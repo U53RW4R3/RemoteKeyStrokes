@@ -21,11 +21,11 @@ function CmdFile {
 
 function Execute {
     local commands=$1
-    local type=$2
+    local method=$2
 
     # TODO: Fill in the rest of the execution types
-    case $type in
-    	"" | dialogbox)
+    case $method in
+    	dialogbox)
     	   DialogBox
     	   ;;
     	msbuild)
@@ -49,8 +49,9 @@ function MSBuild {
 }
 
 function Base64 {
-    local file_type=$(file "$1")
+    local local_file=$1
     local output_file=$2
+    local file_type=$(file "$local_file")
     
     # TODO: Finish the implementation
     if [[ $file_type == *"ASCII text"* ]]
@@ -75,8 +76,16 @@ function CopyCon {
     local file_content=$1
     local output_file=$2
     
-    # TODO: create an if statement to terminate the script if the line is
-    # equal or greater than 255 characters limit
+    # Check one of the lines reached the 255 character limit
+    while read -r line
+    do
+    	line_length=$(wc -c < "$line")
+    	if [ "$line_length" -ge 255 ]
+    	then
+    	    echo "[!] Character Limit reached! Terminating program."
+    	    exit 1
+    	fi
+    done < $file_content
 
     xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "copy con $output_file"
     xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
@@ -93,10 +102,10 @@ function CopyCon {
 function OutputRemoteFile {
     local local_file=$1
     local remote_file=$2
-    local transfer_method=$3
+    local method=$3
 
     # TODO: Fill in the rest of the transfer methods
-    case $transfer_method in
+    case $method in
     	"" | base64)
     	   Base64 $local_file $remote_file
     	   ;;
