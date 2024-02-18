@@ -22,6 +22,7 @@ function InputFile {
 function Base64 {
     local file_content=$1
     local output_file=$2
+    local platform=$3
     
     # TODO: Finish the implementation
 }
@@ -49,8 +50,11 @@ function OutputRemoteFile {
 
     # TODO: Fill in the rest of the transfer methods
     case $transfer_type in
-    	"" | base64)
-    	   Base64 $local_file $remote_file
+    	"" | cmdb64)
+    	   Base64 $local_file $remote_file "windows"
+    	   ;;
+    	nixb64)
+    	   Base64 $local_file $remote_file "unix"
     	   ;;
     	copycon)
     	   CopyCon $local_file $remote_file
@@ -68,7 +72,7 @@ Options:
     -c, --cmdfile <cmdfile>     Specify the file containing commands to execute
     -i, --input <input>         Specify the input file to transfer
     -o, --tofile <tofile>       Specify the output file to transfer
-    -t, --type <transfer_type>  Specify the transfer type (base64 is set by
+    -t, --type <transfer_type>  Specify the transfer type (cmdb64 is set by
     				default if not specified)
 
     -w, --windowname <name>     Specify the window name for RDP (FreeRDP is set
@@ -141,7 +145,7 @@ function main() {
     if [ -n "$CMDFILE" ]
     then
         InputFile "$CMDFILE"
-    elif [ -n "$INPUT" ] && [ -n "$OUTPUT" ] && [ -n "$TYPE" ]
+    elif [ -n "$INPUT" ] && [ -n "$OUTPUT" ]
     then
         OutputRemoteFile "$INPUT" "$OUTPUT" "$TYPE"
     fi
