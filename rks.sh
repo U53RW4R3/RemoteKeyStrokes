@@ -25,11 +25,11 @@ function Execute {
 
     # TODO: Fill in the rest of the execution types
     case $type in
-    	"" | base64)
-    	   Base64 $local_file $remote_file
+    	"" | dialogbox)
+    	   DialogBox
     	   ;;
-    	copycon)
-    	   CopyCon $local_file $remote_file
+    	msbuild)
+    	   MSBuild
     	   ;;
     	*)
     	   echo "Invalid Execution Type!" >&2
@@ -40,10 +40,12 @@ function Execute {
 
 function DialogBox {
     # TODO: Calculate the character limit if it's greater or equal to 260 before execute the command
+    echo "dialog"
 }
 
 function MSBuild {
     # TODO: Add two methods one for adding shellcode and the other for powershell runspace
+    echo "msbuild"
 }
 
 function Base64 {
@@ -53,16 +55,16 @@ function Base64 {
     # TODO: Finish the implementation
     if [[ $file_type == *"ASCII text"* ]]
     then
-        #echo "The file is ASCII text"
+        echo "The file is ASCII text"
     elif [[ $file_type == *"ELF"*"LSB pie executable"* ]]
     then
-        #echo "The file is an ELF binary"
+        echo "The file is an ELF binary"
     elif [[ $file_type == *"PE32+ executable (DLL)"* ]]
     then
-        #echo "The file is a DLL binary"
+        echo "The file is a DLL binary"
     elif [[ $file_type == *"PE32+ executable"* ]]
     then
-        #echo "The file is an EXE binary"
+        echo "The file is an EXE binary"
     else
         echo "The file type is unknown"
     fi
@@ -110,27 +112,27 @@ function OutputRemoteFile {
 
 function usage() {
     cat << EOF
-Usage: $0 [-c <cmdfile> | -i <input> -o <tofile>] [-w <windowname>] [-h]
+Usage: $0 [-c <command | cmdfile> | -i <input_file> -o <output_file>] [-w <windowname>] [-h]
 Options:
-    -c, --cmdfile <cmdfile>     Specify the file containing commands to execute
-    -i, --input <input>         Specify the input file to transfer
-    -o, --tofile <tofile>       Specify the output file to transfer
-    -m, --method <method>       Specify the file transfer or execution method
-                                (For file transfer "base64" is set by default if
-                                not specified. For execution method "none" is set
-                                by default if not specified)
+    -c, --command <command | cmdfile>		Specify the file containing commands to execute
+    -i, --input <input_file>         		Specify the local input file to transfer
+    -o, --output <output_file>			Specify the remote output file to transfer
+    -m, --method <method>			Specify the file transfer or execution method
+						(For file transfer "base64" is set by default if
+						not specified. For execution method "none" is set
+						by default if not specified)
 
-    -w, --windowname <name>     Specify the window name for RDP (freerdp is set
-                                by default if not specified)
+    -w, --windowname <name>			Specify the window name for RDP (freerdp is set
+ 						by default if not specified)
 
-    -h, --help                  Display this help message
+    -h, --help					Display this help message
 EOF
     exit 1
 }
 
-long_opts="cmdfile:,execute:,input:,tofile:,method:,windowname:,help"
+long_opts="cmdfile:,input:,output:,method:,windowname:,help"
 
-OPTS=$(getopt -o "c:e:i:o:m:w:h" --long "$long_opts" -n "$(basename "$0")" -- "$@")
+OPTS=$(getopt -o "c:i:o:m:w:h" --long "$long_opts" -n "$(basename "$0")" -- "$@")
 if [ $? != 0 ]
 then
     echo "Failed to parse options... Exiting." >&2
@@ -141,19 +143,15 @@ eval set -- "${OPTS}"
 
 while true; do
     case "$1" in
-        -c | --cmdfile)
-            CMDFILE=$2
-            shift 2
-            ;;
-        -e | --execute)
-            EXECUTE=$2
+        -c | --command)
+            COMMAND=$2
             shift 2
             ;;
         -i | --input)
             INPUT=$2
             shift 2
             ;;
-        -o | --tofile)
+        -o | --output)
             OUTPUT=$2
             shift 2
             ;;
@@ -185,7 +183,7 @@ function main() {
     if [ -z "$WINDOWNAME" ]
     then
         WINDOWNAME="FreeRDP"
-    elif [[ "$WINDOWNAME" != "freerdp" && "$WINDOWNAME" != "rdesktop" &&  != "tightvnc" ]]
+    elif [[ "$WINDOWNAME" != "freerdp" && "$WINDOWNAME" != "rdesktop" && "$WINDOWNAME" != "tightvnc" ]]
     then
     	if [ "$WINDOWNAME" = "freerdp" ]
     	then
@@ -202,18 +200,23 @@ function main() {
         fi
     fi
 
-    if [ -n "$CMDFILE" ]
+    # TODO: Make an if statement when passed input as a string.
+    # It executes a single line otherwise read the contents of the file.
+    
+    # Check if a file is provided
+    if [ -f "$COMMAND" ]
     then
-        CmdFile "$CMDFILE"
-    elif [ -n "$EXECUTE" ]
+        CmdFile "$COMMAND"
+    elif [[ -n "$COMMAND" && -n "$METHOD" ]]
     then
+    	# When input is string it executes command
     	if [ -z "$METHOD" ]
     	then
     	    METHOD="none"
     	fi
 
-        Execute "$EXECUTE" "$METHOD"
-    elif [ -n "$INPUT" ] && [ -n "$OUTPUT" ]
+        Execute "$COMMAND" "$METHOD"
+    elif [ -f "$INPUT" ] && [ -n "$OUTPUT" ]
     then
         OutputRemoteFile "$INPUT" "$OUTPUT" "$METHOD"
     fi
