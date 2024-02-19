@@ -49,15 +49,12 @@ function DialogBox {
     local commands=$1
 
     echo "[*] Checking one of the lines reaches 260 character limit"
-    while read -r line
-    do
-    	line_length=$(wc -c < "$line")
-    	if [ "$line_length" -ge 260 ]
-    	then
-    	    echo "[!] Character Limit reached! Terminating program."
-    	    exit 1
-    	fi
-    done < $commands
+    length=$(echo -n "$commands" | wc -c)
+    if [ "$length" -ge 260 ]
+    then
+        echo "[!] Character Limit reached! Terminating program."
+        exit 1
+    fi
 
     echo "[*] Executing commands..."
     xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Super_L+R
