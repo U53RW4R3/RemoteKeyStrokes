@@ -10,50 +10,75 @@ function check_dependencies() {
 }
 
 function CmdFile {
-    local local_file=$1
+    local file=$1
 
+    echo "[*] Executing commands..."
     while read -r line
     do
         xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$line"
         xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
-    done < $local_file
+    done < $file
+    echo "[+] Task completed!"
 }
 
 function Execute {
     local commands=$1
     local method=$2
 
-    # TODO: Fill in the rest of the execution types
+    # TODO: Implement bin2hex method
     case $method in
-    	dialogbox)
-    	   DialogBox
-    	   ;;
-    	msbuild)
-    	   MSBuild
-    	   ;;
-    	*)
-    	   echo "Invalid Execution Type!" >&2
-    	   exit 1
-    	   ;;
+        none)
+            echo "[*] Executing commands..."
+            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$commands"
+            xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+            echo "[+] Task completed!"
+            ;;
+        dialogbox)
+            echo "[*] Executing commands..."
+            DialogBox $commands
+            echo "[+] Task completed!"
+            ;;
+        *)
+            echo "Invalid Execution Type!" >&2
+            exit 1
+            ;;
     esac
 }
 
 function DialogBox {
-    # TODO: Calculate the character limit if it's greater or equal to 260 before execute the command
-    echo "dialog"
+    local commands=$1
+
+    echo "[*] Checking one of the lines reaches 260 character limit"
+    while read -r line
+    do
+    	line_length=$(wc -c < "$line")
+    	if [ "$line_length" -ge 260 ]
+    	then
+    	    echo "[!] Character Limit reached! Terminating program."
+    	    exit 1
+    	fi
+    done < $commands
+
+    echo "[*] Executing commands..."
+    xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Super_L+R
+    xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$commands"
+    xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+    echo "[+] Task completed!"
 }
 
 function MSBuild {
     # TODO: Add two methods one for adding shellcode and the other for powershell runspace
+    # Add a flag C# implant
     echo "msbuild"
 }
 
 function Base64 {
-    local local_file=$1
+    local input_file=(base64 -w 0 $1)
     local output_file=$2
     local platform=$3
     
     # TODO: Finish the implementation
+    echo "[*] Transferring file..."
     if [ $platform = "windows" ]
     then
         echo "Windows OS"
@@ -62,6 +87,7 @@ function Base64 {
         echo "Linux OS"
     fi
 
+    echo "[*] File transferred!"
 }
 
 function CopyCon {
@@ -70,21 +96,22 @@ function CopyCon {
 
     if [ $platform != "windows" ]
     then
-        echo "[!] copycon works on windows user! Try 'base64' method instead."
+        echo "[!] copycon only exists on Windows operating system user! Try 'base64' method instead."
         exit 1
     fi
     
-    # Check one of the lines reached the 255 character limit
+    echo "[*] Checking one of the lines reaches 255 character limit"
     while read -r line
     do
-    	line_length=$(wc -c < "$line")
-    	if [ "$line_length" -ge 255 ]
-    	then
-    	    echo "[!] Character Limit reached! Terminating program."
-    	    exit 1
-    	fi
+        line_length=$(wc -c < "$line")
+        if [ "$line_length" -ge 255 ]
+        then
+            echo "[!] Character Limit reached! Terminating program."
+            exit 1
+        fi
     done < $file_content
 
+    echo "[*] Transferring file..."
     xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "copy con $output_file"
     xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
 
@@ -95,6 +122,7 @@ function CopyCon {
     done < $file_content
 
     xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Ctrl+Z Return
+    echo "[*] File transferred!"
 }
 
 function OutputRemoteFile {
@@ -105,16 +133,16 @@ function OutputRemoteFile {
 
     # TODO: Fill in the rest of the transfer methods
     case $method in
-    	"" | base64)
-    	   Base64 $local_file $remote_file $platform
-    	   ;;
-    	copycon)
-    	   CopyCon $local_file $remote_file $platform
-    	   ;;
-    	*)
-    	   echo "Invalid Type Transfer!" >&2
-    	   exit 1
-    	   ;;
+        "" | base64)
+            Base64 $local_file $remote_file $platform
+            ;;
+        copycon)
+            CopyCon $local_file $remote_file $platform
+            ;;
+        *)
+            echo "Invalid File Transfer Technique!" >&2
+            exit 1
+            ;;
     esac
 }
 
