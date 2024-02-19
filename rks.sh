@@ -25,7 +25,6 @@ function Execute {
     local commands=$1
     local method=$2
 
-    # TODO: Implement bin2hex method
     case $method in
         none)
             echo "[*] Executing commands..."
@@ -128,7 +127,7 @@ function OutputRemoteFile {
     local platform=$3
     local method=$4
 
-    # TODO: Fill in the rest of the transfer methods
+    # TODO: Implement bin2hex method
     case $method in
         "" | base64)
             Base64 $local_file $remote_file $platform
@@ -257,11 +256,11 @@ function main() {
         CmdFile "$COMMAND"
     elif [[ -n "$COMMAND" && -n "$METHOD" ]]
     then
-    	# When input is string it executes command
-    	if [ -z "$METHOD" ]
-    	then
-    	    METHOD="none"
-    	fi
+        # When input is string it executes command
+        if [ -z "$METHOD" ]
+        then
+            METHOD="none"
+        fi
 
         Execute "$COMMAND" "$METHOD"
     elif [ -f "$INPUT" ] && [ -n "$OUTPUT" ]
