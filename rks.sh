@@ -51,23 +51,15 @@ function MSBuild {
 function Base64 {
     local local_file=$1
     local output_file=$2
-    local file_type=$(file "$local_file")
+    local platform=$3
     
     # TODO: Finish the implementation
-    if [[ $file_type == *"ASCII text"* ]]
+    if [ $platform = "windows" ]
     then
-        echo "The file is ASCII text"
-    elif [[ $file_type == *"ELF"*"LSB pie executable"* ]]
+        echo "Windows OS"
+    elif [ $file_type == "linux" ]
     then
-        echo "The file is an ELF binary"
-    elif [[ $file_type == *"PE32+ executable (DLL)"* ]]
-    then
-        echo "The file is a DLL binary"
-    elif [[ $file_type == *"PE32+ executable"* ]]
-    then
-        echo "The file is an EXE binary"
-    else
-        echo "The file type is unknown"
+        echo "Linux OS"
     fi
 
 }
@@ -75,6 +67,12 @@ function Base64 {
 function CopyCon {
     local file_content=$1
     local output_file=$2
+
+    if [ $platform != "windows" ]
+    then
+        echo "[!] copycon works on windows user! Try 'base64' method instead."
+        exit 1
+    fi
     
     # Check one of the lines reached the 255 character limit
     while read -r line
@@ -102,15 +100,16 @@ function CopyCon {
 function OutputRemoteFile {
     local local_file=$1
     local remote_file=$2
-    local method=$3
+    local platform=$3
+    local method=$4
 
     # TODO: Fill in the rest of the transfer methods
     case $method in
     	"" | base64)
-    	   Base64 $local_file $remote_file
+    	   Base64 $local_file $remote_file $platform
     	   ;;
     	copycon)
-    	   CopyCon $local_file $remote_file
+    	   CopyCon $local_file $remote_file $platform
     	   ;;
     	*)
     	   echo "Invalid Type Transfer!" >&2
@@ -121,27 +120,30 @@ function OutputRemoteFile {
 
 function usage() {
     cat << EOF
-Usage: $0 [-c <command | cmdfile> | -i <input_file> -o <output_file>] [-w <windowname>] [-h]
+Usage: $0 [-c <command | cmdfile> | -i <input_file> -o <output_file> -p <platform>] [-m <method>] [-w <windowname>] [-h]
 Options:
-    -c, --command <command | cmdfile>		Specify the file containing commands to execute
-    -i, --input <input_file>         		Specify the local input file to transfer
-    -o, --output <output_file>			Specify the remote output file to transfer
-    -m, --method <method>			Specify the file transfer or execution method
-						(For file transfer "base64" is set by default if
-						not specified. For execution method "none" is set
-						by default if not specified)
+    -c, --command <command | cmdfile>       Specify a command or a file containing to execute
+    -i, --input <input_file>                Specify the local input file to transfer
+    -o, --output <output_file>              Specify the remote output file to transfer
+    -m, --method <method>                   Specify the file transfer or execution method
+                                            (For file transfer "base64" is set by default if
+                                            not specified. For execution method "none" is set
+                                            by default if not specified)
 
-    -w, --windowname <name>			Specify the window name for RDP (freerdp is set
- 						by default if not specified)
+    -p, --platform <operating_system>       Specify the operating system (windows is set by default
+                                            if not specified)
 
-    -h, --help					Display this help message
+    -w, --windowname <name>	                Specify the window name for graphical remote program (freerdp is set
+                                            by default if not specified)
+
+    -h, --help                              Display this help message
 EOF
     exit 1
 }
 
-long_opts="cmdfile:,input:,output:,method:,windowname:,help"
+long_opts="command:,input:,output:,method:,platform:,windowname:,help"
 
-OPTS=$(getopt -o "c:i:o:m:w:h" --long "$long_opts" -n "$(basename "$0")" -- "$@")
+OPTS=$(getopt -o "c:i:o:m:p:w:h" --long "$long_opts" -n "$(basename "$0")" -- "$@")
 if [ $? != 0 ]
 then
     echo "Failed to parse options... Exiting." >&2
@@ -164,9 +166,13 @@ while true; do
             OUTPUT=$2
             shift 2
             ;;
-	-m | --method)
+        -m | --method)
             METHOD=$2
-	    shift 2
+            shift 2
+            ;;
+        -p | --platform)
+            PLATFORM=$2
+            shift 2
             ;;
         -w | --windowname)
             WINDOWNAME=$2
@@ -194,24 +200,32 @@ function main() {
         WINDOWNAME="FreeRDP"
     elif [[ "$WINDOWNAME" != "freerdp" && "$WINDOWNAME" != "rdesktop" && "$WINDOWNAME" != "tightvnc" ]]
     then
-    	if [ "$WINDOWNAME" = "freerdp" ]
-    	then
-    	    WINDOWNAME="FreeRDP"
-    	elif [ "$WINDOWNAME" = "rdesktop" ]
-    	then
-    	    continue
-    	elif [ "$WINDOWNAME" = "tightvnc" ]
-    	then
-    	    WINDOWNAME="TightVNC"
-    	else
-            echo "Invalid window name specified. Allowed values: 'freerdp', 'rdesktop', or 'tightvnc'."
-            exit 1
-        fi
+        echo "Invalid window name specified. Allowed values: 'freerdp', 'rdesktop', or 'tightvnc'."
+        exit 1
+    fi
+
+    if [ "$WINDOWNAME" = "freerdp" ]
+    then
+        WINDOWNAME="FreeRDP"
+    elif [ "$WINDOWNAME" = "rdesktop" ]
+    then
+        continue
+    elif [ "$WINDOWNAME" = "tightvnc" ]
+    then
+        WINDOWNAME="TightVNC"
     fi
 
     # TODO: Make an if statement when passed input as a string.
     # It executes a single line otherwise read the contents of the file.
-    
+
+    if [ -z "$PLATFORM" ]
+    then
+        PLATFORM="windows"
+    elif [[ "$PLATFORM" != "windows" && "$PLATFORM" != "linux" ]]
+    then
+        echo "Invalid or operating system not supported. Allowed values: 'windows' or 'linux'."
+        exit 1
+    fi
     # Check if a file is provided
     if [ -f "$COMMAND" ]
     then
@@ -227,7 +241,7 @@ function main() {
         Execute "$COMMAND" "$METHOD"
     elif [ -f "$INPUT" ] && [ -n "$OUTPUT" ]
     then
-        OutputRemoteFile "$INPUT" "$OUTPUT" "$METHOD"
+        OutputRemoteFile "$INPUT" "$OUTPUT" "$PLATFORM" "$METHOD"
     fi
 }
 
