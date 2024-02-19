@@ -229,6 +229,7 @@ function main() {
         exit 1
     fi
 
+    # Matches the window name
     if [ "$WINDOWNAME" = "freerdp" ]
     then
         WINDOWNAME="FreeRDP"
@@ -240,9 +241,7 @@ function main() {
         WINDOWNAME="TightVNC"
     fi
 
-    # TODO: Make an if statement when passed input as a string.
-    # It executes a single line otherwise read the contents of the file.
-
+    # Selecting operating system
     if [ -z "$PLATFORM" ]
     then
         PLATFORM="windows"
@@ -251,6 +250,7 @@ function main() {
         echo "Invalid or operating system not supported. Allowed values: 'windows' or 'linux'."
         exit 1
     fi
+
     # Check if a file is provided
     if [ -f "$COMMAND" ]
     then
