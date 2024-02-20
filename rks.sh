@@ -59,7 +59,6 @@ function Execute {
 
 function DialogBox {
     local commands=$1
-    echo "$commands"
 
     echo "[*] Checking one of the lines reaches 260 character limit"
     length=$(echo -n "$commands" | wc -c)
@@ -70,7 +69,7 @@ function DialogBox {
     fi
 
     echo "[*] Executing commands..."
-    xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Super_L+r
+    xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Super+r
     xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$commands"
     xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
     echo "[+] Task completed!"
@@ -157,14 +156,22 @@ function OutputRemoteFile {
 }
 
 function CreateUser {
-    platform=$1
+    local select=$1
+    local platform=$2
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
-    echo "Not implemented"
+    if [ $platform = "windows" ]
+    then
+        echo "Windows"
+    elif [ $platform = "linux" ]
+    then
+        echo "Linux"
+    fi
 }
 
 function StickyKey {
-    platform=$1
+    local select=$1
+    local platform=$2
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
     if [ $platform != "windows" ]
@@ -179,7 +186,8 @@ function StickyKey {
 }
 
 function UtilityManager {
-    platform=$1
+    local select=$1
+    local platform=$2
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
     if [ $platform != "windows" ]
@@ -194,7 +202,8 @@ function UtilityManager {
 }
 
 function Magnifier {
-    platform=$1
+    local select=$1
+    local platform=$2
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
     if [ $platform != "windows" ]
@@ -210,7 +219,8 @@ function Magnifier {
 }
 
 function Narrator {
-    platform=$1
+    local select=$1
+    local platform=$2
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
     if [ $platform != "windows" ]
@@ -225,7 +235,8 @@ function Narrator {
 }
 
 function DisplaySwitch {
-    platform=$1
+    local select=$1
+    local platform=$2
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
     if [ $platform != "windows" ]
@@ -240,25 +251,28 @@ function DisplaySwitch {
 }
 
 function Persistence {
-    local persistence_method=$1
+    local select=$1 # -s, --select flag "info,backdoor,cleanup"
     local platform=$2
+    local persistence_method=$3
     # TODO: Fill in the rest of the persistence methods
-    # Add a -b, --backdoor flag
     case $persistence_method in
+        createuser)
+            CreateUser $select $platform
+            ;;
         sethc)
-            StickyKey $platform
+            StickyKey $select $platform
             ;;
         utilman)
-            UtilityManager $platform
+            UtilityManager $select $platform
             ;;
         magnifier)
-            Magnifier $platform
+            Magnifier $select $platform
             ;;
         narrator)
-            Narrator $platform
+            Narrator $select $platform
             ;;
         displayswitch)
-            DisplaySwitch $platform
+            DisplaySwitch $select $platform
             ;;
         *)
             echo "Invalid Persistence Technique!" >&2
@@ -268,7 +282,13 @@ function Persistence {
 }
 
 function AntiForensics {
-    # TODO: Include features for anti-forensics
+    local method=$1
+    # TODO: Include features for anti-forensics also include eventvwr.msc with a dialog box
+    # add flag -a, --antiforensics
+    
+    # Batch script
+    # Powershell script
+    # Bash script
     echo "Not implemented"
 }
 
@@ -279,13 +299,14 @@ Options:
     -c, --command <command | cmdfile>       Specify a command or a file containing to execute
     -i, --input <input_file>                Specify the local input file to transfer
     -o, --output <output_file>              Specify the remote output file to transfer
-    -m, --method <method>                   Specify the file transfer or execution method
-                                            (For file transfer "base64" is set by default if
-                                            not specified. For execution method "none" is set
-                                            by default if not specified)
 
     -p, --platform <operating_system>       Specify the operating system (windows is set by
                                             default if not specified)
+
+    -m, --method <method>                   Specify the file transfer or execution method
+                                            (For file transfer "base64" is set by default if
+                                            not specified. For command execution method
+                                            "none" is set by default if not specified)
 
     -w, --windowname <name>	                Specify the window name for graphical remote
                                             program (freerdp is set by default if not
@@ -296,9 +317,9 @@ EOF
     exit 1
 }
 
-long_opts="command:,input:,output:,method:,platform:,windowname:,help"
+long_opts="command:,input:,output:,platform:,method:,windowname:,help"
 
-OPTS=$(getopt -o "c:i:o:m:p:w:h" --long "$long_opts" -n "$(basename "$0")" -- "$@")
+OPTS=$(getopt -o "c:i:o:p:m:w:h" --long "$long_opts" -n "$(basename "$0")" -- "$@")
 if [ $? != 0 ]
 then
     echo "Failed to parse options... Exiting." >&2
@@ -307,7 +328,8 @@ fi
 
 eval set -- "${OPTS}"
 
-while true; do
+while true
+do
     case "$1" in
         -c | --command)
             COMMAND=$2
@@ -321,12 +343,12 @@ while true; do
             OUTPUT=$2
             shift 2
             ;;
-        -m | --method)
-            METHOD=$2
-            shift 2
-            ;;
         -p | --platform)
             PLATFORM=$2
+            shift 2
+            ;;
+        -m | --method)
+            METHOD=$2
             shift 2
             ;;
         -w | --windowname)
@@ -371,7 +393,7 @@ function main() {
         WINDOWNAME="TightVNC"
     fi
 
-    # Select operating system
+    # Operating System
     if [ -z "$PLATFORM" ]
     then
         PLATFORM="windows"
@@ -381,25 +403,34 @@ function main() {
         exit 1
     fi
 
-    # Check if a file is provided
+    # Executing commands
     if [ -f "$COMMAND" ]
     then
+        # Check if a file is passed as input
         CmdFile "$COMMAND"
     fi
     
     if [[ ! -f "$COMMAND" && -n "$COMMAND" ]]
     then
-		# When input is string it executes command
+		# When input is string and not a file. It executes command
 		if [ -z "$METHOD" ]
 		then
 		    METHOD="none"
 		fi
 		Execute "$COMMAND" "$METHOD"
 	fi
-        
-    if [[ -f "$INPUT"  && -n "$OUTPUT" ]]
+    
+    # File transfer
+    if [[ -f "$INPUT" && -n "$OUTPUT" ]]
     then
         OutputRemoteFile "$INPUT" "$OUTPUT" "$PLATFORM" "$METHOD"
+    fi
+    
+    # Persistence method
+    if [ -n "$SELECT" ]
+    then
+        # -s <info | backdoor | cleanup> -p <windows | linux> -m <persistence_method>
+        Persistence "$SELECT" "$PLATFORM" "$METHOD"
     fi
 }
 

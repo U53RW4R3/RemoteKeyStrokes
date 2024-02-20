@@ -91,9 +91,11 @@ $ ./rks.sh -i /usr/share/powersploit/Exfiltration/Invoke-Mimikatz.ps1 -o "C:\Win
 
 - Implement Bin2Hex file transfer
 
-- Implement to read shellcode input and run C# implant and powershell runspace
+- Implement a persistence function for both windows and linux.
 
-- Implement a persistence backdoor. Sticky keys, displayswitch
+- Implement antiforensics function for both windows and linux.
+
+- Implement to read shellcode input and run C# implant and powershell runspace
 
 ## References
 
