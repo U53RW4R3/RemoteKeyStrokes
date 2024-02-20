@@ -18,9 +18,10 @@ function print_status {
     local status=$1
     local message=$2
     # TODO: Add colors
-    # [*] for blue
-    # [+] for green
-    # [!] for yellow
+    # [*] for blue PROGRESS:
+    # [+] for green DONE:
+    # [!] for yellow WARN:
+    # [-] for red ERROR:
     # white to reset colors
     echo ""
 }
@@ -65,7 +66,7 @@ function DialogBox {
     length=$(echo -n "$commands" | wc -c)
     if [ "$length" -ge 260 ]
     then
-        echo "[!] Character Limit reached! Terminating program."
+        echo "[-] Character Limit reached! Terminating program."
         exit 1
     fi
 
@@ -106,7 +107,7 @@ function CopyCon {
 
     if [ $platform != "windows" ]
     then
-        echo "[!] copycon only exists on Windows operating system user! Try 'base64' method instead."
+        echo "[-] copycon only exists on Windows operating system user! Try 'base64' method instead."
         exit 1
     fi
     
@@ -116,7 +117,7 @@ function CopyCon {
         length=$(echo -n "$line" | wc -c)
         if [ "$length" -ge 255 ]
         then
-            echo "[!] Character Limit reached! Terminating program."
+            echo "[-] Character Limit reached! Terminating program."
             exit 1
         fi
     done < $file_content
@@ -177,7 +178,7 @@ function StickyKey {
     # Add a cleanup method
     if [ $platform != "windows" ]
     then
-        echo "[!] Registry keys only exists on Windows operating system user!"
+        echo "[-] Registry keys only exists on Windows operating system user!"
         exit 1
     fi
 
@@ -193,7 +194,7 @@ function UtilityManager {
     # Add a cleanup method
     if [ $platform != "windows" ]
     then
-        echo "[!] Registry keys only exists on Windows operating system user!"
+        echo "[-] Registry keys only exists on Windows operating system user!"
         exit 1
     fi
 
@@ -209,7 +210,7 @@ function Magnifier {
     # Add a cleanup method
     if [ $platform != "windows" ]
     then
-        echo "[!] Registry keys only exists on Windows operating system user!"
+        echo "[-] Registry keys only exists on Windows operating system user!"
         exit 1
     fi
 
@@ -226,7 +227,7 @@ function Narrator {
     # Add a cleanup method
     if [ $platform != "windows" ]
     then
-        echo "[!] Registry keys only exists on Windows operating system user!"
+        echo "[-] Registry keys only exists on Windows operating system user!"
         exit 1
     fi
 
@@ -242,7 +243,7 @@ function DisplaySwitch {
     # Add a cleanup method
     if [ $platform != "windows" ]
     then
-        echo "[!] Registry keys only exists on Windows operating system user!"
+        echo "[-] Registry keys only exists on Windows operating system user!"
         exit 1
     fi
 
@@ -382,7 +383,7 @@ function main() {
         WINDOWNAME="FreeRDP"
     elif [[ "$WINDOWNAME" != "freerdp" && "$WINDOWNAME" != "rdesktop" && "$WINDOWNAME" != "tightvnc" ]]
     then
-        echo "Invalid window name specified. Allowed values: 'freerdp', 'rdesktop', or 'tightvnc'."
+        echo "[-] Invalid window name specified. Allowed values: 'freerdp', 'rdesktop', or 'tightvnc'."
         exit 1
     fi
 
@@ -404,7 +405,7 @@ function main() {
         PLATFORM="windows"
     elif [[ "$PLATFORM" != "windows" && "$PLATFORM" != "linux" ]]
     then
-        echo "Invalid or operating system not supported. Allowed values: 'windows' or 'linux'."
+        echo "[-] Invalid or operating system not supported. Allowed values: 'windows' or 'linux'."
         exit 1
     fi
 
