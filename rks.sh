@@ -162,7 +162,7 @@ function OutputRemoteFile {
 }
 
 function CreateUser {
-    local select=$1
+    local mode=$1
     local platform=$2
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
@@ -176,7 +176,7 @@ function CreateUser {
 }
 
 function StickyKey {
-    local select=$1
+    local mode=$1
     local platform=$2
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
@@ -192,7 +192,7 @@ function StickyKey {
 }
 
 function UtilityManager {
-    local select=$1
+    local mode=$1
     local platform=$2
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
@@ -208,7 +208,7 @@ function UtilityManager {
 }
 
 function Magnifier {
-    local select=$1
+    local mode=$1
     local platform=$2
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
@@ -225,7 +225,7 @@ function Magnifier {
 }
 
 function Narrator {
-    local select=$1
+    local mode=$1
     local platform=$2
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
@@ -241,7 +241,7 @@ function Narrator {
 }
 
 function DisplaySwitch {
-    local select=$1
+    local mode=$1
     local platform=$2
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
@@ -257,31 +257,32 @@ function DisplaySwitch {
 }
 
 function Persistence {
-    local select=$1
+    local persistence_mode=$1
     local platform=$2
     local persistence_method=$3
 
-    # -s, --select flag "info,backdoor". For info contains the execution commands
+    # -s, --select flag "info,backdoor". For "info" contains the execution commands
     # for both command prompt and powershell. To enumerate, persistence and cleanup
+    # For "backdoor" to activate the backdoor
     # TODO: Fill in the rest of the persistence methods
     case $persistence_method in
         createuser)
-            CreateUser $select $platform
+            CreateUser $persistence_mode $platform
             ;;
         sethc)
-            StickyKey $select $platform
+            StickyKey $persistence_mode $platform
             ;;
         utilman)
-            UtilityManager $select $platform
+            UtilityManager $persistence_mode $platform
             ;;
         magnifier)
-            Magnifier $select $platform
+            Magnifier $persistence_mode $platform
             ;;
         narrator)
-            Narrator $select $platform
+            Narrator $persistence_mode $platform
             ;;
         displayswitch)
-            DisplaySwitch $select $platform
+            DisplaySwitch $persistence_mode $platform
             ;;
         *)
             echo "Invalid Persistence Technique!" >&2
@@ -371,6 +372,7 @@ function AntiForensics {
     esac
 }
 
+# TODO: Add more flags once it's fully implemented
 function usage() {
     cat << EOF
 Usage: $0 (RemoteKeyStrokes)
@@ -396,9 +398,9 @@ EOF
     exit 1
 }
 
-long_opts="command:,input:,output:,platform:,method:,windowname:,help"
+long_opts="command:,input:,output:,elevate:,select:,antiforensics:,platform:,method:,windowname:,help"
 
-OPTS=$(getopt -o "c:i:o:p:m:w:h" --long "$long_opts" -n "$(basename "$0")" -- "$@")
+OPTS=$(getopt -o "c:i:o:e:s:a:p:m:w:h" --long "$long_opts" -n "$(basename "$0")" -- "$@")
 if [ $? != 0 ]
 then
     echo "Failed to parse options... Exiting." >&2
@@ -420,6 +422,18 @@ do
             ;;
         -o | --output)
             OUTPUT=$2
+            shift 2
+            ;;
+        -e | --elevate)
+            ELEVATE=$2
+            shift 2
+            ;;
+        -s | --select)
+            SELECT=$2
+            shift 2
+            ;;
+        -a | --antiforensics)
+            ANTIFORENSICS=$2
             shift 2
             ;;
         -p | --platform)
@@ -504,12 +518,26 @@ function main() {
     then
         OutputRemoteFile "$INPUT" "$OUTPUT" "$PLATFORM" "$METHOD"
     fi
-    
+
+    # Privilege Escalation method
+    if [[ -n "$ELEVATE" && -n "$METHOD" ]]
+    then
+        # -e info -p <windows | linux> -m bypassuac
+        PrivEsc "$ELEVATE" "$PLATFORM" "$METHOD"
+    fi
+
     # Persistence method
     if [[ -n "$SELECT" && -n "$METHOD" ]]
     then
-        # -s <info | backdoor | cleanup> -p <windows | linux> -m <persistence_method>
+        # -s <info | backdoor > -p <windows | linux> -m <persistence_method>
         Persistence "$SELECT" "$PLATFORM" "$METHOD"
+    fi
+
+    # Antiforensics method
+    if [[ -n "$ANTIFORENSICS" && -n "$METHOD" ]]
+    then
+        # -a <info | execute> -p <windows | linux> -m <antiforensics_method>
+        AntiForensics "$ANTIFORENSICS" "$PLATFORM" "$METHOD"
     fi
 }
 
