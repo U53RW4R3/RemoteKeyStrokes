@@ -283,19 +283,45 @@ function Persistence {
     esac
 }
 
+function EventViewer {
+    local mode=$1
+
+    if [[ $mode = "" || $mode = "manual" ]]
+    then
+        DialogBox "eventvwr.msc"
+    else
+        echo "[-] Invalid mode!"
+    fi
+}
+
 function AntiForensics {
-    # local antiforensics=$1
+    local antiforensics_mode=$1
     local platform=$2
-    local method=$3
+    local antiforensics_method=$3
     # TODO: Include features for anti-forensics also include eventvwr.msc with a dialog box
     # add flag -a, --antiforensics
 
-    # -a <auto (to transfer and execute) | manual (display the commands) | > -p linux -m <script | commands>
+    # -a <info (display info) | execute (to execute the commands | script (to transfer script) | manual (display the commands)>
+    # -p <windows | linux> -m <wevutil | winevent>
     
     # Batch script
     # Powershell script
     # Bash script
-    echo "Not implemented"
+    case $persistence_method in
+        wevutil)
+            WevUtil $antiforensics_mode $platform
+            ;;
+        winevent)
+            WinEvent $antiforensics_mode $platform
+            ;;
+        eventvwr)
+            EventViewer $antiforensics_mode $platform
+            ;;
+        *)
+            echo "Invalid Antiforensic Technique!" >&2
+            exit 1
+            ;;
+    esac
 }
 
 function usage() {
