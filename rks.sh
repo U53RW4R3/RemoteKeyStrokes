@@ -52,6 +52,8 @@ function Execute {
         dialogbox)
             DialogBox "$commands"
             ;;
+        runspace)
+            MSBuild "$commands"
         *)
             echo "Invalid Execution Type!" >&2
             exit 1
@@ -80,6 +82,8 @@ function DialogBox {
 function MSBuild {
     # TODO: Add two methods one for adding shellcode and the other for powershell runspace
     # Add a flag C# implant
+
+    # Add a flag if an input is passed as powershell runspace
     echo "msbuild"
 }
 
@@ -253,9 +257,12 @@ function DisplaySwitch {
 }
 
 function Persistence {
-    local select=$1 # -s, --select flag "info,backdoor,cleanup"
+    local select=$1
     local platform=$2
     local persistence_method=$3
+
+    # -s, --select flag "info,backdoor". For info contains the execution commands
+    # for both command prompt and powershell. To enumerate, persistence and cleanup
     # TODO: Fill in the rest of the persistence methods
     case $persistence_method in
         createuser)
@@ -281,6 +288,15 @@ function Persistence {
             exit 1
             ;;
     esac
+}
+
+function PrivEsc {
+    local elevate_mode=$1
+    local platform=$2
+    local elevate_method=$3
+    # TODO: add -e, --elevated flag
+    # -e info -p <windows | linux> -m bypassuac
+    echo "Not implemented"
 }
 
 function EventViewer {
@@ -459,7 +475,7 @@ function main() {
     fi
     
     # Persistence method
-    if [[] -n "$SELECT" && -n "$METHOD" ]]
+    if [[ -n "$SELECT" && -n "$METHOD" ]]
     then
         # -s <info | backdoor | cleanup> -p <windows | linux> -m <persistence_method>
         Persistence "$SELECT" "$PLATFORM" "$METHOD"

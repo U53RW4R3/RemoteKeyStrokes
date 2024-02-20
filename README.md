@@ -97,6 +97,8 @@ $ ./rks.sh -i /usr/share/powersploit/Exfiltration/Invoke-Mimikatz.ps1 -o "C:\Win
 
 - Implement to read shellcode input and run C# implant and powershell runspace
 
+- Implement privesc function for both windows and linux
+
 ## References
 
 - [Video: sethc.exe Backdoor CMD Payload delivery (USB Rubber Ducky style)](https://www.youtube.com/watch?v=8YFEujJUxws)
