@@ -14,8 +14,9 @@ function check_dependencies() {
     fi
 }
 
-function color_print {
-    local message=
+function print_status {
+    local status=$1
+    local message=$2
     # TODO: Add colors
     # [*] for blue
     # [+] for green
@@ -282,9 +283,13 @@ function Persistence {
 }
 
 function AntiForensics {
-    local method=$1
+    # local antiforensics=$1
+    local platform=$2
+    local method=$3
     # TODO: Include features for anti-forensics also include eventvwr.msc with a dialog box
     # add flag -a, --antiforensics
+
+    # -a <auto (to transfer and execute) | manual (display the commands) | > -p linux -m <script | commands>
     
     # Batch script
     # Powershell script
@@ -427,7 +432,7 @@ function main() {
     fi
     
     # Persistence method
-    if [ -n "$SELECT" ]
+    if [[] -n "$SELECT" && -n "$METHOD" ]]
     then
         # -s <info | backdoor | cleanup> -p <windows | linux> -m <persistence_method>
         Persistence "$SELECT" "$PLATFORM" "$METHOD"
