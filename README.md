@@ -12,7 +12,7 @@ All credits goes to [nopernik](https://github.com/nopernik) for making it possib
 
 ```
 $ ./rks.sh -h
-Usage: ./rks.sh [-c <command | cmdfile> | -i <input_file> -o <output_file> -p <platform>] [-m <method>] [-w <windowname>] [-h]
+Usage: ./rks.sh (RemoteKeyStrokes)
 Options:
     -c, --command <command | cmdfile>       Specify a command or a file containing to execute
     -i, --input <input_file>                Specify the local input file to transfer
@@ -85,19 +85,23 @@ $ ./rks.sh -i /usr/share/powersploit/Exfiltration/Invoke-Mimikatz.ps1 -o "C:\Win
 
 ## TODO and Help Wanted
 
+- Add text colors for better user experience
+
 - Implement Base64 file transfer
 
 - Implement Bin2Hex file transfer
 
 - Implement to read shellcode input and run C# implant and powershell runspace
 
-- Implement a sticky key persistence backdoor when pressing SHIFT 5 times
+- Implement a persistence backdoor. Sticky keys, displayswitch
 
 ## References
 
 - [Video: sethc.exe Backdoor CMD Payload delivery (USB Rubber Ducky style)](https://www.youtube.com/watch?v=8YFEujJUxws)
 
 - [Original Script](https://github.com/nopernik/mytools/blob/master/rdp-cmd-delivery.sh)
+
+- [sticky_keys_hunter](https://github.com/ztgrace/sticky_keys_hunter)
 
 ## Credits
 

