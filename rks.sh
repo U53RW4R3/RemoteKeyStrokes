@@ -153,11 +153,12 @@ Options:
                                             not specified. For execution method "none" is set
                                             by default if not specified)
 
-    -p, --platform <operating_system>       Specify the operating system (windows is set by default
-                                            if not specified)
+    -p, --platform <operating_system>       Specify the operating system (windows is set by
+                                            default if not specified)
 
-    -w, --windowname <name>	                Specify the window name for graphical remote program (freerdp is set
-                                            by default if not specified)
+    -w, --windowname <name>	                Specify the window name for graphical remote
+                                            program (freerdp is set by default if not
+                                            specified)
 
     -h, --help                              Display this help message
 EOF
