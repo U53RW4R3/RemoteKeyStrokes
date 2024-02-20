@@ -33,9 +33,7 @@ function Execute {
             echo "[+] Task completed!"
             ;;
         dialogbox)
-            echo "[*] Executing commands..."
-            DialogBox $commands
-            echo "[+] Task completed!"
+            DialogBox "$commands"
             ;;
         *)
             echo "Invalid Execution Type!" >&2
@@ -46,6 +44,7 @@ function Execute {
 
 function DialogBox {
     local commands=$1
+    echo "$commands"
 
     echo "[*] Checking one of the lines reaches 260 character limit"
     length=$(echo -n "$commands" | wc -c)
@@ -56,7 +55,7 @@ function DialogBox {
     fi
 
     echo "[*] Executing commands..."
-    xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Super_L+R
+    xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Super_L+r
     xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$commands"
     xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
     echo "[+] Task completed!"
@@ -78,7 +77,7 @@ function Base64 {
     if [ $platform = "windows" ]
     then
         echo "Windows OS"
-    elif [ $file_type == "linux" ]
+    elif [ $platform = "linux" ]
     then
         echo "Linux OS"
     fi
@@ -99,8 +98,8 @@ function CopyCon {
     echo "[*] Checking one of the lines reaches 255 character limit"
     while read -r line
     do
-        line_length=$(wc -c < "$line")
-        if [ "$line_length" -ge 255 ]
+        length=$(echo -n "$line" | wc -c)
+        if [ "$length" -ge 255 ]
         then
             echo "[!] Character Limit reached! Terminating program."
             exit 1
@@ -254,16 +253,19 @@ function main() {
     if [ -f "$COMMAND" ]
     then
         CmdFile "$COMMAND"
-    elif [[ -n "$COMMAND" && -n "$METHOD" ]]
+    fi
+    
+    if [[ ! -f "$COMMAND" && -n "$COMMAND" ]]
     then
-        # When input is string it executes command
-        if [ -z "$METHOD" ]
-        then
-            METHOD="none"
-        fi
-
-        Execute "$COMMAND" "$METHOD"
-    elif [ -f "$INPUT" ] && [ -n "$OUTPUT" ]
+		# When input is string it executes command
+		if [ -z "$METHOD" ]
+		then
+		    METHOD="none"
+		fi
+		Execute "$COMMAND" "$METHOD"
+	fi
+        
+    if [[ -f "$INPUT"  && -n "$OUTPUT" ]]
     then
         OutputRemoteFile "$INPUT" "$OUTPUT" "$PLATFORM" "$METHOD"
     fi
