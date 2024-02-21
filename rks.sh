@@ -26,6 +26,11 @@ function print_status {
     echo ""
 }
 
+# TODO: Fill in the implementation
+function randomize_variable {
+    echo "test"
+}
+
 function CmdFile {
     local file=$1
 
@@ -88,21 +93,51 @@ function MSBuild {
 }
 
 function Base64 {
-    local input_file=(base64 -w 0 $1)
+    local input=$1
     local output_file=$2
     local platform=$3
-    
-    # TODO: Finish the implementation
-    echo "[*] Transferring file..."
-    if [ $platform = "windows" ]
+
+    # Check if input is passed as file
+    if [ -f "$input" ]
     then
-        echo "Windows OS"
-    elif [ $platform = "linux" ]
-    then
-        echo "Linux OS"
+        file=$(base64 -w 0 $input)        
+        echo "[*] Transferring file..."
+        if [ $platform = "windows" ]
+        then
+        pwsh_base64_file=$(cat <<EOF
+\$payload = "$file"
+\$decoded = [Convert]::FromBase64String(\$payload)
+[IO.File]::WriteAllBytes("$output_file", \$decoded)
+EOF
+)
+        while IFS= read -r line
+        do
+            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$line"
+            xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+        done <<< "$pwsh_base64_file"
+        elif [ $platform = "linux" ]
+        then
+        while read -r line
+        do
+            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "echo -n $line | base64 -d > $output_file"
+            xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+        done < "$file"
+        fi
+
+        echo "[+] File transferred!"
     fi
 
-    echo "[+] File transferred!"
+    # TODO: Finish the implementation
+    # When input is string and not a file.
+    if [[ ! -f "$input" && -n "$input" ]]
+    then
+        echo "Not implemented"
+        multiline=(cat <<<EOF
+"$input"
+EOF
+)
+        line_count=$(echo "$multiline" | wc -l)
+    fi
 }
 
 function CopyCon {
