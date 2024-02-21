@@ -196,16 +196,15 @@ function PowershellOutFile {
     # TODO: Test the function and modify when necessary
     if [ -f "$input" ]
     then
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "@\""
+        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "@'"
         xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
         if [ "$mode" = "text" ]
         then
-            # TODO: Find the character limit when using @"$line"@
-            echo "[*] Checking one of the lines reaches <> character limit"
+            echo "[*] Checking one of the lines reaches 3477 character limit"
             while read -r line
             do
                 length=$(echo -n "$line" | wc -c)
-                if [ "$length" -ge 255 ]
+                if [ "$length" -ge 3477 ]
                 then
                     echo "[-] Character Limit reached! Terminating program."
                     exit 1
@@ -219,7 +218,7 @@ function PowershellOutFile {
                 xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
             done < $input
             
-            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "\"@ | Out-File $output_file"
+            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "'@ | Out-File $output_file"
             xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
         elif [ "$mode" = "certutil" ]
         then
@@ -235,7 +234,7 @@ function PowershellOutFile {
             done <<< "$file"
             
             xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "-----END CERTIFICATE-----"
-            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "\"@ | Out-File temp.txt"
+            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "'@ | Out-File temp.txt"
             xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Ctrl+Z Return
 
             xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "CertUtil.exe -decode temp.txt $output_file"
