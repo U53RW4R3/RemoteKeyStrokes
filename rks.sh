@@ -107,11 +107,14 @@ function OutputRemoteFile {
         cmdb64)
             Base64 $local_file $remote_file $platform "cmd"
             ;;
-        pwshcertutilb64)
-            Base64 $local_file $remote_file $platform "pwshcertutilb64"
-            ;;
         nixb64)
             Base64 $local_file $remote_file $platform "console"
+            ;;
+        outfile)
+            PowershellOutFile $local_file $remote_file $platform "text"
+            ;;
+        pwshcertutil)
+            PowershellOutFile $local_file $remote_file $platform "certutil"
             ;;
         copycon)
             CopyCon $local_file $remote_file $platform "text"
@@ -133,32 +136,26 @@ function Base64 {
     if [ -f "$input" ]
     then
         echo "[*] Transferring file..."
-        if [[ "$platform" = "windows" ]]
+        if [[ "$platform" = "windows" || "$platform" = "linux" && "$mode" = "powershell" ]]
         then
-            if [ "$mode" = "powershell" ]
-            then
-                file=$(base64 -w 0 $input)
-                pwsh_base64=$(cat <<EOF
+            file=$(base64 -w 0 $input)
+            base64_decoder=$(cat <<EOF
 \$payload = "$file"
 \$decoded = [Convert]::FromBase64String(\$payload)
 [IO.File]::WriteAllBytes("$output_file", \$decoded)
 EOF
 )
-                while IFS= read -r line
-                do
-                    xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$line"
-                    xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
-                done <<< "$pwsh_base64"
-            elif [ "$mode" = "cmd" ]
-            then
-                file=$(base64 -w 64 $input)
-                # TODO: Implement certutil base64 file transfer
-                CopyCon $file $output_file $platform "base64"
-            elif [ "$mode" = "pwshcertutilb64" ]
-            then
-                # TODO: Implement certutil base64 file transfer through powershell
-                echo "Not Yet implemented"
-            fi
+
+            while IFS= read -r line
+            do
+                xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$line"
+                xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+            done <<< "$base64_decoder"
+        elif [[ "$platform" = "windows" && "$mode" = "cmd" ]]
+        then
+            file=$(base64 -w 64 $input)
+            # TODO: Implement certutil base64 file transfer
+            CopyCon $file $output_file $platform "base64"
         elif [[ "$platform" = "linux" && "$mode" = "console" ]]
         then
             while read -r line
@@ -183,6 +180,74 @@ EOF
 )
         count_line=$(echo "$multiline" | wc -l)
     fi
+}
+
+function PowershellOutFile {
+    local input=$1
+    local output_file=$2
+    local platform=$3
+    local mode=$4
+    
+    if [[ "$platform" != "windows" && "$platform" != "linux" ]]
+    then
+        echo "[-] Only windows and linux are supported for this method!"
+    fi
+    
+    # TODO: Test the function and modify when necessary
+    if [ -f "$input" ]
+    then
+        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "@\""
+        xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+        if [ "$mode" = "text" ]
+        then
+            # TODO: Find the character limit when using @"$line"@
+            echo "[*] Checking one of the lines reaches <> character limit"
+            while read -r line
+            do
+                length=$(echo -n "$line" | wc -c)
+                if [ "$length" -ge 255 ]
+                then
+                    echo "[-] Character Limit reached! Terminating program."
+                    exit 1
+                fi
+            done < $input
+            
+            echo "[*] Transferring file..."
+            while read -r line
+            do
+                xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$line"
+                xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+            done < $input
+            
+            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "\"@ | Out-File $output_file"
+            xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+        elif [ "$mode" = "certutil" ]
+        then
+            echo "[*] Transferring file..."
+            file=$(base64 -w 64 $input)
+            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "-----BEGIN CERTIFICATE-----"
+            xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+            
+            while read -r line
+            do
+                xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$line"
+                xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+            done <<< "$file"
+            
+            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "-----END CERTIFICATE-----"
+            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "\"@ | Out-File temp.txt"
+            xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Ctrl+Z Return
+
+            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "CertUtil.exe -decode temp.txt $output_file"
+            xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+            
+            xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "Remove-Item -Force temp.txt"
+            xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+        fi
+    elif
+    fi
+    
+    echo "[+] File transferred!"
 }
 
 function CopyCon {
@@ -244,7 +309,7 @@ function CopyCon {
         xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "CertUtil.exe -decode temp.txt $output_file"
         xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
         
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "del temp.txt"
+        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "del /f temp.txt"
         xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
     fi
 
