@@ -35,9 +35,11 @@ function xdotool_return_input {
         xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$input"
         xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
     elif [ "$key" = "copycon" ]
+    then
         xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$input"
         xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Ctrl+Z Return
     elif [ "$key" = "custom" ]
+    then
         xdotool search --name "$WINDOWNAME" windowfocus windowactivate key "$input"
     fi
 }
@@ -245,7 +247,6 @@ function PowershellOutFile {
             
             xdotool_return_input "Remove-Item -Force temp.txt" "return"
         fi
-    elif
     fi
     
     echo "[+] File transferred!"
