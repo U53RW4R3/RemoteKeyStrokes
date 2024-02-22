@@ -153,10 +153,18 @@ function Base64 {
         echo "[*] Transferring file..."
         if [[ "$platform" = "windows" || "$platform" = "linux" && "$mode" = "powershell" ]]
         then
-            file=$(base64 -w 0 "$input")
+            file_type=$(file "$1")
+            
+            if [[ "$input" == *"ASCII text"* ]]
+            then
+                file=$(iconv -f ASCII -t UTF-16LE "$input" | base64 -w 0)
+            else
+                file=$(base64 -w 0 "$input")
+            fi
+            
             base64_decoder=$(cat <<EOF
 \$payload = "$file"
-\$decoded = [Convert]::FromBase64String(\$payload)
+\[byte[]]$decoded = [Convert]::FromBase64String(\$payload)
 [IO.File]::WriteAllBytes("$output_file", \$decoded)
 EOF
 )
