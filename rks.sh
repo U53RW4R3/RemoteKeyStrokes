@@ -190,7 +190,24 @@ function Base64 {
 [IO.File]::WriteAllBytes("$output_file", \$${random2})
 EOF
 )
-
+            print_status "progress" "Checking one of the lines reaches 3477 character limit"
+            while read -r line
+            do
+                length=$(echo -n "$line" | wc -c)
+                if [ "$length" -ge 3477 ]
+                then
+                    print_status "error" "Character Limit reached!"
+                    print_status "information" "Use 'pwshcertutil' as a method instead."
+                    print_status "information" "Terminating program..."
+                    exit 1
+                fi
+            done <<< "$base64_decoder"
+            
+            while IFS= read -r line
+            do
+                xdotool_return_input "$line" "return"
+            done <<< "$base64_decoder"
+            
             while IFS= read -r line
             do
                 xdotool_return_input "$line" "return"
