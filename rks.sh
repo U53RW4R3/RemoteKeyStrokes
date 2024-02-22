@@ -356,6 +356,7 @@ function CopyCon {
                 xdotool_return_input "$line" "return"
             done < "$input"
         elif [ ! -f "$input" && -n "$input" ]]
+        then
             while IFS= read -r line
             do
                 xdotool_return_input "$line" "return"
