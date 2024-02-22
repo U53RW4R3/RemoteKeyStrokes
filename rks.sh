@@ -56,7 +56,7 @@ function CmdFile {
     while read -r line
     do
         xdotool_return_input "$line" "return"
-    done < $file
+    done < "$file"
     echo "[+] Task completed!"
 }
 
@@ -117,22 +117,22 @@ function OutputRemoteFile {
     # TODO: Implement bin2hex method
     case $method in
         "" | pwshb64)
-            Base64 $local_file $remote_file $platform "powershell"
+            Base64 "$local_file" "$remote_file" "$platform" "powershell"
             ;;
         cmdb64)
-            Base64 $local_file $remote_file $platform "cmd"
+            Base64 "$local_file" "$remote_file" "$platform" "cmd"
             ;;
         nixb64)
-            Base64 $local_file $remote_file $platform "console"
+            Base64 "$local_file" "$remote_file" "$platform" "console"
             ;;
         outfile)
-            PowershellOutFile $local_file $remote_file $platform "text"
+            PowershellOutFile "$local_file" "$remote_file" "$platform" "text"
             ;;
         pwshcertutil)
-            PowershellOutFile $local_file $remote_file $platform "certutil"
+            PowershellOutFile "$local_file" "$remote_file" "$platform" "certutil"
             ;;
         copycon)
-            CopyCon $local_file $remote_file $platform "text"
+            CopyCon "$local_file" "$remote_file" "$platform" "text"
             ;;
         *)
             echo "Invalid File Transfer Technique!" >&2
@@ -153,7 +153,7 @@ function Base64 {
         echo "[*] Transferring file..."
         if [[ "$platform" = "windows" || "$platform" = "linux" && "$mode" = "powershell" ]]
         then
-            file=$(base64 -w 0 $input)
+            file=$(base64 -w 0 "$input")
             base64_decoder=$(cat <<EOF
 \$payload = "$file"
 \$decoded = [Convert]::FromBase64String(\$payload)
@@ -167,9 +167,9 @@ EOF
             done <<< "$base64_decoder"
         elif [[ "$platform" = "windows" && "$mode" = "cmd" ]]
         then
-            file=$(base64 -w 64 $input)
+            file=$(base64 -w 64 "$input")
             # TODO: Implement certutil base64 file transfer
-            CopyCon $file $output_file $platform "base64"
+            CopyCon "$file" "$output_file" "$platform" "base64"
         elif [[ "$platform" = "linux" && "$mode" = "console" ]]
         then
             while read -r line
@@ -221,19 +221,19 @@ function PowershellOutFile {
                     echo "[-] Character Limit reached! Terminating program."
                     exit 1
                 fi
-            done < $input
+            done < "$input"
             
             echo "[*] Transferring file..."
             while read -r line
             do
                 xdotool_return_input "$line" "return"
-            done < $input
+            done < "$input"
             
             xdotool_return_input "'@ | Out-File $output_file" "return"
         elif [ "$mode" = "certutil" ]
         then
             echo "[*] Transferring file..."
-            file=$(base64 -w 64 $input)
+            file=$(base64 -w 64 "$input")
             xdotool_return_input "-----BEGIN CERTIFICATE-----" "return"
             
             while read -r line
@@ -275,24 +275,24 @@ function CopyCon {
                 echo "[-] Character Limit reached! Terminating program."
                 exit 1
             fi
-        done < $input
+        done < "$input"
 
         echo "[*] Transferring file..."
         xdotool_return_input "copy con $output_file" "return"
 
         # TODO: Test it to ensure it's functional
-        line_count=$(wc -l < $input)
+        line_count=$(wc -l < "$input")
         counter=1
         while read -r line
         do
-            if [ "$current_line" -ne "$line_count" ]
+            if [ "$counter" -ne "$line_count" ]
             then
                 xdotool_return_input "$line" "return"
             else
                 xdotool_return_input "$line" "copycon"
             fi
             ((counter++))
-        done < $input
+        done < "$input"
     elif [[ ! -f "$input" && -n "$input" && "$mode" = "base64" ]]
     then
         # TODO: Be sure to modify and test that it works
@@ -422,22 +422,22 @@ function Persistence {
     # TODO: Fill in the rest of the persistence methods
     case $persistence_method in
         createuser)
-            CreateUser $persistence_mode $platform
+            CreateUser "$persistence_mode" "$platform"
             ;;
         sethc)
-            StickyKey $persistence_mode $platform
+            StickyKey "$persistence_mode" "$platform"
             ;;
         utilman)
-            UtilityManager $persistence_mode $platform
+            UtilityManager "$persistence_mode" "$platform"
             ;;
         magnifier)
-            Magnifier $persistence_mode $platform
+            Magnifier "$persistence_mode" "$platform"
             ;;
         narrator)
-            Narrator $persistence_mode $platform
+            Narrator "$persistence_mode" "$platform"
             ;;
         displayswitch)
-            DisplaySwitch $persistence_mode $platform
+            DisplaySwitch "$persistence_mode" "$platform"
             ;;
         *)
             echo "Invalid Persistence Technique!" >&2
@@ -518,13 +518,13 @@ function AntiForensics {
     # Bash script
     case $persistence_method in
         wevutil)
-            WevUtil $antiforensics_mode $platform
+            WevUtil "$antiforensics_mode" "$platform" "$antiforensics_method"
             ;;
         winevent)
-            WinEvent $antiforensics_mode $platform
+            WinEvent "$antiforensics_mode" "$platform" "$antiforensics_method"
             ;;
         eventvwr)
-            EventViewer $antiforensics_mode $platform
+            EventViewer "$antiforensics_mode $platform" "$antiforensics_method"
             ;;
         *)
             echo "Invalid Antiforensic Technique!" >&2
@@ -641,7 +641,7 @@ function main() {
         WINDOWNAME="FreeRDP"
     elif [ "$WINDOWNAME" = "rdesktop" ]
     then
-        continue
+        return
     elif [ "$WINDOWNAME" = "tightvnc" ]
     then
         WINDOWNAME="TightVNC"
