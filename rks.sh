@@ -54,9 +54,18 @@ function xdotool_return_input {
     fi
 }
 
-# TODO: Fill in the implementation
-function randomize_variable {
-    echo "test"
+function random_string {
+    local characters="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+    local length=$(( RANDOM % 13 + 8 ))  # Random number between 8 and 20
+    local string=""
+    
+    for (( i=0; i<$length; i++ ))
+    do
+        local random_index=$(( RANDOM % ${#characters} ))
+        string+=${characters:$random_index:1}
+    done
+    
+    echo "$string"
 }
 
 function CmdFile {
@@ -156,6 +165,9 @@ function Base64 {
     local output_file=$2
     local platform=$3
     local mode=$4
+    
+    local random1=$(random_string)
+    local random2=$(random_string)
 
     # Check if input is passed as file
     if [ -f "$input" ]
@@ -173,9 +185,9 @@ function Base64 {
             fi
             
             base64_decoder=$(cat <<EOF
-\$payload = "$file"
-\[byte[]]\$decoded = [Convert]::FromBase64String(\$payload)
-[IO.File]::WriteAllBytes("$output_file", \$decoded)
+\$${random1} = "$file"
+\[byte[]]\$${random2} = [Convert]::FromBase64String(\$${random1})
+[IO.File]::WriteAllBytes("$output_file", \$${random2})
 EOF
 )
 
@@ -185,9 +197,8 @@ EOF
             done <<< "$base64_decoder"
         elif [[ "$platform" = "windows" && "$mode" = "cmd" ]]
         then
-            file=$(base64 -w 64 "$input")
             # TODO: Implement certutil base64 file transfer
-            CopyCon "$file" "$output_file" "$platform" "base64"
+            CopyCon "$input" "$output_file" "$platform" "base64"
         elif [[ "$platform" = "linux" && "$mode" = "console" ]]
         then
             while read -r line
@@ -219,6 +230,8 @@ function PowershellOutFile {
     local platform=$3
     local mode=$4
     
+    local random_temp=$(random_string)
+    
     if [[ "$platform" != "windows" && "$platform" != "linux" ]]
     then
         print_status "error" "Only windows and linux are supported for this method!"
@@ -239,7 +252,7 @@ function PowershellOutFile {
                     if [ "$length" -ge 3477 ]
                     then
                         print_status "error" "Character Limit reached!"
-                        print_status "information" "Use \"pwshcertutil\" as a method instead."
+                        print_status "information" "Use 'pwshcertutil' as a method instead."
                         print_status "information" "Terminating program..."
                         exit 1
                     fi
@@ -272,10 +285,10 @@ function PowershellOutFile {
             done <<< "$file"
             
             xdotool_return_input "-----END CERTIFICATE-----" "return"
-            xdotool_return_input "'@ | Out-File temp.txt" "return"
-            xdotool_return_input "CertUtil.exe -decode temp.txt $output_file" "return"
+            xdotool_return_input "'@ | Out-File ${random_temp}" "return"
+            xdotool_return_input "CertUtil.exe -decode ${random_temp} $output_file" "return"
             
-            xdotool_return_input "Remove-Item -Force temp.txt" "return"
+            xdotool_return_input "Remove-Item -Force ${random_temp}" "return"
         fi
     fi
     
@@ -287,10 +300,14 @@ function CopyCon {
     local output_file=$2
     local platform=$3
     local mode=$4
+    
+    local random_temp=$(random_string)
 
     if [ "$platform" != "windows" ]
     then
-        echo "[-] copycon only exists on Windows operating system user! Try 'pwshb64' method instead."
+        print_status "error" "copycon only exists on Windows operating system user!"
+        print_status "information" "Use 'pwshb64' as a method instead."
+        print_status "information" "Terminating program..."
         exit 1
     fi
     
@@ -303,7 +320,7 @@ function CopyCon {
             if [ "$length" -ge 255 ]
             then
                 print_status "error" "Character Limit reached!"
-                print_status "information" "Use \"cmdb64\" as a method instead."
+                print_status "information" "Use 'cmdb64' as a method instead."
                 print_status "information" "Terminating program..."
                 exit 1
             fi
@@ -325,24 +342,31 @@ function CopyCon {
             fi
             ((counter++))
         done < "$input"
-    elif [[ ! -f "$input" && -n "$input" && "$mode" = "base64" ]]
+    elif [ "$mode" = "base64" ]
     then
-        # TODO: Be sure to modify and test that it works
-
+        # TODO: Ensure it works
         print_status "progress" "Transferring file..."
         # TODO: replace temp.txt to randomize function
-        xdotool_return_input "copy con temp.txt" "return"
+        xdotool_return_input "copy con ${random_temp}" "return"
         xdotool_return_input "-----BEGIN CERTIFICATE-----" "return"
-
-        while IFS= read -r line
-        do
-            xdotool_return_input "$line" "return"
-        done <<< "$input"
+        
+        if [ -f "$input" ]
+        then
+            while read -r line
+            do
+                xdotool_return_input "$line" "return"
+            done < "$input"
+        elif [ ! -f "$input" && -n "$input" ]]
+            while IFS= read -r line
+            do
+                xdotool_return_input "$line" "return"
+            done <<< "$input"
+        fi
         
         xdotool_return_input "-----END CERTIFICATE-----" "copycon"
 
-        dotool_return_input "CertUtil.exe -decode temp.txt $output_file" "return"
-        dotool_return_input "del /f temp.txt" "return"
+        dotool_return_input "CertUtil.exe -decode ${random_temp} $output_file" "return"
+        dotool_return_input "del /f ${random_temp}" "return"
     fi
 
     print_status "completed" "File transferred!"
