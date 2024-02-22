@@ -174,7 +174,7 @@ function Base64 {
             
             base64_decoder=$(cat <<EOF
 \$payload = "$file"
-\[byte[]]$decoded = [Convert]::FromBase64String(\$payload)
+\[byte[]]\$decoded = [Convert]::FromBase64String(\$payload)
 [IO.File]::WriteAllBytes("$output_file", \$decoded)
 EOF
 )
