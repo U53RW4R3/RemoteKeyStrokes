@@ -242,8 +242,8 @@ function PowershellOutFile {
                 
                 xdotool_return_input "'@ | Out-File $output_file" "return"
             else
-                echo "[!] This is a binary file! Use \"pwshcertutil\" method instead..."
-                exit 1
+                echo "[!] This is a binary file! Switching to \"pwshcertutil\" method instead..."
+                PowershellOutFile "$input" "$output_file" "$platform" "certutil"
             fi
             
             
