@@ -468,7 +468,7 @@ function Persistence {
             DisplaySwitch "$persistence_mode" "$platform"
             ;;
         *)
-            echo "Invalid Persistence Technique!" >&2
+            print_status "error" "Invalid Persistence Technique!" >&2
             exit 1
             ;;
     esac
@@ -495,7 +495,7 @@ function WevUtil {
         echo "not implemented"
     else
     # TODO: If the mode was invalid display the available options to inform the user
-        echo "[-] Invalid mode!"
+        print_status "error" "Invalid mode!"
     fi
 }
 
@@ -511,7 +511,7 @@ function WinEvent {
         echo "not implemented"
     else
     # TODO: If the mode was invalid display the available options to inform the user
-        echo "[-] Invalid mode!"
+        print_status "error" "Invalid mode!"
     fi
 }
 
@@ -527,7 +527,7 @@ function EventViewer {
         DialogBox "eventvwr.msc"
     else
     # TODO: If the mode was invalid display the available options to inform the user
-        echo "[-] Invalid mode!"
+        print_status "error" "Invalid mode!"
     fi
 }
 
@@ -555,7 +555,7 @@ function AntiForensics {
             EventViewer "$antiforensics_mode $platform" "$antiforensics_method"
             ;;
         *)
-            echo "Invalid Antiforensic Technique!" >&2
+            print_status "error" "Invalid Antiforensic Technique!" >&2
             exit 1
             ;;
     esac
@@ -659,7 +659,7 @@ function main() {
         WINDOWNAME="FreeRDP"
     elif [[ "$WINDOWNAME" != "freerdp" && "$WINDOWNAME" != "rdesktop" && "$WINDOWNAME" != "tightvnc" ]]
     then
-        echo "[-] Invalid window name specified. Allowed values: 'freerdp', 'rdesktop', or 'tightvnc'."
+        print_status "error" "Invalid window name specified. Allowed values: 'freerdp', 'rdesktop', or 'tightvnc'."
         exit 1
     fi
 
@@ -681,7 +681,7 @@ function main() {
         PLATFORM="windows"
     elif [[ "$PLATFORM" != "windows" && "$PLATFORM" != "linux" ]]
     then
-        echo "[-] Invalid or operating system not supported. Allowed values: 'windows' or 'linux'."
+        print_status "error" "Invalid or operating system not supported. Allowed values: 'windows' or 'linux'."
         exit 1
     fi
 
