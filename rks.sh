@@ -153,9 +153,9 @@ function Base64 {
         echo "[*] Transferring file..."
         if [[ "$platform" = "windows" || "$platform" = "linux" && "$mode" = "powershell" ]]
         then
-            file_type=$(file "$1")
+            file_type=$(file "$input")
             
-            if [[ "$input" == *"ASCII text"* ]]
+            if [[ "$file_type" == *"ASCII text"* ]]
             then
                 file=$(iconv -f ASCII -t UTF-16LE "$input" | base64 -w 0)
             else
@@ -217,31 +217,41 @@ function PowershellOutFile {
     # TODO: Test the function and modify when necessary
     if [ -f "$input" ]
     then
-        xdotool_return_input "@'" "return"
         if [ "$mode" = "text" ]
         then
-            echo "[*] Checking one of the lines reaches 3477 character limit"
-            while read -r line
-            do
-                length=$(echo -n "$line" | wc -c)
-                if [ "$length" -ge 3477 ]
-                then
-                    echo "[-] Character Limit reached! Terminating program."
-                    exit 1
-                fi
-            done < "$input"
+            file_type=$(file "$input")
+            if [[ "$file_type" == *"ASCII text"* ]]
+            then
+                echo "[*] Checking one of the lines reaches 3477 character limit"
+                while read -r line
+                do
+                    length=$(echo -n "$line" | wc -c)
+                    if [ "$length" -ge 3477 ]
+                    then
+                        echo "[-] Character Limit reached! Terminating program."
+                        exit 1
+                    fi
+                done < "$input"
+                
+                echo "[*] Transferring file..."
+                xdotool_return_input "@'" "return"
+                while read -r line
+                do
+                    xdotool_return_input "$line" "return"
+                done < "$input"
+                
+                xdotool_return_input "'@ | Out-File $output_file" "return"
+            else
+                echo "[!] This is a binary file! Use \"pwshcertutil\" method instead..."
+                exit 1
+            fi
             
-            echo "[*] Transferring file..."
-            while read -r line
-            do
-                xdotool_return_input "$line" "return"
-            done < "$input"
             
-            xdotool_return_input "'@ | Out-File $output_file" "return"
         elif [ "$mode" = "certutil" ]
         then
             echo "[*] Transferring file..."
             file=$(base64 -w 64 "$input")
+            xdotool_return_input "@'" "return"
             xdotool_return_input "-----BEGIN CERTIFICATE-----" "return"
             
             while read -r line
