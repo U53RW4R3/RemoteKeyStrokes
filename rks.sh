@@ -6,14 +6,14 @@ function print_status {
 
     # Blue for information
     # Bold Blue for progress
-    # Bold Green for complete
+    # Bold Green for completed
     # Bold Yellow for warning
     # Bold Red for error
     # * default to white 
     case $status in
         information) color="\033[34m[*]\033[0m" ;;
         progress) color="\033[1;34m[*]\033[0m" ;;
-        complete) color="\033[1;32m[+]\033[0m" ;;
+        completed) color="\033[1;32m[+]\033[0m" ;;
         warning) color="\033[1;33m[!]\033[0m" ;;
         error) color="\033[1;31m[-]\033[0m" ;;
         *) color="\033[0m" ;;
@@ -67,7 +67,7 @@ function CmdFile {
     do
         xdotool_return_input "$line" "return"
     done < "$file"
-    echo print_status "complete" "Task completed!"
+    echo print_status "completed" "Task completed!"
 }
 
 function Execute {
@@ -78,7 +78,7 @@ function Execute {
         none)
             print_status "progress" "Executing commands..."
             xdotool_return_input "$commands" "return"
-            print_status "complete" "Task completed!"
+            print_status "completed" "Task completed!"
             ;;
         dialogbox)
             DialogBox "$commands"
@@ -107,7 +107,7 @@ function DialogBox {
     print_status "progress" "Executing commands..."
     xdotool_return_input "Super+r" "custom"
     xdotool_return_input "$commands" "return"
-    print_status "complete" "Task completed!"
+    print_status "completed" "Task completed!"
 }
 
 function MSBuild {
@@ -196,7 +196,7 @@ EOF
             done < "$file"
         fi
 
-        print_status "complete" "File transferred!"
+        print_status "completed" "File transferred!"
     fi
 
     # TODO: Finish the implementation
@@ -238,7 +238,9 @@ function PowershellOutFile {
                     length=$(echo -n "$line" | wc -c)
                     if [ "$length" -ge 3477 ]
                     then
-                        print_status "error" "Character Limit reached! Terminating program."
+                        print_status "error" "Character Limit reached!"
+                        print_status "information" "Use \"pwshcertutil\" as a method instead."
+                        print_status "information" "Terminating program..."
                         exit 1
                     fi
                 done < "$input"
@@ -277,7 +279,7 @@ function PowershellOutFile {
         fi
     fi
     
-    echo print_status "complete" "File transferred!"
+    echo print_status "completed" "File transferred!"
 }
 
 function CopyCon {
@@ -300,7 +302,9 @@ function CopyCon {
             length=$(echo -n "$line" | wc -c)
             if [ "$length" -ge 255 ]
             then
-                print_status "error" "Character Limit reached! Terminating program."
+                print_status "error" "Character Limit reached!"
+                print_status "information" "Use \"cmdb64\" as a method instead."
+                print_status "information" "Terminating program..."
                 exit 1
             fi
         done < "$input"
@@ -341,7 +345,7 @@ function CopyCon {
         dotool_return_input "del /f temp.txt" "return"
     fi
 
-    print_status "complete" "File transferred!"
+    print_status "completed" "File transferred!"
 }
 
 function CreateUser {
@@ -371,7 +375,7 @@ function StickyKey {
 
     print_status "progress" "Activating sethc.exe (sticky keys) backdoor..."
     xdotool_return_input "shift shift shift shift shift" "custom"
-    print_status "complete" "Backdoor Activated!"
+    print_status "completed" "Backdoor Activated!"
 }
 
 function UtilityManager {
@@ -387,7 +391,7 @@ function UtilityManager {
 
     print_status "progress" "Activating utilman.exe (utility manager) backdoor..."
     xdotool_return_input "Super+u" "custom"
-    print_status "complete" "Backdoor Activated!"
+    print_status "completed" "Backdoor Activated!"
 }
 
 function Magnifier {
@@ -404,7 +408,7 @@ function Magnifier {
     print_status "progress" "Activating magnifier.exe backdoor..."
     xdotool_return_input "Super+equal" "custom"
     xdotool_return_input "Super+minus" "custom"
-    print_status "complete" "Backdoor Activated!"
+    print_status "completed" "Backdoor Activated!"
 }
 
 function Narrator {
@@ -420,7 +424,7 @@ function Narrator {
 
     print_status "progress" "Activating narrator.exe backdoor..."
     xdotool_return_input "Super+Return" "custom"
-    print_status "complete" "Backdoor Activated!"
+    print_status "completed" "Backdoor Activated!"
 }
 
 function DisplaySwitch {
@@ -436,7 +440,7 @@ function DisplaySwitch {
 
     print_status "progress" "Activating displayswitch.exe backdoor..."
     xdotool_return_input "Super+p" "custom"
-    print_status "complete" "Backdoor Activated!"
+    print_status "completed" "Backdoor Activated!"
 }
 
 function Persistence {
