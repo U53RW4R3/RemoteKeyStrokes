@@ -14,6 +14,7 @@ All credits goes to [nopernik](https://github.com/nopernik) for making it possib
 - File Transfer
 - Execute C# Implant (Coming soon)
 - Privilege Escalation (Coming soon)
+- Persistence (Coming soon)
 - Anti-Forensics (Coming soon)
 
 ## Help Menu
@@ -156,6 +157,10 @@ meterpreter > sysinfo
 ```
 
 ### Privilege Escalation
+
+TODO: Fill this info after the feature has been implemented
+
+### Persistence
 
 TODO: Fill this info after the feature has been implemented
 

@@ -46,7 +46,7 @@ function xdotool_return_input {
         xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
     elif [ "$key" = "copycon" ]
     then
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$input"
+        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type -- "$input"
         xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Ctrl+Z Return
     elif [ "$key" = "custom" ]
     then
@@ -56,7 +56,7 @@ function xdotool_return_input {
 
 function random_string {
     local characters="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-    local length=$(( RANDOM % 13 + 8 ))  # Random number between 8 and 20
+    local length=$(( RANDOM % 13 + 8 ))  # A length of characters between 8 and 20
     local string=""
     
     for (( i=0; i<$length; i++ ))
@@ -139,7 +139,7 @@ function OutputRemoteFile {
             Base64 "$local_file" "$remote_file" "$platform" "powershell"
             ;;
         cmdb64)
-            Base64 "$local_file" "$remote_file" "$platform" "cmd"
+            CopyCon "$local_file" "$remote_file" "$platform" "base64"
             ;;
         nixb64)
             Base64 "$local_file" "$remote_file" "$platform" "console"
@@ -170,59 +170,48 @@ function Base64 {
     local random2=$(random_string)
 
     # Check if input is passed as file
-    if [ -f "$input" ]
+    if [[ -f "$input" && ("$platform" = "windows" || "$platform" = "linux") && "$mode" = "powershell" ]]
     then
-        if [[ "$platform" = "windows" || "$platform" = "linux" && "$mode" = "powershell" ]]
+        file_type=$(file "$input")
+        
+        if [[ "$file_type" == *"ASCII text"* ]]
         then
-            file_type=$(file "$input")
-            
-            if [[ "$file_type" == *"ASCII text"* ]]
-            then
-                file=$(iconv -f ASCII -t UTF-16LE "$input" | base64 -w 0)
-            else
-                file=$(base64 -w 0 "$input")
-            fi
-            
-            base64_decoder=$(cat <<EOF
+            file=$(iconv -f ASCII -t UTF-16LE "$input" | base64 -w 0)
+        else
+            file=$(base64 -w 0 "$input")
+        fi
+        
+        base64_decoder=$(cat <<EOF
 \$${random1} = "$file"
 \[byte[]]\$${random2} = [Convert]::FromBase64String(\$${random1})
 [IO.File]::WriteAllBytes("$output_file", \$${random2})
 EOF
 )
-            print_status "progress" "Checking one of the lines reaches 3477 character limit"
-            while read -r line
-            do
-                length=$(echo -n "$line" | wc -c)
-                if [ "$length" -ge 3477 ]
-                then
-                    print_status "error" "Character Limit reached!"
-                    print_status "information" "Use 'pwshcertutil' as a method instead."
-                    print_status "information" "Terminating program..."
-                    exit 1
-                fi
-            done <<< "$base64_decoder"
-            print_status "progress" "Transferring file..."
-            while IFS= read -r line
-            do
-                xdotool_return_input "$line" "return"
-            done <<< "$base64_decoder"
-            
-            while IFS= read -r line
-            do
-                xdotool_return_input "$line" "return"
-            done <<< "$base64_decoder"
-        elif [[ "$platform" = "windows" && "$mode" = "cmd" ]]
-        then
-            # TODO: Implement certutil base64 file transfer
-            CopyCon "$input" "$output_file" "$platform" "base64"
-        elif [[ "$platform" = "linux" && "$mode" = "console" ]]
-        then
-            while read -r line
-            do
-                xdotool_return_input "echo -n $line | base64 -d > $output_file" "return"
-            done < "$file"
-        fi
-
+        print_status "progress" "Checking one of the lines reaches 3477 character limit"
+        while read -r line
+        do
+            length=$(echo -n "$line" | wc -c)
+            if [ "$length" -ge 3477 ]
+            then
+                print_status "error" "Character Limit reached!"
+                print_status "information" "Use 'pwshcertutil' as a method instead."
+                print_status "information" "Terminating program..."
+                exit 1
+            fi
+        done <<< "$base64_decoder"
+        
+        print_status "progress" "Transferring file..."
+        while IFS= read -r line
+        do
+            xdotool_return_input "$line" "return"
+        done <<< "$base64_decoder"
+        print_status "completed" "File transferred!"
+    elif [[ "$platform" = "linux" && "$mode" = "console" ]]
+    then
+        while read -r line
+        do
+            xdotool_return_input "echo -n $line | base64 -d > $output_file" "return"
+        done < "$file"
         print_status "completed" "File transferred!"
     fi
 
@@ -237,6 +226,7 @@ EOF
 EOF
 )
         count_line=$(echo "$multiline" | wc -l)
+        print_status "completed" "File transferred!"
     fi
 }
 
@@ -283,7 +273,7 @@ function PowershellOutFile {
                 
                 xdotool_return_input "'@ | Out-File $output_file" "return"
             else
-                echo print_status "information" "This is a binary file! Switching to 'pwshcertutil' method instead..."
+                echo print_status "warning" "This is a binary file! Switching to 'pwshcertutil' method instead..."
                 PowershellOutFile "$input" "$output_file" "$platform" "certutil"
             fi
             
@@ -308,7 +298,7 @@ function PowershellOutFile {
         fi
     fi
     
-    echo print_status "completed" "File transferred!"
+    print_status "completed" "File transferred!"
 }
 
 function CopyCon {
@@ -329,71 +319,61 @@ function CopyCon {
     
     if [[ -f "$input" && "$mode" = "text" ]]
     then
+        print_status "progress" "Checking one of the lines reaches 255 character limit"
+        while read -r line
+        do
+            length=$(echo -n "$line" | wc -c)
+            if [ "$length" -ge 255 ]
+            then
+                print_status "error" "Character Limit reached!"
+                print_status "information" "Use 'cmdb64' as a method instead."
+                print_status "information" "Terminating program..."
+                exit 1
+            fi
+        done < "$input"
+
+        print_status "progress" "Transferring file..."
+        xdotool_return_input "copy con $output_file" "return"
+
+        # TODO: Test it to ensure it's functional
+        line_count=$(wc -l < "$input")
+        counter=1
+        while read -r line
+        do
+            if [ "$counter" -ne "$line_count" ]
+            then
+                xdotool_return_input "$line" "return"
+            else
+                xdotool_return_input "$line" "copycon"
+            fi
+            ((counter++))
+        done < "$input"
+    elif [ "$mode" = "base64" ]
+    then
         file_type=$(file "$input")
         
         if [[ "$file_type" == *"ASCII text"* ]]
         then
-            print_status "progress" "Checking one of the lines reaches 255 character limit"
-            while read -r line
-            do
-                length=$(echo -n "$line" | wc -c)
-                if [ "$length" -ge 255 ]
-                then
-                    print_status "error" "Character Limit reached!"
-                    print_status "information" "Use 'cmdb64' as a method instead."
-                    print_status "information" "Terminating program..."
-                    exit 1
-                fi
-            done < "$input"
-
-            print_status "progress" "Transferring file..."
-            xdotool_return_input "copy con $output_file" "return"
-
-            # TODO: Test it to ensure it's functional
-            line_count=$(wc -l < "$input")
-            counter=1
-            while read -r line
-            do
-                if [ "$counter" -ne "$line_count" ]
-                then
-                    xdotool_return_input "$line" "return"
-                else
-                    xdotool_return_input "$line" "copycon"
-                fi
-                ((counter++))
-            done < "$input"
-            print_status "completed" "File transferred!"
+            string_base64=$(iconv -f ASCII -t UTF-16LE "$input" | base64 -w 64)
         else
-            print_status "information" "This is a binary file! Switching to 'cmdb64' method instead..."
-            CopyCon "$input" "$output_file" "$platform" "base64"
+            string_base64=$(base64 -w 64 "$input")
         fi
-    elif [ "$mode" = "base64" ]
-    then
-        # TODO: Ensure it works
+
         print_status "progress" "Transferring file..."
         xdotool_return_input "copy con ${random_temp}.txt" "return"
         xdotool_return_input "-----BEGIN CERTIFICATE-----" "return"
         
-        if [ -f "$input" ]
-        then
-            while read -r line
-            do
-                xdotool_return_input "$line" "return"
-            done < "$input"
-        elif [ ! -f "$input" && -n "$input" ]]
-        then
-            while IFS= read -r line
-            do
-                xdotool_return_input "$line" "return"
-            done <<< "$input"
-        fi
+        while IFS= read -r line
+        do
+            xdotool_return_input "$line" "return"
+        done <<< "$string_base64"
         
         xdotool_return_input "-----END CERTIFICATE-----" "copycon"
-
-        dotool_return_input "CertUtil.exe -decode ${random_temp}.txt $output_file" "return"
-        dotool_return_input "del /f ${random_temp}.txt" "return"
-        print_status "completed" "File transferred!"
+        xdotool_return_input "CertUtil.exe -decode ${random_temp}.txt $output_file" "return"
+        xdotool_return_input "del /f ${random_temp}.txt" "return"
     fi
+
+    print_status "completed" "File transferred!"
 }
 
 function CreateUser {
