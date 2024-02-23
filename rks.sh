@@ -42,7 +42,7 @@ function xdotool_return_input {
     
     if [ "$key" = "return" ]
     then
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$input"
+        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type -- "$input"
         xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
     elif [ "$key" = "copycon" ]
     then
