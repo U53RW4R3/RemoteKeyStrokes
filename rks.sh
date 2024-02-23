@@ -172,7 +172,6 @@ function Base64 {
     # Check if input is passed as file
     if [ -f "$input" ]
     then
-        print_status "progress" "Transferring file..."
         if [[ "$platform" = "windows" || "$platform" = "linux" && "$mode" = "powershell" ]]
         then
             file_type=$(file "$input")
@@ -202,7 +201,7 @@ EOF
                     exit 1
                 fi
             done <<< "$base64_decoder"
-            
+            print_status "progress" "Transferring file..."
             while IFS= read -r line
             do
                 xdotool_return_input "$line" "return"
@@ -284,7 +283,7 @@ function PowershellOutFile {
                 
                 xdotool_return_input "'@ | Out-File $output_file" "return"
             else
-                echo print_status "warning" "This is a binary file! Switching to 'pwshcertutil' method instead..."
+                echo print_status "information" "This is a binary file! Switching to 'pwshcertutil' method instead..."
                 PowershellOutFile "$input" "$output_file" "$platform" "certutil"
             fi
             
@@ -330,35 +329,44 @@ function CopyCon {
     
     if [[ -f "$input" && "$mode" = "text" ]]
     then
-        print_status "progress" "Checking one of the lines reaches 255 character limit"
-        while read -r line
-        do
-            length=$(echo -n "$line" | wc -c)
-            if [ "$length" -ge 255 ]
-            then
-                print_status "error" "Character Limit reached!"
-                print_status "information" "Use 'cmdb64' as a method instead."
-                print_status "information" "Terminating program..."
-                exit 1
-            fi
-        done < "$input"
+        file_type=$(file "$input")
+        
+        if [[ "$file_type" == *"ASCII text"* ]]
+        then
+            print_status "progress" "Checking one of the lines reaches 255 character limit"
+            while read -r line
+            do
+                length=$(echo -n "$line" | wc -c)
+                if [ "$length" -ge 255 ]
+                then
+                    print_status "error" "Character Limit reached!"
+                    print_status "information" "Use 'cmdb64' as a method instead."
+                    print_status "information" "Terminating program..."
+                    exit 1
+                fi
+            done < "$input"
 
-        print_status "progress" "Transferring file..."
-        xdotool_return_input "copy con $output_file" "return"
+            print_status "progress" "Transferring file..."
+            xdotool_return_input "copy con $output_file" "return"
 
-        # TODO: Test it to ensure it's functional
-        line_count=$(wc -l < "$input")
-        counter=1
-        while read -r line
-        do
-            if [ "$counter" -ne "$line_count" ]
-            then
-                xdotool_return_input "$line" "return"
-            else
-                xdotool_return_input "$line" "copycon"
-            fi
-            ((counter++))
-        done < "$input"
+            # TODO: Test it to ensure it's functional
+            line_count=$(wc -l < "$input")
+            counter=1
+            while read -r line
+            do
+                if [ "$counter" -ne "$line_count" ]
+                then
+                    xdotool_return_input "$line" "return"
+                else
+                    xdotool_return_input "$line" "copycon"
+                fi
+                ((counter++))
+            done < "$input"
+            print_status "completed" "File transferred!"
+        else
+            print_status "information" "This is a binary file! Switching to 'cmdb64' method instead..."
+            CopyCon "$input" "$output_file" "$platform" "base64"
+        fi
     elif [ "$mode" = "base64" ]
     then
         # TODO: Ensure it works
@@ -384,9 +392,8 @@ function CopyCon {
 
         dotool_return_input "CertUtil.exe -decode ${random_temp}.txt $output_file" "return"
         dotool_return_input "del /f ${random_temp}.txt" "return"
+        print_status "completed" "File transferred!"
     fi
-
-    print_status "completed" "File transferred!"
 }
 
 function CreateUser {
