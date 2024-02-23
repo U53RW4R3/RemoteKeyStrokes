@@ -294,14 +294,14 @@ function PowershellOutFile {
             print_status "progress" "Transferring file..."
             base64_string=$(base64 -w 64 "$input")
             xdotool_return_input "@'" "return"
-            xdotool_return_input "-----BEGIN CERTIFICATE-----" "return"
+            xdotool_return_input "\"-----BEGIN CERTIFICATE-----\"" "return"
             
             while IFS= read -r line
             do
                 xdotool_return_input "$line" "return"
             done <<< "$base64_string"
             
-            xdotool_return_input "-----END CERTIFICATE-----" "return"
+            xdotool_return_input "\"-----END CERTIFICATE-----\"" "return"
             xdotool_return_input "'@ | Out-File ${random_temp}" "return"
             xdotool_return_input "CertUtil.exe -decode ${random_temp} $output_file" "return"
             
@@ -364,7 +364,7 @@ function CopyCon {
         # TODO: Ensure it works
         print_status "progress" "Transferring file..."
         xdotool_return_input "copy con ${random_temp}" "return"
-        xdotool_return_input "-----BEGIN CERTIFICATE-----" "return"
+        xdotool_return_input "\"-----BEGIN CERTIFICATE-----\"" "return"
         
         if [ -f "$input" ]
         then
