@@ -208,24 +208,11 @@ EOF
         print_status "completed" "File transferred!"
     elif [[ "$platform" = "linux" && "$mode" = "console" ]]
     then
-        while read -r line
+        base64_data=$(base64 -w 0 "$input")
+        while IFS= read -r line
         do
             xdotool_return_input "echo -n $line | base64 -d > $output_file" "return"
-        done < "$file"
-        print_status "completed" "File transferred!"
-    fi
-
-    # TODO: Finish the implementation
-
-    # When input is string and not a file.
-    if [[ ! -f "$input" && -n "$input" ]]
-    then
-        echo "Not implemented"
-        multiline=$(cat <<<EOF
-"$input"
-EOF
-)
-        count_line=$(echo "$multiline" | wc -l)
+        done <<< "$base64_data"
         print_status "completed" "File transferred!"
     fi
 }
@@ -281,14 +268,14 @@ function PowershellOutFile {
         elif [ "$mode" = "certutil" ]
         then
             print_status "progress" "Transferring file..."
-            base64_string=$(base64 -w 64 "$input")
+            base64_data=$(base64 -w 64 "$input")
             xdotool_return_input "@'" "return"
             xdotool_return_input "-----BEGIN CERTIFICATE-----" "return"
             
             while IFS= read -r line
             do
                 xdotool_return_input "$line" "return"
-            done <<< "$base64_string"
+            done <<< "$base64_data"
             
             xdotool_return_input "-----END CERTIFICATE-----" "return"
             xdotool_return_input "'@ | Out-File ${random_temp}.txt" "return"
