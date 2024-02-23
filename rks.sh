@@ -230,7 +230,6 @@ function PowershellOutFile {
         print_status "error" "Only windows and linux are supported for this method!"
     fi
     
-    # TODO: Test the function and modify when necessary
     if [ -f "$input" ]
     then
         if [ "$mode" = "text" ]
@@ -658,7 +657,7 @@ function AntiForensics {
     # Batch script
     # Powershell script
     # Bash script
-    case $persistence_method in
+    case $antiforensics_method in
         wevutil)
             WevUtil "$antiforensics_mode" "$platform" "$antiforensics_method"
             ;;
