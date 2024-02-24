@@ -169,6 +169,7 @@ function Base64 {
     local random1=$(random_string)
     local random2=$(random_string)
 
+    # TODO: Implement encryption method through base64 with -b,--bypass flag
     # Check if input is passed as file
     if [[ -f "$input" && ("$platform" = "windows" || "$platform" = "linux") && "$mode" = "powershell" ]]
     then

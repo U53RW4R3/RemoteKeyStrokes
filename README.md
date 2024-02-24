@@ -214,6 +214,8 @@ TODO: Fill this info
 
 - [ ] Implement Bin2Hex file transfer
 
+- [ ] Implement encryption method of base64
+
 - [ ] Implement a persistence function for both windows and linux.
 
 - [ ] Implement antiforensics function for both windows and linux.
