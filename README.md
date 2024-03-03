@@ -50,6 +50,10 @@ Options:
 
 ## Usage
 
+### Authenticate RDP machine
+
+TODO: Fill this info
+
 ### Internal Reconnaissance
 
 - When running in command prompt
