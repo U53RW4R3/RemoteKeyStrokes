@@ -766,9 +766,9 @@ function main() {
     if [ -z "$WINDOWNAME" ]
     then
         WINDOWNAME="FreeRDP"
-    elif [[ "$WINDOWNAME" != "freerdp" && "$WINDOWNAME" != "rdesktop" && "$WINDOWNAME" != "tightvnc" ]]
+    elif [[ "$WINDOWNAME" != "freerdp" && "$WINDOWNAME" != "tightvnc" ]]
     then
-        print_status "error" "Invalid window name specified. Allowed values: 'freerdp', 'rdesktop', or 'tightvnc'."
+        print_status "error" "Invalid window name specified. Allowed values: 'freerdp', or 'tightvnc'."
         exit 1
     fi
 
@@ -776,9 +776,6 @@ function main() {
     if [ "$WINDOWNAME" = "freerdp" ]
     then
         WINDOWNAME="FreeRDP"
-    elif [ "$WINDOWNAME" = "rdesktop" ]
-    then
-        return
     elif [ "$WINDOWNAME" = "tightvnc" ]
     then
         WINDOWNAME="TightVNC"

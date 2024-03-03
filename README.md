@@ -203,10 +203,6 @@ TODO: Fill this info after the feature has been implemented
 
 `$ ./rks.sh -i implant.ps1 -w tightvnc`
 
-- If you're targeting legacy operating systems with older RDP authentication specify the window name with `rdesktop`.
-
-`$ ./rks.sh -i implant.bat -w rdesktop`
-
 ### FAQ
 
 TODO: Fill this info
