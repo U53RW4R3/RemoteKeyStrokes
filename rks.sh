@@ -22,6 +22,8 @@ function print_status {
     echo -e "$color $message"
 }
 
+# TODO: Add check for xfreerdp-x11 and xtightvncviewer
+
 function check_dependencies() {
     if ! which xdotool &>/dev/null
     then
@@ -192,6 +194,7 @@ function Base64 {
 [IO.File]::WriteAllBytes("$output_file", \$${random2})
 EOF
 )
+		# TODO: Perform split character length if xdotool limit surpassed
 
         print_status "progress" "Transferring file..."
         while IFS= read -r line

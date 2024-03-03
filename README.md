@@ -17,6 +17,12 @@ All credits goes to [nopernik](https://github.com/nopernik) for making it possib
 - Persistence (Coming soon)
 - Anti-Forensics (Coming soon)
 
+## Dependencies
+
+- Debian-based distros.
+
+`$ sudo apt install -y xfreerdp-x11 xtightvncviewer xdotool`
+
 ## Help Menu
 
 ```
