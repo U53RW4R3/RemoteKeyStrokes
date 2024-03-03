@@ -75,12 +75,12 @@ function random_string {
 function CmdFile {
     local file=$1
 
-    echo print_status "progress" "Executing commands..."
+    print_status "progress" "Executing commands..."
     while read -r line
     do
         xdotool_return_input "$line" "escapechars"
     done < "$file"
-    echo print_status "completed" "Task completed!"
+    print_status "completed" "Task completed!"
 }
 
 function Execute {
