@@ -207,6 +207,8 @@ TODO: Fill this info
 
 ## TODO and Help Wanted
 
+- [ ] Split into characters to surpass xdotool limitation for `pwshb64` method.
+
 - [ ] Implement Bin2Hex file transfer
 
 - [ ] Implement encryption method of base64
