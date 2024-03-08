@@ -19,9 +19,9 @@ All credits goes to [nopernik](https://github.com/nopernik) for making it possib
 
 ## Dependencies
 
-- Debian-based distros.
+- For Debian-based distros.
 
-`$ sudo apt install -y xfreerdp-x11 xtightvncviewer xdotool`
+`$ sudo apt install -y xfreerdp-x11 xtightvncviewer xdotool bsdextrautils`
 
 ## Help Menu
 
