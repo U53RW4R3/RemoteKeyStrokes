@@ -140,9 +140,6 @@ function OutputRemoteFile {
     local method=$4
 
     # TODO: Implement bin2hex method
-    # one line HEX value without spaces , columns ,addresses (either echo or tee to logging by appending)
-
-    # C:\> certutil -f -encodehex scan.bat hex_type_12.hex 12
 
     case $method in
         "" | pwshb64)
@@ -227,6 +224,16 @@ function Bin2Hex {
     local mode=$4
     
     echo "Not implemented"
+    
+    data=$(hexdump -v -e '"\" 1/1 "%02x"' "$input")
+    
+    # one line HEX value without spaces , columns ,addresses (either echo or tee to logging by appending)
+
+    # C:\> certutil -f -encodehex scan.bat hex_type_12.hex 12
+    
+    # For powershell.exe split the hex oneliner into chunks to decode it easily in a for loop
+    
+    # See if it's possible with cmd.exe using batch scripting
 }
 
 function PowershellOutFile {
@@ -295,7 +302,11 @@ function PowershellOutFile {
             xdotool_return_input "Remove-Item -Force ${random_temp}.txt" "return"
         elif [ "$mode" = "hex" ]
         then
-            # in columns with spaces , without the characters and the addresses (can be used with copycon and outfile)
+            data=$(hexdump -v -e '"\" 1/1 "%02x"' "$input")
+            # in columns with spaces , without the characters and the addresses
+            # (can be used with copycon and outfile)
+            # Add a counter after 6 hexadecimal values give two spaces and
+            # another counter for 6 hexadecimal value give a new line in a for loop
 
             # C:\> certutil -f -encodehex scan.bat hex_type_4.hex 4
             # Sample output:
@@ -378,7 +389,11 @@ function CopyCon {
         xdotool_return_input "del /f ${random_temp}.txt" "return"
     elif [ "$mode" = "hex" ]
     then
-        # in columns with spaces , without the characters and the addresses (can be used with copycon and outfile)
+        data=$(hexdump -v -e '"\" 1/1 "%02x"' "$input")
+        # in columns with spaces , without the characters and the addresses
+        # (can be used with copycon and outfile)
+        # Add a counter after 6 hexadecimal values give two spaces and
+        # another counter for 6 hexadecimal value give a new line
 
         # C:\> certutil -f -encodehex scan.bat hex_type_4.hex 4
         # Sample output:
