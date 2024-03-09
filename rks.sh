@@ -65,7 +65,7 @@ function random_string {
     local length=$(( RANDOM % 13 + 8 ))  # A length of characters between 8 and 20
     local string=""
 
-    for (( i=0; i<$length; i++ ))
+    for (( i=0; i<length; i++ ))
     do
         local random_index=$(( RANDOM % ${#characters} ))
         string+=${characters:$random_index:1}
