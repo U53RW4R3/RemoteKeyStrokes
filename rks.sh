@@ -1,5 +1,9 @@
 #!/bin/bash
 
+function check_distro() {
+    echo "distro"
+}
+
 # TODO: Add check for xfreerdp-x11 and xtightvncviewer
 
 function check_dependencies() {
@@ -19,8 +23,8 @@ function check_dependencies() {
 # Helpers functions
 
 function print_status {
-    local status="${1}"
-    local message="${2}"
+    local status=${1}
+    local message=${2}
 
     # Blue for information
     # Bold Blue for progress
@@ -41,8 +45,8 @@ function print_status {
 }
 
 function XDoToolInput {
-    local input="${1}"
-    local key="${2}"
+    local input=${1}
+    local key=${2}
 
     if [ "${key}" = "return" ]
     then
@@ -77,7 +81,7 @@ function RandomString {
 }
 
 function LinesOfLength {
-    local file="${1}"
+    local file=${1}
     local counter=1
 
     while read -r line
@@ -89,7 +93,7 @@ function LinesOfLength {
 }
 
 function CmdFile {
-    local file="${1}"
+    local file=${1}
 
     print_status "progress" "Executing commands..."
     while read -r line
@@ -100,8 +104,8 @@ function CmdFile {
 }
 
 function Execute {
-    local commands="${1}"
-    local method="${2}"
+    local commands=${1}
+    local method=${2}
 
     case ${method} in
         none)
@@ -123,11 +127,10 @@ function Execute {
 }
 
 function DialogBox {
-    local commands="${1}"
+    local commands=${1}
 
     print_status "progress" "Checking one of the lines reaches 260 character limit"
-    length=${#commands}
-    if [ "$length" -ge 260 ]
+    if [ "${#commands}" -ge 260 ]
     then
         print_status "error" "Character Limit reached! Terminating program."
         exit 1
@@ -148,10 +151,10 @@ function MSBuild {
 }
 
 function OutputRemoteFile {
-    local local_file="${1}"
-    local remote_file="${2}"
-    local platform="${3}"
-    local method="${4}"
+    local local_file=${1}
+    local remote_file=${2}
+    local platform=${3}
+    local method=${4}
 
     # TODO: Implement bin2hex method
 
@@ -182,10 +185,10 @@ function OutputRemoteFile {
 }
 
 function Base64 {
-    local input="${1}"
-    local output_file="$2"
-    local platform="${3}"
-    local mode="${4}"
+    local input=${1}
+    local output_file=${2}
+    local platform=${3}
+    local mode=${4}
 
     local random1
     local random2
@@ -235,10 +238,10 @@ EOF
 }
 
 function Bin2Hex {
-    local input="${1}"
-    local output_file="${2}"
-    local platform="${3}"
-    local mode="${4}"
+    local input=${1}
+    local output_file=${2}
+    local platform=${3}
+    local mode=${4}
 
     echo "Not implemented"
 
@@ -255,10 +258,10 @@ function Bin2Hex {
 }
 
 function PowershellOutFile {
-    local input="${1}"
-    local output_file="${2}"
-    local platform="${3}"
-    local mode="${4}"
+    local input=${1}
+    local output_file=${2}
+    local platform=${3}
+    local mode=${4}
 
     local random_temp
     random_temp=$(RandomString)
@@ -339,10 +342,10 @@ function PowershellOutFile {
 }
 
 function CopyCon {
-    local input="${1}"
-    local output_file="${2}"
-    local platform="${3}"
-    local mode="${4}"
+    local input=${1}
+    local output_file=${2}
+    local platform=${3}
+    local mode=${4}
 
     local random_temp=$(RandomString)
 
@@ -359,8 +362,7 @@ function CopyCon {
         print_status "progress" "Checking one of the lines reaches 255 character limit"
         while read -r line
         do
-            length=${#line}
-            if [ "${length}" -ge 255 ]
+            if [ "${#line}" -ge 255 ]
             then
                 print_status "error" "Character Limit reached!"
                 print_status "information" "Use 'cmdb64' as a method instead."
@@ -425,8 +427,8 @@ function CopyCon {
 }
 
 function CreateUser {
-    local mode="${1}"
-    local platform="${2}"
+    local mode=${1}
+    local platform=${2}
     local description=$(cat <<<EOF
 "Fill in the description of the technique"
 EOF
@@ -451,8 +453,8 @@ EOF
 }
 
 function StickyKey {
-    local mode="${1}"
-    local platform="${2}"
+    local mode=${1}
+    local platform=${2}
     local description=$(cat <<<EOF
 "Fill in the description of the technique"
 EOF
@@ -480,8 +482,8 @@ EOF
 }
 
 function UtilityManager {
-    local mode="${1}"
-    local platform="${2}"
+    local mode=${1}
+    local platform=${2}
     local description=$(cat <<<EOF
 "Fill in the description of the technique"
 EOF
@@ -509,8 +511,8 @@ EOF
 }
 
 function Magnifier {
-    local mode="${1}"
-    local platform="${2}"
+    local mode=${1}
+    local platform=${2}
     local description=$(cat <<<EOF
 "Fill in the description of the technique"
 EOF
@@ -539,8 +541,8 @@ EOF
 }
 
 function Narrator {
-    local mode="${1}"
-    local platform="${2}"
+    local mode=${1}
+    local platform=${2}
     local description=$(cat <<<EOF
 "Fill in the description of the technique"
 EOF
@@ -568,8 +570,8 @@ EOF
 }
 
 function DisplaySwitch {
-    local mode="${1}"
-    local platform="${2}"
+    local mode=${1}
+    local platform=${2}
     local description=$(cat <<<EOF
 "Fill in the description of the technique"
 EOF
@@ -597,9 +599,9 @@ EOF
 }
 
 function Persistence {
-    local persistence_mode="${1}"
-    local platform="${2}"
-    local persistence_method="${3}"
+    local persistence_mode=${1}
+    local platform=${2}
+    local persistence_method=${3}
 
     # -s, --select flag "info,backdoor". For "info" contains the execution commands
     # for both command prompt and powershell. To enumerate, persistence and cleanup
@@ -632,9 +634,9 @@ function Persistence {
 }
 
 function PrivEsc {
-    local elevate_mode="${1}"
-    local platform="${2}"
-    local elevate_method="${3}"
+    local elevate_mode=${1}
+    local platform=${2}
+    local elevate_method=${3}
     # TODO: add -e, --elevated flag
     # -e info -p <windows | linux> -m bypassuac
     echo "Not implemented"
@@ -664,7 +666,7 @@ EOF
 }
 
 function WinEvent {
-    local mode="${1}"
+    local mode=${1}
     local description=$(cat <<<EOF
 "Fill in the description of the technique"
 EOF
@@ -687,7 +689,7 @@ EOF
 }
 
 function EventViewer {
-    local mode="${1}"
+    local mode=${1}
     local description=$(cat <<<EOF
 "Fill in the description of the technique"
 EOF
@@ -707,9 +709,9 @@ EOF
 }
 
 function AntiForensics {
-    local antiforensics_mode="${1}"
-    local platform="${2}"
-    local antiforensics_method="${3}"
+    local antiforensics_mode=${1}
+    local platform=${2}
+    local antiforensics_method=${3}
     # TODO: Include features for anti-forensics also include eventvwr.msc with a dialog box
     # add flag -a, --antiforensics
 
@@ -777,39 +779,39 @@ while true
 do
     case ${1} in
         -c | --command)
-            COMMAND="${2}"
+            COMMAND=${2}
             shift 2
             ;;
         -i | --input)
-            INPUT="${2}"
+            INPUT=${2}
             shift 2
             ;;
         -o | --output)
-            OUTPUT="${2}"
+            OUTPUT=${2}
             shift 2
             ;;
         -e | --elevate)
-            ELEVATE="${2,,}"
+            ELEVATE=${2,,}
             shift 2
             ;;
         -s | --select)
-            SELECT="${2,,}"
+            SELECT=${2,,}
             shift 2
             ;;
         -a | --antiforensics)
-            ANTIFORENSICS="${2,,}"
+            ANTIFORENSICS=${2,,}
             shift 2
             ;;
         -p | --platform)
-            PLATFORM="${2,,}"
+            PLATFORM=${2,,}
             shift 2
             ;;
         -m | --method)
-            METHOD="${2,,}"
+            METHOD=${2,,}
             shift 2
             ;;
         -w | --windowname)
-            WINDOWNAME="${2}"
+            WINDOWNAME=${2}
             shift 2
             ;;
         -h | --help)
@@ -827,6 +829,7 @@ do
 done
 
 function main() {
+    # check_distro
     check_dependencies
 
     if [ -z "${WINDOWNAME}" ]
