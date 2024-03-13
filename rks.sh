@@ -1,10 +1,6 @@
 #!/bin/bash
 
-function check_distro() {
-    echo "distro"
-}
-
-# TODO: Add check for xfreerdp-x11 and xtightvncviewer
+# TODO: Add check for xfreerdp-x11 and xtightvncviewer. Also do some checks with supported package managers.
 
 function check_dependencies() {
     if ! which xdotool &>/dev/null
@@ -291,7 +287,7 @@ function PowershellOutFile {
                     fi
                 done < "${input}"
 
-                echo print_status "progress" "Transferring file..."
+                print_status "progress" "Transferring file..."
                 XDoToolInput "@'" "escapechars"
                 while read -r line
                 do
@@ -300,8 +296,9 @@ function PowershellOutFile {
 
                 XDoToolInput "'@ | Out-File ${output_file}" "escapechars"
             else
-                echo print_status "warning" "This is a binary file! Switching to 'pwshcertutil' method instead..."
+                print_status "warning" "This is a binary file! Switching to 'pwshcertutil' method instead..."
                 PowershellOutFile "${input}" "${output_file}" "${platform}" "certutil"
+                exit 1
             fi
 
 
@@ -470,7 +467,7 @@ EOF
 
     if [ "${mode}" = "info" ]
     then
-        echo "$description"
+        echo "${description}"
     elif [ "${mode}" = "backdoor" ]
     then
         print_status "progress" "Activating sethc.exe (sticky keys) backdoor..."

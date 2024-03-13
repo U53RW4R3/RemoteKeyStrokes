@@ -88,16 +88,22 @@ net group "Domain Computers" /domain
 
 $ ./rks.sh -c "cmd.exe" -m dialogbox
 
-$ ./rks.h -c recon_cmds.txt
+$ ./rks.sh -c recon_cmds.txt
+```
+
+- When running in powershell (TODO)
+
+```
+$ cat recon_cmdlets.txt
+
+$ ./rks.sh -c "powershell.exe" -m dialogbox
+
+$ ./rks.sh -c recon_cmdlets.txt
 ```
 
 - To execute a single command
 
-```
-$ ./rks.sh -c "cmd.exe" -m dialogbox
-
-$ ./rks.sh -c "systeminfo"
-```
+`$ ./rks.sh -c "systeminfo"`
 
 ### 0x02 - Execute Implant
 
