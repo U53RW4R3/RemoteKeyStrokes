@@ -185,14 +185,14 @@ $ ./rks.sh -c "python -c \"<payload>\""
 
 - There are 6 file transfer methods in total.
 
-|    Command    |      Platform     | Description |
-| ------------- | ----------------- | ----------- |
-|    pwshb64    | Windows and Linux | Encodes the file into base64 throught powershell. |
-|     cmdb64    |      Windows      | Uses `copy con` to output the encoded base64 file's content then decodes it with `CertUtil.exe`. |
-|     nixb64    |       Unix        | Decodes base64 content into a file with `base64`. |
-|    outfile    | Windows and Linux | Uses `Out-File` cmdlet to output the text file. |
-|   outfileb64  |      Windows      | Uses `Out-File` cmdlet to output the encoded base64 file's content then decodes it with `CertUtil.exe`. |
-|     copycon   |      Windows      | Uses `copy con` command to output the text file. |
+|     Method     |      Platform     | Description |
+| -------------- | ----------------- | ----------- |
+|   `pwshb64`    | Windows and Linux | Encodes the file into base64 throught powershell. |
+|    `cmdb64`    |      Windows      | Uses `copy con` to output the encoded base64 file's content then decodes it with `CertUtil.exe`. |
+|    `nixb64`    |       Unix        | Decodes base64 content into a file with `base64`. |
+|   `outfile`    | Windows and Linux | Uses `Out-File` cmdlet to output the text file. |
+|  `outfileb64`  |      Windows      | Uses `Out-File` cmdlet to output the encoded base64 file's content then decodes it with `CertUtil.exe`. |
+|    `copycon`   |      Windows      | Uses `copy con` command to output the text file. |
 
 - Transfer a file remotely when pivoting in a isolated network. If you want to specify the remote path on windows be sure to include quotes. By default it uses Powershell base64 to transfer files if not specified.
 
