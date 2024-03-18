@@ -167,11 +167,23 @@ function OutputRemoteFile {
         outfile)
             PowershellOutFile "${local_file}" "${remote_file}" "${platform}" "text"
             ;;
-        pwshcertutil)
-            PowershellOutFile "${local_file}" "${remote_file}" "${platform}" "certutil"
+        outfileb64)
+            PowershellOutFile "${local_file}" "${remote_file}" "${platform}" "base64"
             ;;
         copycon)
             CopyCon "${local_file}" "${remote_file}" "${platform}" "text"
+            ;;
+        pwshhex)
+            Bin2Hex "${local_file}" "${remote_file}" "${platform}" "hex"
+            ;;
+        cmdhex)
+            CopyCon "${local_file}" "${remote_file}" "${platform}" "hex"
+            ;;
+        nixhex)
+            Bin2Hex "${local_file}" "${remote_file}" "${platform}" "hex"
+            ;;
+        outfilehex)
+            PowershellOutFile "${local_file}" "${remote_file}" "${platform}" "hex"
             ;;
         *)
             print_status "error" "Invalid File Transfer Technique!" >&2
@@ -254,7 +266,7 @@ function Bin2Hex {
 
     # one line HEX value without spaces , columns ,addresses (either echo or tee to logging by appending)
 
-    # C:\> certutil -f -encodehex scan.bat hex_type_12.hex 12
+    # C:\> CertUtil.exe -f -encodehex scan.bat hex_type_12.hex 12
 
     # For powershell.exe split the hex oneliner into chunks to decode it easily in a for loop
 
@@ -289,7 +301,7 @@ function PowershellOutFile {
                     if [ "${length}" -ge 3477 ]
                     then
                         print_status "error" "Character Limit reached!"
-                        print_status "information" "Use 'pwshcertutil' as a method instead."
+                        print_status "information" "Use 'outfileb64' as a method instead."
                         print_status "information" "Terminating program..."
                         exit 1
                     fi
@@ -304,14 +316,22 @@ function PowershellOutFile {
 
                 XDoToolInput "'@ | Out-File ${output_file}" "escapechars"
             else
-                print_status "warning" "This is a binary file! Switching to 'pwshcertutil' method instead..."
+                print_status "warning" "This is a binary file! Switching to 'outfileb64' method instead..."
                 PowershellOutFile "${input}" "${output_file}" "${platform}" "certutil"
                 exit 1
             fi
 
 
-        elif [ "${mode}" = "certutil" ]
+        elif [ "${mode}" = "base64" ]
         then
+            if [ "${platform}" != "windows" ]
+            then
+                print_status "error" "This method is exclusively used for windows because it relies on 'CertUtil.exe'."
+                print_status "information" "Use 'nixb64' as a method instead."
+                print_status "information" "Terminating program..."
+                exit 1
+            fi
+
             print_status "progress" "Transferring file..."
             base64_data=$(base64 -w 64 "${input}")
             XDoToolInput "@'" "escapechars"
