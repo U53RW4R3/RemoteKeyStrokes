@@ -188,9 +188,11 @@ function Base64 {
 
     local random1
     local random2
+    local random3
     
     random1=$(RandomString)
     random2=$(RandomString)
+    random3=$(RandomString)
 
     # TODO: Implement encryption method through base64 with -b,--bypass flag
     # iconv -t UTF-16LE file.txt | gzip -c | openssl enc -a -e -A
@@ -214,7 +216,7 @@ function Base64 {
 [IO.File]::WriteAllBytes("$output_file", \$${random2})
 EOF
 )
-		# TODO: Perform split character length if xdotool limit surpassed
+		# TODO: Perform split character length if powershell variable limit surpassed
 
         print_status "progress" "Transferring file..."
         while IFS= read -r line
@@ -225,6 +227,12 @@ EOF
     elif [[ "${platform}" = "linux" && "${mode}" = "console" ]]
     then
         base64_data=$(base64 -w 0 "${input}")
+        
+        # TODO: Perform split character length if bash variable limit surpassed
+        # variable="string"
+        # variable+="more string"
+        # echo -n ${variable}" | base64 -d > output
+        
         while IFS= read -r line
         do
             XDoToolInput "echo -n ${line} | base64 -d > ${output_file}" "return"
