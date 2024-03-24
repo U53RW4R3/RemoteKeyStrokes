@@ -365,8 +365,8 @@ function PowershellOutFile {
             XDoToolInput "Remove-Item -Force ${random_temp}.txt" "return"
         elif [ "${mode}" = "hex" ]
         then
-            data=$(hexdump -v -e '"\" 1/1 "%02x"' "${input}")
-            length=${#data}
+            data=$(od -A n -t x1 -v "${input}" | tr -d ' \n')
+            chunks=100
             # in columns with spaces , without the characters and the addresses
             # (can be used with copycon and outfile)
             # Add a counter after 6 hexadecimal values give two spaces and
@@ -452,7 +452,8 @@ function CopyCon {
         XDoToolInput "del /f ${random_temp}.txt" "return"
     elif [ "${mode}" = "hex" ]
     then
-        data=$(hexdump -v -e '"\" 1/1 "%02x"' "${input}")
+        data=$(od -A n -t x1 -v "${input}" | tr -d ' \n')
+        chunks=100
         # in columns with spaces , without the characters and the addresses
         # (can be used with copycon and outfile)
         # Add a counter after 6 hexadecimal values give two spaces and
