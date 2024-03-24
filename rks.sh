@@ -217,38 +217,44 @@ function Base64 {
 
         if [[ "${file_type}" == *"ASCII text"* ]]
         then
-            file=$(iconv -f ASCII -t UTF-16LE "${input}" | base64 -w 0)
+            data=$(iconv -f ASCII -t UTF-16LE "${input}" | base64 -w 0)
         else
-            file=$(base64 -w 0 "${input}")
+            data=$(base64 -w 0 "${input}")
         fi
 
-        base64_decoder=$(cat <<EOF
-\$${random1} = "${file}"
-[byte[]]\$${random2} = [Convert]::FromBase64String(\$${random1})
-[IO.File]::WriteAllBytes("$output_file", \$${random2})
-EOF
-)
-		# TODO: Perform split character length if powershell variable limit surpassed
-
         print_status "progress" "Transferring file..."
-        while IFS= read -r line
+        chunks=100
+
+        for ((i=0; i<${#data}; i+=chunks))
         do
-            XDoToolInput "${line}" "return"
-        done <<< "${base64_decoder}"
+            if [[ i -eq 0 ]]
+            then
+                XDoToolInput "\$${random1} = \"${data:i:chunks}\"" "return"
+            else
+                XDoToolInput "\$${random1} = \"${data:i:chunks}\"" "return"
+            fi
+        done
+
+        XDoToolInput "[byte[]]\$${random2} = [Convert]::FromBase64String(\$${random1})" "return"
+        XDoToolInput "[IO.File]::WriteAllBytes("$output_file", \$${random2})" "return"
+
         print_status "completed" "File transferred!"
     elif [[ "${platform}" = "linux" && "${mode}" = "console" ]]
     then
         base64_data=$(base64 -w 0 "${input}")
-        
-        # TODO: Perform split character length if bash variable limit surpassed
-        # variable="string"
-        # variable+="more string"
-        # echo -n ${variable}" | base64 -d > output
-        
-        while IFS= read -r line
+        chunks=100
+
+        for ((i=0; i<${#data}; i+=chunks))
         do
-            XDoToolInput "echo -n ${line} | base64 -d > ${output_file}" "return"
-        done <<< "${base64_data}"
+            if [[ i -eq 0 ]]
+            then
+                XDoToolInput "${random1}=\"${data:i:chunks}\"" "return"
+            else
+                XDoToolInput "${random1}+=\"${data:i:chunks}\"" "return"
+            fi
+        done
+
+        XDoToolInput "echo -n ${random1} | base64 -d > ${output_file}" "return"
         print_status "completed" "File transferred!"
     fi
 }
@@ -260,9 +266,19 @@ function Bin2Hex {
     local mode=${4}
 
     echo "Not implemented"
+    
+    data=$(od -A n -t x1 -v "${input}" | tr -d ' \n')
+    chunks=100
 
-    data=$(hexdump -v -e '"\" 1/1 "%02x"' "${input}")
-    length=${#data}
+    for ((i=0; i<${#data}; i+=chunks))
+    do
+        if [[ i -eq 0 ]]
+        then
+            echo "\$variable = \"${data:i:chunks}\""
+        else
+            echo "\$variable += \"${data:i:chunks}\""
+        fi
+    done
 
     # one line HEX value without spaces , columns ,addresses (either echo or tee to logging by appending)
 
