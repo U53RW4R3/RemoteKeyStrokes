@@ -205,7 +205,7 @@ function Base64 {
     local random1
     local random2
     local random3
-    
+
     random1=$(RandomString)
     random2=$(RandomString)
     random3=$(RandomString)
@@ -266,12 +266,12 @@ function Bin2Hex {
     local output_file=${2}
     local platform=${3}
     local mode=${4}
-    
+
     local data
     local chunks=100
 
     echo "Not implemented"
-    
+
     data=$(od -A n -t x1 -v "${input}" | tr -d ' \n')
 
     for ((i=0; i<${#data}; i+=chunks))
@@ -298,7 +298,7 @@ function PowershellOutFile {
     local output_file=${2}
     local platform=${3}
     local mode=${4}
-    
+
     local base64_data
     local data
     local chunks=100
