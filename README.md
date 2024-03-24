@@ -244,6 +244,18 @@ TODO: Fill this info after the feature has been implemented
 
 TODO: Fill this info after the feature has been implemented
 
+- You can combine AMSI Bypass with the powershell implant to circumvent **Windows Security**.
+
+```
+$ cat amsi_bypass.ps1
+
+$ cat amsi_bypass.ps1 implant.ps1 > payload.ps1
+
+$ ./rks.sh -c "powershell.exe" -m dialogbox
+
+$ ./rks.sh -c payload.ps1
+```
+
 ### 0x07 - Specify Grapical Remote Software
 
 - If you're targeting VNC network protocols you can specify the window name with `tightvnc`.
@@ -255,8 +267,6 @@ TODO: Fill this info after the feature has been implemented
 TODO: Fill this info
 
 ## TODO and Help Wanted
-
-- [ ] Split into characters to surpass xdotool limitation for `pwshb64` method.
 
 - [ ] Implement Bin2Hex file transfer
 

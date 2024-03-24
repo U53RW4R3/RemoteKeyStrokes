@@ -16,7 +16,7 @@ function check_dependencies() {
     fi
 }
 
-# Helpers functions
+# Helper functions
 
 function print_status {
     local status=${1}
@@ -174,13 +174,16 @@ function OutputRemoteFile {
             CopyCon "${local_file}" "${remote_file}" "${platform}" "text"
             ;;
         pwshhex)
-            Bin2Hex "${local_file}" "${remote_file}" "${platform}" "hex"
+            Bin2Hex "${local_file}" "${remote_file}" "${platform}" "powershell"
             ;;
         cmdhex)
+            Bin2Hex "${local_file}" "${remote_file}" "${platform}" "certutil"
+            ;;
+        copyconhex)
             CopyCon "${local_file}" "${remote_file}" "${platform}" "hex"
             ;;
         nixhex)
-            Bin2Hex "${local_file}" "${remote_file}" "${platform}" "hex"
+            Bin2Hex "${local_file}" "${remote_file}" "${platform}" "console"
             ;;
         outfilehex)
             PowershellOutFile "${local_file}" "${remote_file}" "${platform}" "hex"
@@ -269,20 +272,21 @@ function Bin2Hex {
 
     local data
     local chunks=100
+    
+    local random1
+    local random2
+    local random3
 
-    echo "Not implemented"
+    random1=$(RandomString)
+    random2=$(RandomString)
+    random3=$(RandomString)
 
-    data=$(od -A n -t x1 -v "${input}" | tr -d ' \n')
-
-    for ((i=0; i<${#data}; i+=chunks))
-    do
-        if [[ i -eq 0 ]]
-        then
-            echo "\$variable = \"${data:i:chunks}\""
-        else
-            echo "\$variable += \"${data:i:chunks}\""
-        fi
-    done
+    if [[ "${platform}" != "windows" && "${platform}" != "linux" ]]
+    then
+        print_status "error" "Only windows and linux are supported for this method!"
+        print_status "information" "Terminating program..."
+        exit 1
+    fi
 
     # one line HEX value without spaces , columns ,addresses (either echo or tee to logging by appending)
 
@@ -290,7 +294,42 @@ function Bin2Hex {
 
     # For powershell.exe split the hex oneliner into chunks to decode it easily in a for loop
 
-    # See if it's possible with cmd.exe using batch scripting
+    # Same applies to cmd.exe using batch scripting
+    
+    if [ -f "${input}" ]
+    then
+    	data=$(od -A n -t x1 -v "${input}" | tr -d ' \n')
+    	
+    	if [ "${mode}" = "powershell" ]
+    	then
+    		echo "Powershell bin2hex (pwshhex)"
+        elif [ "${mode}" = "certutil" ]
+        then
+            if [ "${platform}" != "windows" ]
+            then
+                print_status "error" "This method is exclusively used for windows because it relies on 'CertUtil.exe'."
+                print_status "information" "Use 'nixhex' as a method instead."
+                print_status "information" "Terminating program..."
+                exit 1
+            fi
+            
+            echo "Command Prompt bin2hex (cmdhex)"
+            
+    	elif [ "${mode}" = "console" ]
+    	then
+    		echo "Unix bin2hex (nixhex)"
+    	fi
+
+		for ((i=0; i<${#data}; i+=chunks))
+		do
+		    if [[ i -eq 0 ]]
+		    then
+		        echo "\$${random1} = \"${data:i:chunks}\""
+		    else
+		        echo "\$${random1} += \"${data:i:chunks}\""
+		    fi
+		done
+    fi
 }
 
 function PowershellOutFile {
@@ -309,6 +348,8 @@ function PowershellOutFile {
     if [[ "${platform}" != "windows" && "${platform}" != "linux" ]]
     then
         print_status "error" "Only windows and linux are supported for this method!"
+        print_status "information" "Terminating program..."
+        exit 1
     fi
 
     if [ -f "${input}" ]
