@@ -266,11 +266,13 @@ function Bin2Hex {
     local output_file=${2}
     local platform=${3}
     local mode=${4}
+    
+    local data
+    local chunks=100
 
     echo "Not implemented"
     
-    local data=$(od -A n -t x1 -v "${input}" | tr -d ' \n')
-    local chunks=100
+    data=$(od -A n -t x1 -v "${input}" | tr -d ' \n')
 
     for ((i=0; i<${#data}; i+=chunks))
     do
@@ -296,6 +298,10 @@ function PowershellOutFile {
     local output_file=${2}
     local platform=${3}
     local mode=${4}
+    
+    local base64_data
+    local data
+    local chunks=100
 
     local random_temp
     random_temp=$(RandomString)
@@ -351,7 +357,7 @@ function PowershellOutFile {
             fi
 
             print_status "progress" "Transferring file..."
-            local base64_data=$(base64 -w 64 "${input}")
+            base64_data=$(base64 -w 64 "${input}")
             XDoToolInput "@'" "escapechars"
             XDoToolInput "-----BEGIN CERTIFICATE-----" "escapechars"
 
@@ -367,8 +373,7 @@ function PowershellOutFile {
             XDoToolInput "Remove-Item -Force ${random_temp}.txt" "return"
         elif [ "${mode}" = "hex" ]
         then
-            local data=$(od -A n -t x1 -v "${input}" | tr -d ' \n')
-            local chunks=100
+            data=$(od -A n -t x1 -v "${input}" | tr -d ' \n')
             # in columns with spaces , without the characters and the addresses
             # (can be used with copycon and outfile)
             # Add a counter after 6 hexadecimal values give two spaces and
