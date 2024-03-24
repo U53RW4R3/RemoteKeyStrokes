@@ -197,6 +197,10 @@ function Base64 {
     local output_file=${2}
     local platform=${3}
     local mode=${4}
+    
+    local data
+    local chunks=100
+    local base64_data
 
     local random1
     local random2
@@ -223,7 +227,6 @@ function Base64 {
         fi
 
         print_status "progress" "Transferring file..."
-        chunks=100
 
         for ((i=0; i<${#data}; i+=chunks))
         do
@@ -231,18 +234,17 @@ function Base64 {
             then
                 XDoToolInput "\$${random1} = \"${data:i:chunks}\"" "return"
             else
-                XDoToolInput "\$${random1} = \"${data:i:chunks}\"" "return"
+                XDoToolInput "\$${random1} += \"${data:i:chunks}\"" "return"
             fi
         done
 
         XDoToolInput "[byte[]]\$${random2} = [Convert]::FromBase64String(\$${random1})" "return"
-        XDoToolInput "[IO.File]::WriteAllBytes("$output_file", \$${random2})" "return"
+        XDoToolInput "[IO.File]::WriteAllBytes(\"${output_file}\", \$${random2})" "return"
 
         print_status "completed" "File transferred!"
     elif [[ "${platform}" = "linux" && "${mode}" = "console" ]]
     then
         base64_data=$(base64 -w 0 "${input}")
-        chunks=100
 
         for ((i=0; i<${#data}; i+=chunks))
         do
@@ -254,7 +256,7 @@ function Base64 {
             fi
         done
 
-        XDoToolInput "echo -n ${random1} | base64 -d > ${output_file}" "return"
+        XDoToolInput "echo -n ${random1} | base64 -d > \"${output_file}\"" "return"
         print_status "completed" "File transferred!"
     fi
 }
@@ -267,8 +269,8 @@ function Bin2Hex {
 
     echo "Not implemented"
     
-    data=$(od -A n -t x1 -v "${input}" | tr -d ' \n')
-    chunks=100
+    local data=$(od -A n -t x1 -v "${input}" | tr -d ' \n')
+    local chunks=100
 
     for ((i=0; i<${#data}; i+=chunks))
     do
@@ -349,7 +351,7 @@ function PowershellOutFile {
             fi
 
             print_status "progress" "Transferring file..."
-            base64_data=$(base64 -w 64 "${input}")
+            local base64_data=$(base64 -w 64 "${input}")
             XDoToolInput "@'" "escapechars"
             XDoToolInput "-----BEGIN CERTIFICATE-----" "escapechars"
 
@@ -365,8 +367,8 @@ function PowershellOutFile {
             XDoToolInput "Remove-Item -Force ${random_temp}.txt" "return"
         elif [ "${mode}" = "hex" ]
         then
-            data=$(od -A n -t x1 -v "${input}" | tr -d ' \n')
-            chunks=100
+            local data=$(od -A n -t x1 -v "${input}" | tr -d ' \n')
+            local chunks=100
             # in columns with spaces , without the characters and the addresses
             # (can be used with copycon and outfile)
             # Add a counter after 6 hexadecimal values give two spaces and
@@ -388,7 +390,8 @@ function CopyCon {
     local platform=${3}
     local mode=${4}
 
-    local random_temp=$(RandomString)
+    local random_temp
+    random_temp=$(RandomString)
 
     if [ "${platform}" != "windows" ]
     then
