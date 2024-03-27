@@ -21,7 +21,7 @@ All credits goes to [nopernik](https://github.com/nopernik) for making it possib
 
 - For Debian-based distros.
 
-`$ sudo apt install -y xfreerdp-x11 xtightvncviewer xdotool bsdextrautils`
+`$ sudo apt install -y xfreerdp-x11 xtightvncviewer xdotool`
 
 ## Help Menu
 
@@ -187,7 +187,7 @@ $ ./rks.sh -c "python -c \"<payload>\""
 
 |     Method     |      Platform     | Description |
 | -------------- | ----------------- | ----------- |
-|   `pwshb64`    | Windows and Linux | Encodes the file into base64 throught powershell. |
+|   `pwshb64`    | Windows and Linux | Encodes the file into base64 then decodes it with powershell. |
 |    `cmdb64`    |      Windows      | Uses `copy con` to output the encoded base64 file's content then decodes it with `CertUtil.exe`. |
 |    `nixb64`    |       Unix        | Decodes base64 content into a file with `base64`. |
 |   `outfile`    | Windows and Linux | Uses `Out-File` cmdlet to output the text file. |
