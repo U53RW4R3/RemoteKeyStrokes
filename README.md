@@ -4,7 +4,7 @@
 
 A script to automate keystrokes through an active remote desktop session that assists offensive operators in combination with living off the land techniques.
 
-## About RKS (RemoteKeyStrokes)
+## About RemoteKeyStrokes
 
 All credits goes to [nopernik](https://github.com/nopernik) for making it possible so I took it upon myself to improve it. I wanted something that helps during the post exploitation phase when executing commands through a remote desktop.
 
