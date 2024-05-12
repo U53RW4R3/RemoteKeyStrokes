@@ -29,7 +29,7 @@ function print_status {
     # Bold Red for error
     # * default to white
     case ${status} in
-        information) color="\033[34m[*]\033[0m" ;;
+        information) color="\033[34m[info]\033[0m" ;;
         progress) color="\033[1;34m[*]\033[0m" ;;
         completed) color="\033[1;32m[+]\033[0m" ;;
         warning) color="\033[1;33m[!]\033[0m" ;;
@@ -520,10 +520,9 @@ function CopyCon {
 function CreateUser {
     local mode=${1}
     local platform=${2}
-    local description=$(cat <<<EOF
-"Fill in the description of the technique"
-EOF
-)
+    read -d '' description << EndOfText
+Fill in the description of the technique
+EndOfText
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
@@ -546,10 +545,9 @@ EOF
 function StickyKey {
     local mode=${1}
     local platform=${2}
-    local description=$(cat <<<EOF
-"Fill in the description of the technique"
-EOF
-)
+    read -d '' description << EndOfText
+Fill in the description of the technique
+EndOfText
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
@@ -575,10 +573,9 @@ EOF
 function UtilityManager {
     local mode=${1}
     local platform=${2}
-    local description=$(cat <<<EOF
-"Fill in the description of the technique"
-EOF
-)
+    read -d '' description << EndOfText
+Fill in the description of the technique
+EndOfText
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
@@ -604,10 +601,9 @@ EOF
 function Magnifier {
     local mode=${1}
     local platform=${2}
-    local description=$(cat <<<EOF
-"Fill in the description of the technique"
-EOF
-)
+    read -d '' description << EndOfText
+Fill in the description of the technique
+EndOfText
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
@@ -634,10 +630,9 @@ EOF
 function Narrator {
     local mode=${1}
     local platform=${2}
-    local description=$(cat <<<EOF
-"Fill in the description of the technique"
-EOF
-)
+    read -d '' description << EndOfText
+Fill in the description of the technique
+EndOfText
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
@@ -663,10 +658,9 @@ EOF
 function DisplaySwitch {
     local mode=${1}
     local platform=${2}
-    local description=$(cat <<<EOF
-"Fill in the description of the technique"
-EOF
-)
+    read -d '' description << EndOfText
+Fill in the description of the technique
+EndOfText
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
@@ -735,10 +729,9 @@ function PrivEsc {
 
 function WevUtil {
     local mode="${1}"
-    local description=$(cat <<<EOF
-"Fill in the description of the technique"
-EOF
-)
+    read -d '' description << EndOfText
+Fill in the description of the technique
+EndOfText
 
     if [ "${mode}" = "info" ]
     then
@@ -758,10 +751,9 @@ EOF
 
 function WinEvent {
     local mode=${1}
-    local description=$(cat <<<EOF
-"Fill in the description of the technique"
-EOF
-)
+    read -d '' description << EndOfText
+Fill in the description of the technique
+EndOfText
 
     if [ "${mode}" = "info" ]
     then
@@ -781,10 +773,9 @@ EOF
 
 function EventViewer {
     local mode=${1}
-    local description=$(cat <<<EOF
-"Fill in the description of the technique"
-EOF
-)
+    read -d '' description << EndOfText
+Fill in the description of the technique
+EndOfText
 
     if [ "${mode}" = "info" ]
     then
@@ -831,7 +822,7 @@ function AntiForensics {
 
 # TODO: Add more flags once it's fully implemented
 function usage() {
-    cat << EOF
+    read -d '' usage << EndOfText
 Usage: $0 (RemoteKeyStrokes)
 Options:
     -c, --command <command | cmdfile>   Specify a command or a file containing to execute
@@ -851,7 +842,9 @@ Options:
                                         specified)
 
     -h, --help                          Display this help message
-EOF
+EndOfText
+
+    echo "${usage}"
     exit 1
 }
 
@@ -923,7 +916,7 @@ function main() {
     # check_distro
     check_dependencies
 
-    if [ -z "${WINDOWNAME}" ]
+    if [[ -z "${WINDOWNAME}" ]]
     then
         WINDOWNAME="FreeRDP"
     elif [[ "${WINDOWNAME}" != "freerdp" && "${WINDOWNAME}" != "tightvnc" ]]
@@ -933,16 +926,16 @@ function main() {
     fi
 
     # Select graphical remote program to match the window name
-    if [ "${WINDOWNAME}" = "freerdp" ]
+    if [[ "${WINDOWNAME}" = "freerdp" ]]
     then
         WINDOWNAME="FreeRDP"
-    elif [ "${WINDOWNAME}" = "tightvnc" ]
+    elif [[ "${WINDOWNAME}" = "tightvnc" ]]
     then
         WINDOWNAME="TightVNC"
     fi
 
     # Operating System
-    if [ -z "${PLATFORM}" ]
+    if [[ -z "${PLATFORM}" ]]
     then
         PLATFORM="windows"
     elif [[ "${PLATFORM}" != "windows" && "${PLATFORM}" != "linux" ]]
