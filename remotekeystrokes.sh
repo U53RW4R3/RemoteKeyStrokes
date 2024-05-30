@@ -251,7 +251,7 @@ function Base64 {
 
         for ((i=0; i<${#data}; i+=chunks))
         do
-            if [[ i -eq 0 ]]
+            if [[ ${i} -eq 0 ]]
             then
                 XDoToolInput "${random1}=\"${data:i:chunks}\"" "return"
             else
@@ -298,7 +298,7 @@ function Bin2Hex {
     
     if [ -f "${input}" ]
     then
-    	data=$(od -A n -t x1 -v "${input}" | tr -d ' \n')
+    	data=$(basenc -w 0 --base16 "${input}")
     	
     	if [ "${mode}" = "powershell" ]
     	then
@@ -322,7 +322,7 @@ function Bin2Hex {
 
 		for ((i=0; i<${#data}; i+=chunks))
 		do
-		    if [[ i -eq 0 ]]
+		    if [[ ${i} -eq 0 ]]
 		    then
 		        echo "\$${random1} = \"${data:i:chunks}\""
 		    else
@@ -389,6 +389,8 @@ function PowershellOutFile {
 
         elif [ "${mode}" = "base64" ]
         then
+            chunks=64
+
             if [ "${platform}" != "windows" ]
             then
                 print_status "error" "This method is exclusively used for windows because it relies on 'CertUtil.exe'."
@@ -398,14 +400,24 @@ function PowershellOutFile {
             fi
 
             print_status "progress" "Transferring file..."
-            base64_data=$(base64 -w 64 "${input}")
+            base64_data=$(base64 -w 0 "${input}")
             XDoToolInput "@'" "escapechars"
             XDoToolInput "-----BEGIN CERTIFICATE-----" "escapechars"
 
-            while IFS= read -r line
-            do
-                XDoToolInput "${line}" "return"
-            done <<< "${base64_data}"
+	        for ((i=0; i<${#base64_data}; i+=chunks))
+	        do
+	            if [[ ${i} -eq 0 ]]
+	            then
+	                echo "${base64_data:i:chunks}"
+	            else
+	                echo "${base64_data:i:chunks}"
+	            fi
+	        done
+
+            # while IFS= read -r line
+            # do
+            #     XDoToolInput "${line}" "return"
+            # done <<< "${base64_data}"
 
             XDoToolInput "-----END CERTIFICATE-----" "escapechars"
             XDoToolInput "'@ | Out-File ${random_temp}.txt" "escapechars"
@@ -414,7 +426,7 @@ function PowershellOutFile {
             XDoToolInput "Remove-Item -Force ${random_temp}.txt" "return"
         elif [ "${mode}" = "hex" ]
         then
-            data=$(od -A n -t x1 -v "${input}" | tr -d ' \n')
+            data=$(basenc -w 0 --base16 "${input}")
             # in columns with spaces , without the characters and the addresses
             # (can be used with copycon and outfile)
             # Add a counter after 6 hexadecimal values give two spaces and
@@ -435,6 +447,8 @@ function CopyCon {
     local output_file=${2}
     local platform=${3}
     local mode=${4}
+    
+    local chunks
 
     local random_temp
     random_temp=$(RandomString)
@@ -478,30 +492,41 @@ function CopyCon {
         done < "${input}"
     elif [ "${mode}" = "base64" ]
     then
+        chunks=64
         file_type=$(file "${input}")
 
         if [[ "${file_type}" == *"ASCII text"* ]]
         then
-            string_base64=$(iconv -f ASCII -t UTF-16LE "${input}" | base64 -w 64)
+            string_base64=$(iconv -f ASCII -t UTF-16LE "${input}" | base64 -w 0)
         else
-            string_base64=$(base64 -w 64 "${input}")
+            string_base64=$(base64 -w 0 "${input}")
         fi
 
         print_status "progress" "Transferring file..."
         XDoToolInput "copy con ${random_temp}.txt" "return"
         XDoToolInput "-----BEGIN CERTIFICATE-----" "escapechars"
 
-        while IFS= read -r line
+        for ((i=0; i<${#string_base64}; i+=chunks))
         do
-            XDoToolInput "${line}" "return"
-        done <<< "${string_base64}"
+            if [[ i -eq 0 ]]
+            then
+                echo "${string_base64:i:chunks}"
+            else
+                echo "${string_base64:i:chunks}"
+            fi
+        done
+
+        # while IFS= read -r line
+        # do
+        #     XDoToolInput "${line}" "return"
+        # done <<< "${string_base64}"
 
         XDoToolInput "-----END CERTIFICATE-----" "copycon"
         XDoToolInput "CertUtil.exe -f -decode ${random_temp}.txt ${output_file}" "return"
         XDoToolInput "del /f ${random_temp}.txt" "return"
     elif [ "${mode}" = "hex" ]
     then
-        data=$(od -A n -t x1 -v "${input}" | tr -d ' \n')
+        data=$(basenc -w 0 --base16 "${input}")
         chunks=100
         # in columns with spaces , without the characters and the addresses
         # (can be used with copycon and outfile)
