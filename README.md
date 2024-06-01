@@ -17,17 +17,30 @@ All credits goes to [nopernik](https://github.com/nopernik) for making it possib
 - Persistence (Coming soon)
 - Anti-Forensics (Coming soon)
 
-## Dependencies
+## Install Program
+
+### Dependencies
 
 - For Debian-based distros.
 
 `$ sudo apt install -y xfreerdp-x11 xtightvncviewer xdotool`
 
+### Setup
+
+Install the script in the system.
+
+```
+$ sudo wget -O /usr/local/bin/remotekeystrokes https://raw.githubusercontent.com/U53RW4R3/RemoteKeyStrokes/main/remotekeystrokes.sh && \
+sudo ln /usr/local/bin/remotekeystrokes /usr/local/bin/rks && \
+sudo chmod 755 /usr/local/bin/remotekeystrokes && \
+sudo chmod 755 /usr/local/bin/rks
+```
+
 ## Help Menu
 
 ```
 $ ./rks.sh -h
-Usage: ./rks.sh (RemoteKeyStrokes)
+Usage: ./rks.sh
 Options:
     -c, --command <command | cmdfile>   Specify a command or a file containing to execute
     -i, --input <input_file>            Specify the local input file to transfer
