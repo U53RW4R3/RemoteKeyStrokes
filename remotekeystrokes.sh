@@ -19,8 +19,8 @@ function check_dependencies() {
 # Helper functions
 
 function print_status {
-    local status=${1}
-    local message=${2}
+    local status="${1}"
+    local message="${2}"
 
     # Blue for information
     # Bold Blue for progress
@@ -30,10 +30,10 @@ function print_status {
     # * default to white
     case ${status} in
         information) color="\033[34m[info]\033[0m" ;;
-        progress) color="\033[1;34m[*]\033[0m" ;;
-        completed) color="\033[1;32m[+]\033[0m" ;;
-        warning) color="\033[1;33m[!]\033[0m" ;;
-        error) color="\033[1;31m[-]\033[0m" ;;
+        progress) color="\033[1;34m[progress]\033[0m" ;;
+        completed) color="\033[1;32m[done]\033[0m" ;;
+        warning) color="\033[1;33m[warning]\033[0m" ;;
+        error) color="\033[1;31m[error]\033[0m" ;;
         *) color="\033[0m" ;;
     esac
 
@@ -41,8 +41,8 @@ function print_status {
 }
 
 function XDoToolInput {
-    local input=${1}
-    local key=${2}
+    local input="${1}"
+    local key="${2}"
 
     if [ "${key}" = "return" ]
     then
@@ -77,7 +77,7 @@ function RandomString {
 }
 
 function LinesOfLength {
-    local file=${1}
+    local file="${1}"
     local counter=1
 
     while read -r line
@@ -88,8 +88,16 @@ function LinesOfLength {
     echo "${counter}"
 }
 
+function terminate_program() {
+    print_status "warning" "SIGINT response detected!"
+    print_status "info" "Terminating program..."
+    exit 1
+}
+
+trap terminate_program SIGINT
+
 function CmdFile {
-    local file=${1}
+    local file="${1}"
 
     print_status "progress" "Executing commands..."
     while read -r line
@@ -100,10 +108,10 @@ function CmdFile {
 }
 
 function Execute {
-    local commands=${1}
-    local method=${2}
+    local commands="${1}"
+    local method="${2}"
 
-    case ${method} in
+    case "${method}" in
         none)
             print_status "progress" "Executing commands..."
             XDoToolInput "${commands}" "escapechars"
@@ -123,7 +131,7 @@ function Execute {
 }
 
 function DialogBox {
-    local commands=${1}
+    local commands="${1}"
 
     print_status "progress" "Checking one of the lines reaches 260 character limit"
     if [ "${#commands}" -ge 260 ]
@@ -147,14 +155,14 @@ function MSBuild {
 }
 
 function OutputRemoteFile {
-    local local_file=${1}
-    local remote_file=${2}
-    local platform=${3}
-    local method=${4}
+    local local_file="${1}"
+    local remote_file="${2}"
+    local platform="${3}"
+    local method="${4}"
 
     # TODO: Implement bin2hex method
 
-    case ${method} in
+    case "${method}" in
         "" | pwshb64)
             Base64 "${local_file}" "${remote_file}" "${platform}" "powershell"
             ;;
@@ -196,11 +204,11 @@ function OutputRemoteFile {
 }
 
 function Base64 {
-    local input=${1}
-    local output_file=${2}
-    local platform=${3}
-    local mode=${4}
-    
+    local input="${1}"
+    local output_file="${2}"
+    local platform="${3}"
+    local mode="${4}"
+
     local data
     local chunks=100
     local base64_data
@@ -224,9 +232,9 @@ function Base64 {
 
         if [[ "${file_type}" == *"ASCII text"* ]]
         then
-            data=$(iconv -f ASCII -t UTF-16LE "${input}" | base64 -w 0)
+            data=$(iconv -f ASCII -t UTF-16LE "${input}" | basenc -w 0 --base64)
         else
-            data=$(base64 -w 0 "${input}")
+            data=$(basenc -w 0 --base64 "${input}")
         fi
 
         print_status "progress" "Transferring file..."
@@ -247,7 +255,7 @@ function Base64 {
         print_status "completed" "File transferred!"
     elif [[ "${platform}" = "linux" && "${mode}" = "console" ]]
     then
-        base64_data=$(base64 -w 0 "${input}")
+        base64_data=$(basenc -w 0 --base64 "${input}")
 
         for ((i=0; i<${#data}; i+=chunks))
         do
@@ -265,14 +273,14 @@ function Base64 {
 }
 
 function Bin2Hex {
-    local input=${1}
-    local output_file=${2}
-    local platform=${3}
-    local mode=${4}
+    local input="${1}"
+    local output_file="${2}"
+    local platform="${3}"
+    local mode="${4}"
 
     local data
     local chunks=100
-    
+
     local random1
     local random2
     local random3
@@ -295,11 +303,11 @@ function Bin2Hex {
     # For powershell.exe split the hex oneliner into chunks to decode it easily in a for loop
 
     # Same applies to cmd.exe using batch scripting
-    
+
     if [ -f "${input}" ]
     then
     	data=$(basenc -w 0 --base16 "${input}")
-    	
+
     	if [ "${mode}" = "powershell" ]
     	then
     		echo "Powershell bin2hex (pwshhex)"
@@ -312,9 +320,9 @@ function Bin2Hex {
                 print_status "information" "Terminating program..."
                 exit 1
             fi
-            
+
             echo "Command Prompt bin2hex (cmdhex)"
-            
+
     	elif [ "${mode}" = "console" ]
     	then
     		echo "Unix bin2hex (nixhex)"
@@ -333,10 +341,10 @@ function Bin2Hex {
 }
 
 function PowershellOutFile {
-    local input=${1}
-    local output_file=${2}
-    local platform=${3}
-    local mode=${4}
+    local input="${1}"
+    local output_file="${2}"
+    local platform="${3}"
+    local mode="${4}"
 
     local base64_data
     local data
@@ -400,7 +408,7 @@ function PowershellOutFile {
             fi
 
             print_status "progress" "Transferring file..."
-            base64_data=$(base64 -w 0 "${input}")
+            base64_data=$(basenc -w 0 --base64 "${input}")
             XDoToolInput "@'" "escapechars"
             XDoToolInput "-----BEGIN CERTIFICATE-----" "escapechars"
 
@@ -443,11 +451,11 @@ function PowershellOutFile {
 }
 
 function CopyCon {
-    local input=${1}
-    local output_file=${2}
-    local platform=${3}
-    local mode=${4}
-    
+    local input="${1}"
+    local output_file="${2}"
+    local platform="${3}"
+    local mode="${4}"
+
     local chunks
 
     local random_temp
@@ -497,9 +505,9 @@ function CopyCon {
 
         if [[ "${file_type}" == *"ASCII text"* ]]
         then
-            string_base64=$(iconv -f ASCII -t UTF-16LE "${input}" | base64 -w 0)
+            string_base64=$(iconv -f ASCII -t UTF-16LE "${input}" | basenc -w 0 --base64)
         else
-            string_base64=$(base64 -w 0 "${input}")
+            string_base64=$(basenc -w 0 --base64 "${input}")
         fi
 
         print_status "progress" "Transferring file..."
@@ -543,8 +551,8 @@ function CopyCon {
 }
 
 function CreateUser {
-    local mode=${1}
-    local platform=${2}
+    local mode="${1}"
+    local platform="${2}"
     read -d '' description << EndOfText
 Fill in the description of the technique
 EndOfText
@@ -568,8 +576,8 @@ EndOfText
 }
 
 function StickyKey {
-    local mode=${1}
-    local platform=${2}
+    local mode="${1}"
+    local platform="${2}"
     read -d '' description << EndOfText
 Fill in the description of the technique
 EndOfText
@@ -596,8 +604,8 @@ EndOfText
 }
 
 function UtilityManager {
-    local mode=${1}
-    local platform=${2}
+    local mode="${1}"
+    local platform="${2}"
     read -d '' description << EndOfText
 Fill in the description of the technique
 EndOfText
@@ -624,8 +632,8 @@ EndOfText
 }
 
 function Magnifier {
-    local mode=${1}
-    local platform=${2}
+    local mode="${1}"
+    local platform="${2}"
     read -d '' description << EndOfText
 Fill in the description of the technique
 EndOfText
@@ -653,8 +661,8 @@ EndOfText
 }
 
 function Narrator {
-    local mode=${1}
-    local platform=${2}
+    local mode="${1}"
+    local platform="${2}"
     read -d '' description << EndOfText
 Fill in the description of the technique
 EndOfText
@@ -681,8 +689,8 @@ EndOfText
 }
 
 function DisplaySwitch {
-    local mode=${1}
-    local platform=${2}
+    local mode="${1}"
+    local platform="${2}"
     read -d '' description << EndOfText
 Fill in the description of the technique
 EndOfText
@@ -709,15 +717,15 @@ EndOfText
 }
 
 function Persistence {
-    local persistence_mode=${1}
-    local platform=${2}
-    local persistence_method=${3}
+    local persistence_mode="${1}"
+    local platform="${2}"
+    local persistence_method="${3}"
 
     # -s, --select flag "info,backdoor". For "info" contains the execution commands
     # for both command prompt and powershell. To enumerate, persistence and cleanup
     # For "backdoor" to activate the backdoor
     # TODO: Fill in the rest of the persistence methods
-    case ${persistence_method} in
+    case "${persistence_method}" in
         createuser)
             CreateUser "${persistence_mode}" "${platform}"
             ;;
@@ -744,9 +752,9 @@ function Persistence {
 }
 
 function PrivEsc {
-    local elevate_mode=${1}
-    local platform=${2}
-    local elevate_method=${3}
+    local elevate_mode="${1}"
+    local platform="${2}"
+    local elevate_method="${3}"
     # TODO: add -e, --elevated flag
     # -e info -p <windows | linux> -m bypassuac
     echo "Not implemented"
@@ -775,7 +783,7 @@ EndOfText
 }
 
 function WinEvent {
-    local mode=${1}
+    local mode="${1}"
     read -d '' description << EndOfText
 Fill in the description of the technique
 EndOfText
@@ -797,7 +805,7 @@ EndOfText
 }
 
 function EventViewer {
-    local mode=${1}
+    local mode="${1}"
     read -d '' description << EndOfText
 Fill in the description of the technique
 EndOfText
@@ -816,9 +824,9 @@ EndOfText
 }
 
 function AntiForensics {
-    local antiforensics_mode=${1}
-    local platform=${2}
-    local antiforensics_method=${3}
+    local antiforensics_mode="${1}"
+    local platform="${2}"
+    local antiforensics_method="${3}"
     # TODO: Include features for anti-forensics also include eventvwr.msc with a dialog box
     # add flag -a, --antiforensics
 
@@ -828,7 +836,7 @@ function AntiForensics {
     # Batch script
     # Powershell script
     # Bash script
-    case ${antiforensics_method} in
+    case "${antiforensics_method}" in
         wevutil)
             WevUtil "${antiforensics_mode}" "${platform}" "${antiforensics_method}"
             ;;
@@ -848,7 +856,7 @@ function AntiForensics {
 # TODO: Add more flags once it's fully implemented
 function usage() {
     read -d '' usage << EndOfText
-Usage: $0 (RemoteKeyStrokes)
+Usage: ${0} (RemoteKeyStrokes)
 Options:
     -c, --command <command | cmdfile>   Specify a command or a file containing to execute
     -i, --input <input_file>            Specify the local input file to transfer
@@ -888,39 +896,39 @@ while true
 do
     case ${1} in
         -c | --command)
-            COMMAND=${2}
+            COMMAND="${2}"
             shift 2
             ;;
         -i | --input)
-            INPUT=${2}
+            INPUT="${2}"
             shift 2
             ;;
         -o | --output)
-            OUTPUT=${2}
+            OUTPUT="${2}"
             shift 2
             ;;
         -e | --elevate)
-            ELEVATE=${2,,}
+            ELEVATE="${2,,}"
             shift 2
             ;;
         -s | --select)
-            SELECT=${2,,}
+            SELECT="${2,,}"
             shift 2
             ;;
         -a | --antiforensics)
-            ANTIFORENSICS=${2,,}
+            ANTIFORENSICS="${2,,}"
             shift 2
             ;;
         -p | --platform)
-            PLATFORM=${2,,}
+            PLATFORM="${2,,}"
             shift 2
             ;;
         -m | --method)
-            METHOD=${2,,}
+            METHOD="${2,,}"
             shift 2
             ;;
         -w | --windowname)
-            WINDOWNAME=${2}
+            WINDOWNAME="${2}"
             shift 2
             ;;
         -h | --help)
@@ -938,7 +946,6 @@ do
 done
 
 function main() {
-    # check_distro
     check_dependencies
 
     if [[ -z "${WINDOWNAME}" ]]
