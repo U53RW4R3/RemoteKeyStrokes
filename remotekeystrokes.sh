@@ -90,7 +90,7 @@ function LinesOfLength {
 
 function terminate_program() {
     print_status "warning" "SIGINT response detected!"
-    print_status "info" "Terminating program..."
+    print_status "information" "Terminating program..."
     exit 1
 }
 
@@ -133,7 +133,7 @@ function Execute {
 function DialogBox {
     local commands="${1}"
 
-    print_status "progress" "Checking one of the lines reaches 260 character limit"
+    print_status "information" "Checking one of the lines reaches 260 character limit"
     if [[ "${#commands}" -ge 260 ]]
     then
         print_status "error" "Character Limit reached! Terminating program."
