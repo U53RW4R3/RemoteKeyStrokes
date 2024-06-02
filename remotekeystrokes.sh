@@ -224,9 +224,9 @@ function Base64 {
     # Check if input is passed as file
     if [[ -f "${input}" && ("${platform}" = "windows" || "${platform}" = "linux") && "${mode}" = "powershell" ]]
     then
-        file_type=$(file "${input}")
+        file_type=$(file --mime-encoding "${input}")
 
-        if [[ "${file_type}" == *"ASCII text"* ]]
+        if [[ "${file_type}" == *"ascii" ]]
         then
             data=$(iconv -f ASCII -t UTF-16LE "${input}" | basenc -w 0 --base64)
         else
@@ -354,8 +354,8 @@ function PowershellOutFile {
     then
         if [[ "${mode}" = "text" ]]
         then
-            file_type=$(file "${input}")
-            if [[ "${file_type}" == *"ASCII text"* ]]
+            file_type=$(file --mime-encoding "${input}")
+            if [[ "${file_type}" == *"ascii" ]]
             then
                 print_status "progress" "Checking one of the lines reaches 3477 character limit"
                 while read -r line
@@ -486,9 +486,9 @@ function CopyCon {
     elif [[ "${mode}" = "base64" ]]
     then
         chunks=64
-        file_type=$(file "${input}")
+        file_type=$(file --mime-encoding "${input}")
 
-        if [[ "${file_type}" == *"ASCII text"* ]]
+        if [[ "${file_type}" == *"ascii" ]]
         then
             data=$(iconv -f ASCII -t UTF-16LE "${input}" | basenc -w 0 --base64)
         else
