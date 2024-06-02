@@ -339,8 +339,7 @@ TODO: Fill this info
 To uninstall the programs.
 
 ```
-$ sudo rm -f /usr/local/bin/remotekeystrokes && \
-sudo rm -f /usr/local/bin/rks
+$ sudo rm -f /usr/local/bin/remotekeystrokes /usr/local/bin/rks
 ```
 
 ## TODO and Help Wanted
@@ -371,4 +370,4 @@ sudo rm -f /usr/local/bin/rks
 
 ## Disclaimer
 
-- It is your responsibility depending on whatever the cause of your actions user. Remember that with great power comes great responsibility.
+It is your responsibility depending on whatever the cause of your actions user. Remember that with great power comes great responsibility.
