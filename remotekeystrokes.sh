@@ -229,7 +229,8 @@ function Base64 {
         if [[ "${file_type}" == *"ascii" ]]
         then
             data=$(iconv -f ASCII -t UTF-16LE "${input}" | basenc -w 0 --base64)
-        else
+        elif [[ "${file_type}" == "binary" ]]
+        then
             data=$(basenc -w 0 --base64 "${input}")
         fi
 
@@ -378,7 +379,8 @@ function PowershellOutFile {
                 done < "${input}"
 
                 XDoToolInput "'@ | Out-File ${output_file}" "escapechars"
-            else
+            elif [[ "${file_type}" == "binary" ]]
+            then
                 print_status "warning" "This is a binary file! Switching to 'outfileb64' method instead..."
                 PowershellOutFile "${input}" "${output_file}" "${platform}" "certutil"
                 exit 1
@@ -491,7 +493,8 @@ function CopyCon {
         if [[ "${file_type}" == *"ascii" ]]
         then
             data=$(iconv -f ASCII -t UTF-16LE "${input}" | basenc -w 0 --base64)
-        else
+        elif [[ "${file_type}" == "binary" ]]
+        then
             data=$(basenc -w 0 --base64 "${input}")
         fi
 
