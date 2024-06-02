@@ -34,8 +34,7 @@ Install the script in the system.
 ```
 $ sudo wget -O /usr/local/bin/remotekeystrokes https://raw.githubusercontent.com/U53RW4R3/RemoteKeyStrokes/main/remotekeystrokes.sh && \
 sudo ln -sf /usr/local/bin/remotekeystrokes /usr/local/bin/rks && \
-sudo chmod 755 /usr/local/bin/remotekeystrokes && \
-sudo chmod 755 /usr/local/bin/rks
+sudo chmod 755 /usr/local/bin/remotekeystrokes /usr/local/bin/rks
 ```
 
 ## Help Menu
