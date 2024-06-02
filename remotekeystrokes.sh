@@ -237,7 +237,7 @@ function Base64 {
 
         for (( i=0; i<${#data}; i+=chunks ))
         do
-            if [[ i -eq 0 ]]
+            if [[ ${i} -eq 0 ]]
             then
                 XDoToolInput "\$${random_1} = \"${data:i:chunks}\"" "return"
             else
