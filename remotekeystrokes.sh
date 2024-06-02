@@ -264,7 +264,7 @@ function Base64 {
             fi
         done
 
-        XDoToolInput "echo -n \$${random_1} | base64 -d > \"${output_file}\"" "return"
+        XDoToolInput "base64 -d <<< \$${random_1} > \"${output_file}\"" "return"
         print_status "completed" "File transferred!"
     fi
 }
