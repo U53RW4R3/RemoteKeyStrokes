@@ -213,9 +213,9 @@ function Base64 {
     local chunks=100
     local base64_data
 
-    local random1=$(RandomString)
-    local random2=$(RandomString)
-    local random3=$(RandomString)
+    local random_1=$(RandomString)
+    local random_2=$(RandomString)
+    local random_3=$(RandomString)
 
     # TODO: Implement encryption method through base64 with -b,--bypass flag
     # iconv -t UTF-16LE file.txt | gzip -c | openssl enc -a -e -A
@@ -239,14 +239,14 @@ function Base64 {
         do
             if [[ i -eq 0 ]]
             then
-                XDoToolInput "\$${random1} = \"${data:i:chunks}\"" "return"
+                XDoToolInput "\$${random_1} = \"${data:i:chunks}\"" "return"
             else
-                XDoToolInput "\$${random1} += \"${data:i:chunks}\"" "return"
+                XDoToolInput "\$${random_1} += \"${data:i:chunks}\"" "return"
             fi
         done
 
-        XDoToolInput "[byte[]]\$${random2} = [Convert]::FromBase64String(\$${random1})" "return"
-        XDoToolInput "[IO.File]::WriteAllBytes(\"${output_file}\", \$${random2})" "return"
+        XDoToolInput "[byte[]]\$${random_2} = [Convert]::FromBase64String(\$${random_1})" "return"
+        XDoToolInput "[IO.File]::WriteAllBytes(\"${output_file}\", \$${random_2})" "return"
 
         print_status "completed" "File transferred!"
     elif [[ "${platform}" = "linux" && "${mode}" = "console" ]]
@@ -257,13 +257,13 @@ function Base64 {
         do
             if [[ ${i} -eq 0 ]]
             then
-                XDoToolInput "${random1}=\"${data:i:chunks}\"" "return"
+                XDoToolInput "${random_1}=\"${data:i:chunks}\"" "return"
             else
-                XDoToolInput "${random1}+=\"${data:i:chunks}\"" "return"
+                XDoToolInput "${random_1}+=\"${data:i:chunks}\"" "return"
             fi
         done
 
-        XDoToolInput "echo -n ${random1} | base64 -d > \"${output_file}\"" "return"
+        XDoToolInput "echo -n \$${random_1} | base64 -d > \"${output_file}\"" "return"
         print_status "completed" "File transferred!"
     fi
 }
@@ -277,9 +277,9 @@ function Bin2Hex {
     local data
     local chunks=100
 
-    local random1=$(RandomString)
-    local random2=$(RandomString)
-    local random3=$(RandomString)
+    local random_1=$(RandomString)
+    local random_2=$(RandomString)
+    local random_3=$(RandomString)
 
     if [[ "${platform}" != "windows" && "${platform}" != "linux" ]]
     then
@@ -324,9 +324,9 @@ function Bin2Hex {
 		do
 		    if [[ ${i} -eq 0 ]]
 		    then
-		        echo "\$${random1} = \"${data:i:chunks}\""
+		        echo "\$${random_1} = \"${data:i:chunks}\""
 		    else
-		        echo "\$${random1} += \"${data:i:chunks}\""
+		        echo "\$${random_1} += \"${data:i:chunks}\""
 		    fi
 		done
     fi
@@ -338,7 +338,6 @@ function PowershellOutFile {
     local platform="${3}"
     local mode="${4}"
 
-    local base64_data
     local data
     local chunks=100
 
@@ -399,24 +398,19 @@ function PowershellOutFile {
             fi
 
             print_status "progress" "Transferring file..."
-            base64_data=$(basenc -w 0 --base64 "${input}")
+            data=$(basenc -w 0 --base64 "${input}")
             XDoToolInput "@'" "escapechars"
             XDoToolInput "-----BEGIN CERTIFICATE-----" "escapechars"
 
-	        for (( i=0; i<${#base64_data}; i+=chunks ))
+	        for (( i=0; i<${#data}; i+=chunks ))
 	        do
 	            if [[ ${i} -eq 0 ]]
 	            then
-	                echo "${base64_data:i:chunks}"
+	                    XDoToolInput "${data:i:chunks}" "return"
 	            else
-	                echo "${base64_data:i:chunks}"
+                        XDoToolInput "${data:i:chunks}" "return"
 	            fi
 	        done
-
-            # while IFS= read -r line
-            # do
-            #     XDoToolInput "${line}" "return"
-            # done <<< "${base64_data}"
 
             XDoToolInput "-----END CERTIFICATE-----" "escapechars"
             XDoToolInput "'@ | Out-File ${random_temp}.txt" "escapechars"
@@ -447,10 +441,10 @@ function CopyCon {
     local platform="${3}"
     local mode="${4}"
 
+    local data
     local chunks
 
-    local random_temp
-    random_temp=$(RandomString)
+    local random_temp=$(RandomString)
 
     if [[ "${platform}" != "windows" ]]
     then
@@ -496,29 +490,24 @@ function CopyCon {
 
         if [[ "${file_type}" == *"ASCII text"* ]]
         then
-            string_base64=$(iconv -f ASCII -t UTF-16LE "${input}" | basenc -w 0 --base64)
+            data=$(iconv -f ASCII -t UTF-16LE "${input}" | basenc -w 0 --base64)
         else
-            string_base64=$(basenc -w 0 --base64 "${input}")
+            data=$(basenc -w 0 --base64 "${input}")
         fi
 
         print_status "progress" "Transferring file..."
         XDoToolInput "copy con ${random_temp}.txt" "return"
         XDoToolInput "-----BEGIN CERTIFICATE-----" "escapechars"
 
-        for (( i=0; i<${#string_base64}; i+=chunks ))
+        for (( i=0; i<${#data}; i+=chunks ))
         do
-            if [[ i -eq 0 ]]
+            if [[ ${i} -eq 0 ]]
             then
-                echo "${string_base64:i:chunks}"
+                XDoToolInput "${data:i:chunks}" "return"
             else
-                echo "${string_base64:i:chunks}"
+                XDoToolInput "${data:i:chunks}" "return"
             fi
         done
-
-        # while IFS= read -r line
-        # do
-        #     XDoToolInput "${line}" "return"
-        # done <<< "${string_base64}"
 
         XDoToolInput "-----END CERTIFICATE-----" "copycon"
         XDoToolInput "CertUtil.exe -f -decode ${random_temp}.txt ${output_file}" "return"
