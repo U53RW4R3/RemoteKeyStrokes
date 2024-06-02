@@ -28,12 +28,12 @@ function print_status {
     # Bold Yellow for warning
     # Bold Red for error
     # * default to white
-    case ${status} in
-        information) color="\033[34m[info]\033[0m" ;;
-        progress) color="\033[1;34m[progress]\033[0m" ;;
-        completed) color="\033[1;32m[done]\033[0m" ;;
-        warning) color="\033[1;33m[warning]\033[0m" ;;
-        error) color="\033[1;31m[error]\033[0m" ;;
+    case "${status}" in
+        information) color="\033[34m[INFO]\033[0m" ;;
+        progress) color="\033[1;34m[PROG]\033[0m" ;;
+        completed) color="\033[1;32m[DONE]\033[0m" ;;
+        warning) color="\033[1;33m[WARN]\033[0m" ;;
+        error) color="\033[1;31m[ERROR]\033[0m" ;;
         *) color="\033[0m" ;;
     esac
 
