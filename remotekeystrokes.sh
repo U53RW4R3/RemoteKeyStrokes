@@ -856,8 +856,10 @@ function AntiForensics {
 # TODO: Add more flags once it's fully implemented
 function usage() {
     read -d '' usage << EndOfText
-Usage: ${0}
-Options:
+Usage:
+    $(basename ${0}) <flags>
+
+Flags:
     -c, --command <command | cmdfile>   Specify a command or a file containing to execute
     -i, --input <input_file>            Specify the local input file to transfer
     -o, --output <output_file>          Specify the remote output file to transfer
