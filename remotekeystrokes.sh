@@ -3,10 +3,10 @@
 # TODO: Add check for xfreerdp-x11 and xtightvncviewer. Also do some checks with supported package managers.
 
 function check_dependencies() {
-    if [[ ! $(which xdotool &>/dev/null) ]]
+    if ! which xdotool &>/dev/null
     then
         print_status "warning" "Installing missing dependency..."
-        if [[ ! $(which sudo 2>/dev/null) || "${EUID}" -ne 0 ]]
+        if ! which sudo 2>/dev/null || [[ "${EUID}" -eq 0 ]]
         then
             apt install -y xdotool
         else
