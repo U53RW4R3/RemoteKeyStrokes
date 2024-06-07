@@ -286,8 +286,8 @@ function Bin2Hex() {
     local chunks=100
 
     local random_1=$(RandomString)
-    local random_2=$(RandomString)
-    local random_3=$(RandomString)
+
+    local random_temp=$(RandomString)
 
     if [[ "${platform}" != "windows" && "${platform}" != "linux" ]]
     then
@@ -296,13 +296,7 @@ function Bin2Hex() {
         exit 1
     fi
 
-    # one line HEX value without spaces , columns ,addresses (either echo or tee to logging by appending)
-
-    # C:\> CertUtil.exe -f -encodehex scan.bat hex_type_12.hex 12
-
-    # For powershell.exe split the hex oneliner into chunks to decode it easily in a for loop
-
-    # Same applies to cmd.exe using batch scripting
+    # TODO: For powershell.exe split the hex oneliner into chunks to decode it easily in a for loop
 
     if [[ -f "${input}" ]]
     then
@@ -310,7 +304,15 @@ function Bin2Hex() {
 
     	if [[ "${mode}" = "powershell" ]]
     	then
-    		echo "Powershell bin2hex (pwshhex)"
+			for (( i=0; i<${#data}; i+=chunks ))
+			do
+			    if [[ ${i} -eq 0 ]]
+			    then
+			        Keyboard "\$${random_1} = \"${data:i:chunks}\"" "return"
+			    else
+			        Keyboard "\$${random_1} += \"${data:i:chunks}\"" "return"
+			    fi
+			done
         elif [[ "${mode}" = "certutil" ]]
         then
             if [[ "${platform}" != "windows" ]]
@@ -321,22 +323,24 @@ function Bin2Hex() {
                 exit 1
             fi
 
-            echo "Command Prompt bin2hex (cmdhex)"
+        	for (( i=0; i<${#data}; i+=chunks ))
+			do
+			    if [[ ${i} -eq 0 ]]
+			    then
+			        Keyboard "set ${random_1}=${data:i:chunks}" "return"
+			    else
+			        Keyboard "set ${random_1}=%${random_1}%${data:i:chunks}" "return"
+			    fi
+			done
+
+			Keyboard "echo %${random_1}% > ${random_temp}.txt" "return"
+			Keyboard "CertUtil.exe -f -encodehex ${random_temp}.txt \"${output_file}\" 12" "return"
+			Keyboard "del /f ${random_temp}.txt"
 
     	elif [[ "${mode}" = "console" ]]
     	then
     		echo "Unix bin2hex (nixhex)"
     	fi
-
-		for (( i=0; i<${#data}; i+=chunks ))
-		do
-		    if [[ ${i} -eq 0 ]]
-		    then
-		        echo "\$${random_1} = \"${data:i:chunks}\""
-		    else
-		        echo "\$${random_1} += \"${data:i:chunks}\""
-		    fi
-		done
     fi
 }
 
@@ -435,6 +439,7 @@ function PowershellOutFile() {
             # C:\> certutil -f -encodehex scan.bat hex_type_4.hex 4
             # Sample output:
             # 40 65 63 68 6f 20 6f 66  66 0d 0a 73 65 74 20 22
+            # each pair of 8 columns split into hexadecimal chunks
             echo "Not implemented"
         fi
     fi
@@ -532,6 +537,7 @@ function CopyCon() {
         # C:\> certutil -f -encodehex scan.bat hex_type_4.hex 4
         # Sample output:
         # 40 65 63 68 6f 20 6f 66  66 0d 0a 73 65 74 20 22
+        # each pair of 8 columns split into hexadecimal chunks
         echo "Not implemented"
     fi
 
