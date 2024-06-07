@@ -105,9 +105,9 @@ function CmdFile() {
     # If there are zero new lines just read the remaining file's contents.
     if [[ ${number_of_lines} -eq 0 ]]
     then
-	    read contents < "${file}"
-	    Keyboard "${contents}" "escapechars"
-	else
+	read contents < "${file}"
+	Keyboard "${contents}" "escapechars"
+    else
         while read -r line
         do
             Keyboard "${line}" "escapechars"
@@ -217,7 +217,7 @@ function Base64() {
     local output_file="${2}"
     local platform="${3}"
     local mode="${4}"
-    
+
     local file_type=$(file --mime-encoding "${input}")
     local data
     local chunks=100
