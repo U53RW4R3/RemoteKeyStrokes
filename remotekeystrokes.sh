@@ -76,7 +76,7 @@ function RandomString() {
     echo "${string}"
 }
 
-function NumberOfLines() {
+function CountLines() {
     local file="${1}"
     local counter=1
 
@@ -98,7 +98,7 @@ trap terminate_program SIGINT
 
 function CmdFile() {
     local file="${1}"
-    local number_of_lines=$(NumberOfLines "${file}")
+    local number_of_lines=$(CountLines "${file}")
 
     print_status "progress" "Executing commands..."
 
@@ -452,7 +452,7 @@ function CopyCon() {
     local mode="${4}"
 
     local file_type=$(file --mime-encoding "${input}")
-    local number_of_lines=$(NumberOfLines "${input}")
+    local number_of_lines=$(CountLines "${input}")
     local data
     local chunks
 
