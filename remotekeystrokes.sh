@@ -18,7 +18,7 @@ function check_dependencies() {
 
 # Helper functions
 
-function print_status {
+function print_status() {
     local status="${1}"
     local message="${2}"
 
@@ -40,7 +40,7 @@ function print_status {
     echo -e "${color} ${message}"
 }
 
-function XDoToolInput {
+function XDoToolInput() {
     local input="${1}"
     local key="${2}"
 
@@ -62,7 +62,7 @@ function XDoToolInput {
     fi
 }
 
-function RandomString {
+function RandomString() {
     local characters="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
     local length=$(( RANDOM % 13 + 8 ))  # A length of characters between 8 and 20
     local string=""
@@ -76,7 +76,7 @@ function RandomString {
     echo "${string}"
 }
 
-function LinesOfLength {
+function NumberOfLines() {
     local file="${1}"
     local counter=1
 
@@ -96,18 +96,27 @@ function terminate_program() {
 
 trap terminate_program SIGINT
 
-function CmdFile {
+function CmdFile() {
     local file="${1}"
+    local number_of_lines=$(NumberOfLines "${file}")
 
     print_status "progress" "Executing commands..."
-    while read -r line
-    do
-        XDoToolInput "${line}" "escapechars"
-    done < "${file}"
+
+    # If there are zero new lines just read the remaining file's contents.
+    if [[ ${number_of_lines} -eq 0 ]]
+    then
+	    read contents < "${file}"
+	    XDoToolInput "${contents}" "escapechars"
+	else
+        while read -r line
+        do
+            XDoToolInput "${line}" "escapechars"
+        done < "${file}"
+    fi
     print_status "completed" "Task completed!"
 }
 
-function Execute {
+function Execute() {
     local commands="${1}"
     local method="${2}"
 
@@ -130,7 +139,7 @@ function Execute {
     esac
 }
 
-function DialogBox {
+function DialogBox() {
     local commands="${1}"
 
     print_status "information" "Checking one of the lines reaches 260 character limit"
@@ -146,7 +155,7 @@ function DialogBox {
     print_status "completed" "Task completed!"
 }
 
-function MSBuild {
+function MSBuild() {
     # TODO: Add two methods one for adding shellcode and the other for powershell runspace
     # Add a flag C# implant
 
@@ -154,7 +163,7 @@ function MSBuild {
     echo "msbuild"
 }
 
-function OutputRemoteFile {
+function OutputRemoteFile() {
     local local_file="${1}"
     local remote_file="${2}"
     local platform="${3}"
@@ -203,7 +212,7 @@ function OutputRemoteFile {
     esac
 }
 
-function Base64 {
+function Base64() {
     local input="${1}"
     local output_file="${2}"
     local platform="${3}"
@@ -269,7 +278,7 @@ function Base64 {
     fi
 }
 
-function Bin2Hex {
+function Bin2Hex() {
     local input="${1}"
     local output_file="${2}"
     local platform="${3}"
@@ -333,7 +342,7 @@ function Bin2Hex {
     fi
 }
 
-function PowershellOutFile {
+function PowershellOutFile() {
     local input="${1}"
     local output_file="${2}"
     local platform="${3}"
@@ -437,12 +446,13 @@ function PowershellOutFile {
     print_status "completed" "File transferred!"
 }
 
-function CopyCon {
+function CopyCon() {
     local input="${1}"
     local output_file="${2}"
     local platform="${3}"
     local mode="${4}"
 
+    local number_of_lines=$(NumberOfLines "${input}")
     local data
     local chunks
 
@@ -473,11 +483,10 @@ function CopyCon {
         print_status "progress" "Transferring file..."
         XDoToolInput "copy con ${output_file}" "return"
 
-        lines_of_length=$(LinesOfLength "${input}")
         counter=1
         while read -r line
         do
-            if [[ "${counter}" != "${lines_of_length}" ]]
+            if [[ "${counter}" != "${number_of_lines}" ]]
             then
                 XDoToolInput "${line}" "return"
             else
@@ -533,7 +542,7 @@ function CopyCon {
     print_status "completed" "File transferred!"
 }
 
-function CreateUser {
+function CreateUser() {
     local mode="${1}"
     local platform="${2}"
     read -d '' description << EndOfText
@@ -558,7 +567,7 @@ EndOfText
     fi
 }
 
-function StickyKey {
+function StickyKey() {
     local mode="${1}"
     local platform="${2}"
     read -d '' description << EndOfText
@@ -586,7 +595,7 @@ EndOfText
     fi
 }
 
-function UtilityManager {
+function UtilityManager() {
     local mode="${1}"
     local platform="${2}"
     read -d '' description << EndOfText
@@ -614,7 +623,7 @@ EndOfText
     fi
 }
 
-function Magnifier {
+function Magnifier() {
     local mode="${1}"
     local platform="${2}"
     read -d '' description << EndOfText
@@ -643,7 +652,7 @@ EndOfText
     fi
 }
 
-function Narrator {
+function Narrator() {
     local mode="${1}"
     local platform="${2}"
     read -d '' description << EndOfText
@@ -671,7 +680,7 @@ EndOfText
     fi
 }
 
-function DisplaySwitch {
+function DisplaySwitch() {
     local mode="${1}"
     local platform="${2}"
     read -d '' description << EndOfText
@@ -699,7 +708,7 @@ EndOfText
     fi
 }
 
-function Persistence {
+function Persistence() {
     local persistence_mode="${1}"
     local platform="${2}"
     local persistence_method="${3}"
@@ -734,7 +743,7 @@ function Persistence {
     esac
 }
 
-function PrivEsc {
+function PrivEsc() {
     local elevate_mode="${1}"
     local platform="${2}"
     local elevate_method="${3}"
@@ -743,7 +752,7 @@ function PrivEsc {
     echo "Not implemented"
 }
 
-function WevUtil {
+function WevUtil() {
     local mode="${1}"
     read -d '' description << EndOfText
 Fill in the description of the technique
@@ -765,7 +774,7 @@ EndOfText
     fi
 }
 
-function WinEvent {
+function WinEvent() {
     local mode="${1}"
     read -d '' description << EndOfText
 Fill in the description of the technique
@@ -787,7 +796,7 @@ EndOfText
     fi
 }
 
-function EventViewer {
+function EventViewer() {
     local mode="${1}"
     read -d '' description << EndOfText
 Fill in the description of the technique
@@ -806,7 +815,7 @@ EndOfText
     fi
 }
 
-function AntiForensics {
+function AntiForensics() {
     local antiforensics_mode="${1}"
     local platform="${2}"
     local antiforensics_method="${3}"
@@ -961,10 +970,9 @@ function main() {
         exit 1
     fi
 
-    # Executing commands
+    # Check if a file is passed as input then execute commands
     if [[ -f "${COMMAND}" ]]
     then
-        # Check if a file is passed as input
         CmdFile "${COMMAND}"
     fi
 
