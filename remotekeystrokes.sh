@@ -67,7 +67,7 @@ function RandomString() {
     local length=$(( RANDOM % 13 + 8 ))  # A length of characters between 8 and 20
     local string=""
 
-    for (( i=0; i<length; i++ ))
+    for (( i=0; i<${#length}; i++ ))
     do
         local random_index=$(( RANDOM % ${#characters} ))
         string+=${characters:$random_index:1}
@@ -143,7 +143,7 @@ function DialogBox() {
     local commands="${1}"
 
     print_status "information" "Checking one of the lines reaches 260 character limit"
-    if [[ "${#commands}" -ge 260 ]]
+    if [[ ${#commands} -ge 260 ]]
     then
         print_status "error" "Character Limit reached! Terminating program."
         exit 1
@@ -221,7 +221,6 @@ function Base64() {
     local file_type=$(file --mime-encoding "${input}")
     local data
     local chunks=100
-    local base64_data
 
     local random_1=$(RandomString)
     local random_2=$(RandomString)
@@ -260,7 +259,7 @@ function Base64() {
         print_status "completed" "File transferred!"
     elif [[ "${platform}" = "linux" && "${mode}" = "console" ]]
     then
-        base64_data=$(basenc -w 0 --base64 "${input}")
+        data=$(basenc -w 0 --base64 "${input}")
 
         for (( i=0; i<${#data}; i+=chunks ))
         do
@@ -370,7 +369,7 @@ function PowershellOutFile() {
                 while read -r line
                 do
                     length=${#line}
-                    if [[ "${length}" -ge 3477 ]]
+                    if [[ ${length} -ge 3477 ]]
                     then
                         print_status "error" "Character Limit reached!"
                         print_status "information" "Use 'outfileb64' as a method instead."
@@ -393,8 +392,6 @@ function PowershellOutFile() {
                 PowershellOutFile "${input}" "${output_file}" "${platform}" "certutil"
                 exit 1
             fi
-
-
         elif [[ "${mode}" = "base64" ]]
         then
             chunks=64
@@ -416,9 +413,9 @@ function PowershellOutFile() {
 	        do
 	            if [[ ${i} -eq 0 ]]
 	            then
-	                    Keyboard "${data:i:chunks}" "return"
+	            	Keyboard "${data:i:chunks}" "return"
 	            else
-                        Keyboard "${data:i:chunks}" "return"
+	            	Keyboard "${data:i:chunks}" "return"
 	            fi
 	        done
 
@@ -471,7 +468,7 @@ function CopyCon() {
         print_status "progress" "Checking one of the lines reaches 255 character limit"
         while read -r line
         do
-            if [[ "${#line}" -ge 255 ]]
+            if [[ ${#line} -ge 255 ]]
             then
                 print_status "error" "Character Limit reached!"
                 print_status "information" "Use 'cmdb64' as a method instead."
@@ -486,13 +483,13 @@ function CopyCon() {
         counter=1
         while read -r line
         do
-            if [[ "${counter}" != "${number_of_lines}" ]]
+            if [[ ${counter} != ${number_of_lines} ]]
             then
                 Keyboard "${line}" "return"
             else
                 Keyboard "${line}" "copycon"
             fi
-            ((counter++))
+            (( counter++ ))
         done < "${input}"
     elif [[ "${mode}" = "base64" ]]
     then
