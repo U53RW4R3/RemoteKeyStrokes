@@ -852,23 +852,26 @@ Usage:
     $(basename ${0}) <flags>
 
 Flags:
+
+COMMON OPTIONS:
     -c, --command <command | cmdfile>   Specify a command or a file containing to execute
     -i, --input <input_file>            Specify the local input file to transfer
     -o, --output <output_file>          Specify the remote output file to transfer
 
-    -p, --platform <operating_system>   Specify the operating system (windows is set by
+    -p, --platform <operating_system>   Specify the operating system ("windows" is set by
                                         default if not specified)
 
+    -w, --windowname <name>             Specify the window name for graphical remote
+                                        program ("freerdp" is set by default if not
+                                        specified)
+
+    -h, --help                          Display this help message
+
+METHODS:
     -m, --method <method>               Specify the file transfer or execution method
                                         (For file transfer "pwshb64" is set by default if
                                         not specified. For command execution method
                                         "none" is set by default if not specified)
-
-    -w, --windowname <name>             Specify the window name for graphical remote
-                                        program (freerdp is set by default if not
-                                        specified)
-
-    -h, --help                          Display this help message
 EndOfText
 
     echo "${usage}"
