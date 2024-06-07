@@ -48,10 +48,10 @@ function Keyboard() {
     then
         xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type "${input}"
         xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key Return
-	elif [[ "${key}" = "escapechars" ]]
-	then
-		xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type -- "${input}"
-		xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key Return
+    elif [[ "${key}" = "escapechars" ]]
+    then
+        xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type -- "${input}"
+        xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key Return
     elif [[ "${key}" = "copycon" ]]
     then
         xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type -- "${input}"
@@ -217,7 +217,8 @@ function Base64() {
     local output_file="${2}"
     local platform="${3}"
     local mode="${4}"
-
+    
+    local file_type=$(file --mime-encoding "${input}")
     local data
     local chunks=100
     local base64_data
@@ -233,8 +234,6 @@ function Base64() {
     # Check if input is passed as file
     if [[ -f "${input}" && ("${platform}" = "windows" || "${platform}" = "linux") && "${mode}" = "powershell" ]]
     then
-        file_type=$(file --mime-encoding "${input}")
-
         if [[ "${file_type}" == *"ascii" ]]
         then
             data=$(iconv -f ASCII -t UTF-16LE "${input}" | basenc -w 0 --base64)
@@ -348,6 +347,7 @@ function PowershellOutFile() {
     local platform="${3}"
     local mode="${4}"
 
+    local file_type=$(file --mime-encoding "${input}")
     local data
     local chunks=100
 
@@ -364,7 +364,6 @@ function PowershellOutFile() {
     then
         if [[ "${mode}" = "text" ]]
         then
-            file_type=$(file --mime-encoding "${input}")
             if [[ "${file_type}" == *"ascii" ]]
             then
                 print_status "progress" "Checking one of the lines reaches 3477 character limit"
@@ -452,6 +451,7 @@ function CopyCon() {
     local platform="${3}"
     local mode="${4}"
 
+    local file_type=$(file --mime-encoding "${input}")
     local number_of_lines=$(NumberOfLines "${input}")
     local data
     local chunks
@@ -497,7 +497,6 @@ function CopyCon() {
     elif [[ "${mode}" = "base64" ]]
     then
         chunks=64
-        file_type=$(file --mime-encoding "${input}")
 
         if [[ "${file_type}" == *"ascii" ]]
         then
