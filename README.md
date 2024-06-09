@@ -246,7 +246,7 @@ $ rks -c "python -c \"<payload>\""
 
 ### 0x03 - File Transfer
 
-There are 6 file transfer methods in total.
+There are 11 file transfer methods in total.
 
 |     Method     |      Platform     | Description |
 | -------------- | ----------------- | ----------- |
