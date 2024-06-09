@@ -369,6 +369,8 @@ $ sudo rm -f /usr/local/bin/remotekeystrokes /usr/local/bin/rks
 
 - [Original Script](https://github.com/nopernik/mytools/blob/master/rdp-cmd-delivery.sh)
 
+- [VirtualRubberDucky](https://github.com/joewhaley/VirtualRubberDucky)
+
 - [sticky_keys_hunter](https://github.com/ztgrace/sticky_keys_hunter)
 
 ## Credits
