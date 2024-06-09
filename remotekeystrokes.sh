@@ -59,6 +59,9 @@ function Keyboard() {
     elif [[ "${key}" = "customkey" ]]
     then
         xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key "${input}"
+    elif [[ "${key}" = "noreturn" ]]
+    then
+    	xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type -- "${input}"
     fi
 }
 
@@ -340,13 +343,13 @@ function Bin2Hex() {
 			done
 
 			Keyboard "echo %${random_1}% > ${random_temp}.txt" "return"
-			Keyboard "CertUtil.exe -f -encodehex ${random_temp}.txt \"${output_file}\" 12" "return"
+			Keyboard "CertUtil.exe -f -decodehex ${random_temp}.txt \"${output_file}\" 12" "return"
 			Keyboard "del /f ${random_temp}.txt"
     	elif [[ "${mode}" = "console" ]]
     	then
             print_status "progress" "Transferring file..."
 
-            # Make it into a hexadecimal format to interpret the backslash
+            # Split a pair of characters and make it into a hexadecimal format.
             local temp=""
             for (( i=0; i<${#data}; i+=2))
             do
@@ -363,6 +366,7 @@ function Bin2Hex() {
                 fi
             done
 
+			# Interpret the backslash to output into a file.
             Keyboard "echo -en \$${random_1} > \"${output_file}\"" "return"
     	fi
         print_status "completed" "File transferred!"
@@ -378,6 +382,8 @@ function PowershellOutFile() {
     local file_type=$(file --mime-encoding "${input}")
     local data
     local chunks=100
+    local hexadecimal=()
+    local counter=0
 
     local random_temp=$(RandomString)
 
@@ -455,17 +461,44 @@ function PowershellOutFile() {
             Keyboard "Remove-Item -Force ${random_temp}.txt" "return"
         elif [[ "${mode}" = "hex" ]]
         then
+        	print_status "progress" "Transferring file..."
             data=$(basenc -w 0 --base16 "${input}")
-            # in columns with spaces , without the characters and the addresses
-            # (can be used with copycon and outfile)
-            # Add a counter after 6 hexadecimal values give two spaces and
-            # another counter for 6 hexadecimal value give a new line in a for loop
 
-            # C:\> certutil -f -encodehex scan.bat hex_type_4.hex 4
-            # Sample output:
-            # 40 65 63 68 6f 20 6f 66  66 0d 0a 73 65 74 20 22
-            # each pair of 8 columns split into hexadecimal chunks
-            echo "Not implemented"
+            # Append the pair of hexadecimal characters in a array
+            for (( i=0; i<${data}; i+=2 ))
+            do
+            	hexadecimal[i]+="${data:i:2}"
+            done
+
+            Keyboard "@'" "escapechars"
+
+            # Output into two hexdump columns via keystrokes
+            for hex in ${hexadecimal[@]}
+            do
+                if [[ ${counter} -eq 7 ]]
+                then
+                	Keyboard "${hex} " "noreturn"
+                elif [[ ${counter} -eq 8 ]]
+                then
+                	Keyboard "space" "customkey"
+                    echo -n " "
+                elif [[ ${counter} -eq 15 ]]
+                then
+                	Keyboard "${hex}" "return"
+                else
+                	Keyboard "${hex}" "noreturn"
+                fi
+            
+                if [[ ${counter} -eq 15 ]]
+                then
+                    counter=0
+                else
+                    (( counter++ ))
+                fi
+            done
+            Keyboard "'@ | Out-File ${random_temp}.txt" "escapechars"
+			Keyboard "CertUtil.exe -f -decodehex ${random_temp}.txt \"${output_file}\" 4" "return"
+			Keyboard "del /f ${random_temp}.txt"
         fi
     fi
 
@@ -482,6 +515,8 @@ function CopyCon() {
     local number_of_lines=$(CountLines "${input}")
     local data
     local chunks
+    local hexadecimal=()
+    local counter=0
 
     local random_temp=$(RandomString)
 
@@ -552,18 +587,44 @@ function CopyCon() {
         Keyboard "del /f ${random_temp}.txt" "return"
     elif [[ "${mode}" = "hex" ]]
     then
+    	print_status "progress" "Transferring file..."
         data=$(basenc -w 0 --base16 "${input}")
-        chunks=100
-        # in columns with spaces , without the characters and the addresses
-        # (can be used with copycon and outfile)
-        # Add a counter after 6 hexadecimal values give two spaces and
-        # another counter for 6 hexadecimal value give a new line
 
-        # C:\> certutil -f -encodehex scan.bat hex_type_4.hex 4
-        # Sample output:
-        # 40 65 63 68 6f 20 6f 66  66 0d 0a 73 65 74 20 22
-        # each pair of 8 columns split into hexadecimal chunks
-        echo "Not implemented"
+        # Append the pair of hexadecimal characters in a array
+        for (( i=0; i<${data}; i+=2 ))
+        do
+        	hexadecimal[i]+="${data:i:2}"
+        done
+
+            Keyboard "copy con ${random_temp}.hex" "return"
+
+            # Output into two hexdump columns via keystrokes
+            for hex in ${hexadecimal[@]}
+            do
+                if [[ ${counter} -eq 7 ]]
+                then
+                	Keyboard "${hex} " "noreturn"
+                elif [[ ${counter} -eq 8 ]]
+                then
+                	Keyboard "space" "customkey"
+                    echo -n " "
+                elif [[ ${counter} -eq 15 ]]
+                then
+                	Keyboard "${hex}" "return"
+                else
+                	Keyboard "${hex}" "noreturn"
+                fi
+            
+                if [[ ${counter} -eq 15 ]]
+                then
+                    counter=0
+                else
+                    (( counter++ ))
+                fi
+            done
+            Keyboard "Ctrl+Z Return" "customkeys"
+			Keyboard "CertUtil.exe -f -decodehex ${random_temp}.txt \"${output_file}\" 4" "return"
+			Keyboard "del /f ${random_temp}.txt"
     fi
 
     print_status "completed" "File transferred!"
