@@ -348,8 +348,6 @@ $ sudo rm -f /usr/local/bin/remotekeystrokes /usr/local/bin/rks
 
 ## TODO and Help Wanted
 
-- [ ] Implement Bin2Hex file transfer
-
 - [ ] Implement encryption method of AES256 via base64
 
 - [ ] Implement a persistence function for both windows and linux.
