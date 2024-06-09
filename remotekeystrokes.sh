@@ -472,7 +472,7 @@ function PowershellOutFile() {
 
             Keyboard "@'" "escapechars"
 
-            # Output into two hexdump columns via keystrokes
+            # Output into hexdump via keystrokes
             for hex in ${hexadecimal[@]}
             do
                 if [[ ${counter} -eq 7 ]]
@@ -598,7 +598,7 @@ function CopyCon() {
 
             Keyboard "copy con ${random_temp}.hex" "return"
 
-            # Output into two hexdump columns via keystrokes
+            # Output into hexdump via keystrokes
             for hex in ${hexadecimal[@]}
             do
                 if [[ ${counter} -eq 7 ]]
