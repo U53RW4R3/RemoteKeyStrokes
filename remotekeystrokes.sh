@@ -309,15 +309,15 @@ function Bin2Hex() {
     	then
             print_status "progress" "Transferring file..."
 
-			for (( i=0; i<${#data}; i+=chunks ))
-			do
-			    if [[ ${i} -eq 0 ]]
-			    then
-			        Keyboard "\$${random_1} = \"${data:i:chunks}\"" "return"
-			    else
-			        Keyboard "\$${random_1} += \"${data:i:chunks}\"" "return"
-			    fi
-			done
+        for (( i=0; i<${#data}; i+=chunks ))
+        do
+            if [[ ${i} -eq 0 ]]
+            then
+                Keyboard "\$${random_1} = \"${data:i:chunks}\"" "return"
+            else
+                Keyboard "\$${random_1} += \"${data:i:chunks}\"" "return"
+            fi
+        done
 
             Keyboard "[IO.File]::WriteAllBytes(\"${output_file}\", (\$${random_1} -split '(.{2})' | Where-Object { \$_ -ne '' } | ForEach-Object { [Convert]::ToByte(\$_, 16) }))" "return"
         elif [[ "${mode}" = "certutil" ]]
@@ -461,7 +461,7 @@ function PowershellOutFile() {
             Keyboard "Remove-Item -Force ${random_temp}.txt" "return"
         elif [[ "${mode}" = "hex" ]]
         then
-        	print_status "progress" "Transferring file..."
+            print_status "progress" "Transferring file..."
             data=$(basenc -w 0 --base16 "${input}")
 
             # Append the pair of hexadecimal characters in a array
@@ -488,7 +488,7 @@ function PowershellOutFile() {
                 else
                 	Keyboard "${hex}" "noreturn"
                 fi
-            
+
                 if [[ ${counter} -eq 15 ]]
                 then
                     counter=0
@@ -614,7 +614,7 @@ function CopyCon() {
                 else
                 	Keyboard "${hex}" "noreturn"
                 fi
-            
+
                 if [[ ${counter} -eq 15 ]]
                 then
                     counter=0
@@ -628,6 +628,15 @@ function CopyCon() {
     fi
 
     print_status "completed" "File transferred!"
+}
+
+function PrivEsc() {
+    local elevate_mode="${1}"
+    local platform="${2}"
+    local elevate_method="${3}"
+    # TODO: add -e, --elevated flag
+    # -e info -p <windows | linux> -m bypassuac
+    echo "Not implemented"
 }
 
 function CreateUser() {
@@ -829,15 +838,6 @@ function Persistence() {
             exit 1
             ;;
     esac
-}
-
-function PrivEsc() {
-    local elevate_mode="${1}"
-    local platform="${2}"
-    local elevate_method="${3}"
-    # TODO: add -e, --elevated flag
-    # -e info -p <windows | linux> -m bypassuac
-    echo "Not implemented"
 }
 
 function WevUtil() {
