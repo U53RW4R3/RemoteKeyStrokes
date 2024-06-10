@@ -470,21 +470,23 @@ function PowershellOutFile() {
 
             Keyboard "@'" "escapechars"
 
+			# TODO: Make a line if when it reaches to the last element just print it without whitespace or new line
             # Output into hexdump via keystrokes
             for hex in ${hexadecimal[@]}
             do
                 if [[ ${counter} -eq 7 ]]
                 then
-                	Keyboard "${hex} " "noreturn"
+                	Keyboard "${hex}" "noreturn"
+                	Keyboard "space" "customkey"
                 elif [[ ${counter} -eq 8 ]]
                 then
                 	Keyboard "space" "customkey"
-                    echo -n " "
                 elif [[ ${counter} -eq 15 ]]
                 then
                 	Keyboard "${hex}" "return"
                 else
                 	Keyboard "${hex}" "noreturn"
+                	Keyboard "space" "customkey"
                 fi
 
                 if [[ ${counter} -eq 15 ]]
