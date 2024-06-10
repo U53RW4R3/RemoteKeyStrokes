@@ -596,6 +596,7 @@ function CopyCon() {
 
             Keyboard "copy con ${random_temp}.hex" "return"
 
+			# TODO: Make a line if when it reaches to the last element just print it without whitespace or new line
             # Output into hexdump via keystrokes
             for hex in ${hexadecimal[@]}
             do
@@ -621,8 +622,8 @@ function CopyCon() {
                     (( counter++ ))
                 fi
             done
-            # TODO: fix this line
-            Keyboard "Ctrl+Z Return" "customkey"
+            Keyboard "Ctrl+Z" "customkey"
+            Keyboard "Return" "customkey"
 			Keyboard "CertUtil.exe -f -decodehex ${random_temp}.hex \"${output_file}\" 4" "return"
 			Keyboard "del /f ${random_temp}.txt" "return"
     fi
