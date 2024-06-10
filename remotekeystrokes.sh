@@ -70,7 +70,7 @@ function RandomString() {
     local length=$(( RANDOM % 13 + 8 ))  # A length of characters between 8 and 20
     local string=""
 
-    for (( i=0; i<${#length}; i++ ))
+    for (( i=0; i<${length}; i++ ))
     do
         local random_index=$(( RANDOM % ${#characters} ))
         string+=${characters:$random_index:1}
@@ -101,12 +101,12 @@ trap terminate_program SIGINT
 
 function CmdFile() {
     local file="${1}"
-    local number_of_lines=$(CountLines "${file}")
+    local lines=$(CountLines "${file}")
 
     print_status "progress" "Executing commands..."
 
     # If there are zero new lines just read the remaining file's contents.
-    if [[ ${number_of_lines} -eq 0 ]]
+    if [[ ${lines} -eq 0 ]]
     then
 	read contents < "${file}"
 	Keyboard "${contents}" "escapechars"
@@ -199,9 +199,9 @@ function Base64() {
 
         print_status "progress" "Transferring file..."
 
-        for (( i=0; i<${#data}; i+=chunks ))
+        for (( i=0; i<${data}; i+=chunks ))
         do
-            if [[ ${i} -eq 0 ]]
+            if [[ i -eq 0 ]]
             then
                 Keyboard "\$${random_1} = \"${data:i:chunks}\"" "return"
             else
@@ -219,7 +219,7 @@ function Base64() {
 
         print_status "progress" "Transferring file..."
 
-        for (( i=0; i<${#data}; i+=chunks ))
+        for (( i=0; i<${data}; i+=chunks ))
         do
             if [[ ${i} -eq 0 ]]
             then
@@ -262,7 +262,7 @@ function Bin2Hex() {
     	then
             print_status "progress" "Transferring file..."
 
-        for (( i=0; i<${#data}; i+=chunks ))
+        for (( i=0; i<${data}; i+=chunks ))
         do
             if [[ ${i} -eq 0 ]]
             then
@@ -285,7 +285,7 @@ function Bin2Hex() {
 
             print_status "progress" "Transferring file..."
 
-        	for (( i=0; i<${#data}; i+=chunks ))
+        	for (( i=0; i<${data}; i+=chunks ))
 			do
 			    if [[ ${i} -eq 0 ]]
 			    then
@@ -297,19 +297,19 @@ function Bin2Hex() {
 
 			Keyboard "echo %${random_1}% > ${random_temp}.txt" "return"
 			Keyboard "CertUtil.exe -f -decodehex ${random_temp}.txt \"${output_file}\" 12" "return"
-			Keyboard "del /f ${random_temp}.txt"
+			Keyboard "del /f ${random_temp}.txt" "return"
     	elif [[ "${mode}" = "console" ]]
     	then
             print_status "progress" "Transferring file..."
 
             # Split a pair of characters and make it into a hexadecimal format.
             local temp=""
-            for (( i=0; i<${#data}; i+=2))
+            for (( i=0; i<${data}; i+=2))
             do
                 temp+="\\x${data:i:2}"
             done
 
-            for (( i=0; i<${#temp}; i+=chunks ))
+            for (( i=0; i<${temp}; i+=chunks ))
             do
                 if [[ ${i} -eq 0 ]]
                 then
@@ -397,7 +397,7 @@ function PowershellOutFile() {
             Keyboard "@'" "escapechars"
             Keyboard "-----BEGIN CERTIFICATE-----" "escapechars"
 
-	        for (( i=0; i<${#data}; i+=chunks ))
+	        for (( i=0; i<${data}; i+=chunks ))
 	        do
 	            if [[ ${i} -eq 0 ]]
 	            then
@@ -465,7 +465,7 @@ function CopyCon() {
     local mode="${4}"
 
     local file_type=$(file --mime-encoding "${input}")
-    local number_of_lines=$(CountLines "${input}")
+    local lines=$(CountLines "${input}")
     local data
     local chunks
     local hexadecimal=()
@@ -501,7 +501,7 @@ function CopyCon() {
         counter=1
         while read -r line
         do
-            if [[ ${counter} != ${number_of_lines} ]]
+            if [[ ${counter} != ${lines} ]]
             then
                 Keyboard "${line}" "return"
             else
@@ -525,7 +525,7 @@ function CopyCon() {
         Keyboard "copy con ${random_temp}.txt" "return"
         Keyboard "-----BEGIN CERTIFICATE-----" "escapechars"
 
-        for (( i=0; i<${#data}; i+=chunks ))
+        for (( i=0; i<${data}; i+=chunks ))
         do
             if [[ ${i} -eq 0 ]]
             then
