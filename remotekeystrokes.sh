@@ -81,7 +81,7 @@ function RandomString() {
 
 function CountLines() {
     local file="${1}"
-    local counter=1
+    local counter=0
 
     while read -r line
     do
@@ -171,8 +171,6 @@ function OutputRemoteFile() {
     local remote_file="${2}"
     local platform="${3}"
     local method="${4}"
-
-    # TODO: Implement bin2hex method
 
     case "${method}" in
         "" | pwshb64)
@@ -603,16 +601,17 @@ function CopyCon() {
             do
                 if [[ ${counter} -eq 7 ]]
                 then
-                	Keyboard "${hex} " "noreturn"
+                	Keyboard "${hex}" "noreturn"
+                	Keyboard "space" "custom"
                 elif [[ ${counter} -eq 8 ]]
                 then
                 	Keyboard "space" "customkey"
-                    echo -n " "
                 elif [[ ${counter} -eq 15 ]]
                 then
                 	Keyboard "${hex}" "return"
                 else
                 	Keyboard "${hex}" "noreturn"
+                	Keyboard "space" "custom"
                 fi
 
                 if [[ ${counter} -eq 15 ]]
@@ -622,7 +621,7 @@ function CopyCon() {
                     (( counter++ ))
                 fi
             done
-            Keyboard "Ctrl+Z Return" "customkeys"
+            Keyboard "Ctrl+Z Return" "customkey"
 			Keyboard "CertUtil.exe -f -decodehex ${random_temp}.txt \"${output_file}\" 4" "return"
 			Keyboard "del /f ${random_temp}.txt"
     fi
