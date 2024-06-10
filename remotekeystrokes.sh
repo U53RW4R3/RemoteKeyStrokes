@@ -246,9 +246,9 @@ function Base64() {
 
         print_status "progress" "Transferring file..."
 
-        for (( i=0; i<${data}; i+=chunks ))
+        for (( i=0; i<${#data}; i+=chunks ))
         do
-            if [[ i -eq 0 ]]
+            if [[ ${i} -eq 0 ]]
             then
                 Keyboard "\$${random_1} = \"${data:i:chunks}\"" "return"
             else
@@ -266,7 +266,7 @@ function Base64() {
 
         print_status "progress" "Transferring file..."
 
-        for (( i=0; i<${data}; i+=chunks ))
+        for (( i=0; i<${#data}; i+=chunks ))
         do
             if [[ ${i} -eq 0 ]]
             then
@@ -309,7 +309,7 @@ function Bin2Hex() {
     	then
             print_status "progress" "Transferring file..."
 
-        for (( i=0; i<${data}; i+=chunks ))
+        for (( i=0; i<${#data}; i+=chunks ))
         do
             if [[ ${i} -eq 0 ]]
             then
@@ -332,7 +332,7 @@ function Bin2Hex() {
 
             print_status "progress" "Transferring file..."
 
-        	for (( i=0; i<${data}; i+=chunks ))
+        	for (( i=0; i<${#data}; i+=chunks ))
 			do
 			    if [[ ${i} -eq 0 ]]
 			    then
@@ -351,12 +351,12 @@ function Bin2Hex() {
 
             # Split a pair of characters and make it into a hexadecimal format.
             local temp=""
-            for (( i=0; i<${data}; i+=2))
+            for (( i=0; i<${#data}; i+=2))
             do
                 temp+="\\x${data:i:2}"
             done
 
-            for (( i=0; i<${temp}; i+=chunks ))
+            for (( i=0; i<${#temp}; i+=chunks ))
             do
                 if [[ ${i} -eq 0 ]]
                 then
@@ -444,7 +444,7 @@ function PowershellOutFile() {
             Keyboard "@'" "escapechars"
             Keyboard "-----BEGIN CERTIFICATE-----" "escapechars"
 
-	        for (( i=0; i<${data}; i+=chunks ))
+	        for (( i=0; i<${#data}; i+=chunks ))
 	        do
 	            if [[ ${i} -eq 0 ]]
 	            then
@@ -465,7 +465,7 @@ function PowershellOutFile() {
             data=$(basenc -w 0 --base16 "${input}")
 
             # Append the pair of hexadecimal characters in a array
-            for (( i=0; i<${data}; i+=2 ))
+            for (( i=0; i<${#data}; i+=2 ))
             do
             	hexadecimal[i]+="${data:i:2}"
             done
@@ -572,7 +572,7 @@ function CopyCon() {
         Keyboard "copy con ${random_temp}.txt" "return"
         Keyboard "-----BEGIN CERTIFICATE-----" "escapechars"
 
-        for (( i=0; i<${data}; i+=chunks ))
+        for (( i=0; i<${#data}; i+=chunks ))
         do
             if [[ ${i} -eq 0 ]]
             then
@@ -591,7 +591,7 @@ function CopyCon() {
         data=$(basenc -w 0 --base16 "${input}")
 
         # Append the pair of hexadecimal characters in a array
-        for (( i=0; i<${data}; i+=2 ))
+        for (( i=0; i<${#data}; i+=2 ))
         do
         	hexadecimal[i]+="${data:i:2}"
         done
