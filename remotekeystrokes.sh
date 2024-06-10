@@ -137,6 +137,8 @@ function Execute() {
             ;;
         *)
             print_status "error" "Invalid Execution Type!" >&2
+            print_status "information" "Available methods are: none, and dialogbox"
+			print_status "information" "Terminating program..."
             exit 1
             ;;
     esac
@@ -164,53 +166,6 @@ function MSBuild() {
 
     # Add a flag if an input is passed as powershell runspace
     echo "msbuild"
-}
-
-function OutputRemoteFile() {
-    local local_file="${1}"
-    local remote_file="${2}"
-    local platform="${3}"
-    local method="${4}"
-
-    case "${method}" in
-        "" | pwshb64)
-            Base64 "${local_file}" "${remote_file}" "${platform}" "powershell"
-            ;;
-        cmdb64)
-            CopyCon "${local_file}" "${remote_file}" "${platform}" "base64"
-            ;;
-        nixb64)
-            Base64 "${local_file}" "${remote_file}" "${platform}" "console"
-            ;;
-        outfile)
-            PowershellOutFile "${local_file}" "${remote_file}" "${platform}" "text"
-            ;;
-        outfileb64)
-            PowershellOutFile "${local_file}" "${remote_file}" "${platform}" "base64"
-            ;;
-        copycon)
-            CopyCon "${local_file}" "${remote_file}" "${platform}" "text"
-            ;;
-        pwshhex)
-            Bin2Hex "${local_file}" "${remote_file}" "${platform}" "powershell"
-            ;;
-        cmdhex)
-            Bin2Hex "${local_file}" "${remote_file}" "${platform}" "certutil"
-            ;;
-        copyconhex)
-            CopyCon "${local_file}" "${remote_file}" "${platform}" "hex"
-            ;;
-        nixhex)
-            Bin2Hex "${local_file}" "${remote_file}" "${platform}" "console"
-            ;;
-        outfilehex)
-            PowershellOutFile "${local_file}" "${remote_file}" "${platform}" "hex"
-            ;;
-        *)
-            print_status "error" "Invalid File Transfer Technique!" >&2
-            exit 1
-            ;;
-    esac
 }
 
 function Base64() {
@@ -631,6 +586,55 @@ function CopyCon() {
     fi
 
     print_status "completed" "File transferred!"
+}
+
+function OutputRemoteFile() {
+    local local_file="${1}"
+    local remote_file="${2}"
+    local platform="${3}"
+    local method="${4}"
+
+    case "${method}" in
+        "" | pwshb64)
+            Base64 "${local_file}" "${remote_file}" "${platform}" "powershell"
+            ;;
+        cmdb64)
+            CopyCon "${local_file}" "${remote_file}" "${platform}" "base64"
+            ;;
+        nixb64)
+            Base64 "${local_file}" "${remote_file}" "${platform}" "console"
+            ;;
+        outfile)
+            PowershellOutFile "${local_file}" "${remote_file}" "${platform}" "text"
+            ;;
+        outfileb64)
+            PowershellOutFile "${local_file}" "${remote_file}" "${platform}" "base64"
+            ;;
+        copycon)
+            CopyCon "${local_file}" "${remote_file}" "${platform}" "text"
+            ;;
+        pwshhex)
+            Bin2Hex "${local_file}" "${remote_file}" "${platform}" "powershell"
+            ;;
+        cmdhex)
+            Bin2Hex "${local_file}" "${remote_file}" "${platform}" "certutil"
+            ;;
+        copyconhex)
+            CopyCon "${local_file}" "${remote_file}" "${platform}" "hex"
+            ;;
+        nixhex)
+            Bin2Hex "${local_file}" "${remote_file}" "${platform}" "console"
+            ;;
+        outfilehex)
+            PowershellOutFile "${local_file}" "${remote_file}" "${platform}" "hex"
+            ;;
+        *)
+            print_status "error" "Invalid File Transfer Technique!" >&2
+            print_status "information" "Available methods are: pwshb64, cmdb64, nixb64, outfile, outfileb64, copycon, pwshhex, cmdhex, copyconhex, nixhex, and outfilehex"
+			print_status "information" "Terminating program..."
+            exit 1
+            ;;
+    esac
 }
 
 function PrivEsc() {
