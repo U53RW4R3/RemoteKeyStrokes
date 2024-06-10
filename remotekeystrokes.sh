@@ -602,7 +602,7 @@ function CopyCon() {
                 if [[ ${counter} -eq 7 ]]
                 then
                 	Keyboard "${hex}" "noreturn"
-                	Keyboard "space" "custom"
+                	Keyboard "space" "customkey"
                 elif [[ ${counter} -eq 8 ]]
                 then
                 	Keyboard "space" "customkey"
@@ -611,7 +611,7 @@ function CopyCon() {
                 	Keyboard "${hex}" "return"
                 else
                 	Keyboard "${hex}" "noreturn"
-                	Keyboard "space" "custom"
+                	Keyboard "space" "customkey"
                 fi
 
                 if [[ ${counter} -eq 15 ]]
@@ -621,9 +621,10 @@ function CopyCon() {
                     (( counter++ ))
                 fi
             done
+            # TODO: fix this line
             Keyboard "Ctrl+Z Return" "customkey"
-			Keyboard "CertUtil.exe -f -decodehex ${random_temp}.txt \"${output_file}\" 4" "return"
-			Keyboard "del /f ${random_temp}.txt"
+			Keyboard "CertUtil.exe -f -decodehex ${random_temp}.hex \"${output_file}\" 4" "return"
+			Keyboard "del /f ${random_temp}.txt" "return"
     fi
 
     print_status "completed" "File transferred!"
