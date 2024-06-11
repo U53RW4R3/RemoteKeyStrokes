@@ -456,7 +456,7 @@ function PowershellOutFile() {
             done
             Keyboard "'@ | Out-File ${random_temp}.hex" "escapechars"
 			Keyboard "CertUtil.exe -f -decodehex ${random_temp}.hex \"${output_file}\" 4" "return"
-			Keyboard "Remove-Item -Force ${random_temp}.hex"
+			Keyboard "Remove-Item -Force ${random_temp}.hex" "return"
         fi
     fi
 
