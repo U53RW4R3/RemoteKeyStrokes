@@ -454,9 +454,9 @@ function PowershellOutFile() {
                     (( counter++ ))
                 fi
             done
-            Keyboard "'@ | Out-File ${random_temp}.txt" "escapechars"
-			Keyboard "CertUtil.exe -f -decodehex ${random_temp}.txt \"${output_file}\" 4" "return"
-			Keyboard "del /f ${random_temp}.txt"
+            Keyboard "'@ | Out-File ${random_temp}.hex" "escapechars"
+			Keyboard "CertUtil.exe -f -decodehex ${random_temp}.hex \"${output_file}\" 4" "return"
+			Keyboard "Remove-Item -Force ${random_temp}.hex"
         fi
     fi
 
@@ -587,7 +587,7 @@ function CopyCon() {
         done
 
 		Keyboard "CertUtil.exe -f -decodehex ${random_temp}.hex \"${output_file}\" 4" "return"
-		Keyboard "del /f ${random_temp}.txt" "return"
+		Keyboard "del /f ${random_temp}.hex" "return"
     fi
 
     print_status "completed" "File transferred!"
