@@ -336,7 +336,7 @@ function PowershellOutFile() {
     local data
     local chunks=100
     local hexadecimal=()
-    local counter=0
+    local counter
 
     local random_temp=$(RandomString)
 
@@ -420,27 +420,30 @@ function PowershellOutFile() {
             # Append the pair of hexadecimal characters in a array
             for (( i=0; i<${#data}; i+=2 ))
             do
-            	hexadecimal[i]+="${data:i:2}"
+            	hexadecimal+=("${data:i:2}")
             done
 
             Keyboard "@'" "escapechars"
 
-			# TODO: Make a line if when it reaches to the last element just print it without whitespace or new line
-            # Output into hexdump via keystrokes
-            for hex in ${hexadecimal[@]}
+            counter=0
+            for ((i=0; i<${#hexadecimal[@]}; i++))
             do
                 if [[ ${counter} -eq 7 ]]
                 then
-                	Keyboard "${hex}" "noreturn"
+                	Keyboard "${hexadecimal[i]}" "noreturn"
                 	Keyboard "space" "customkey"
                 elif [[ ${counter} -eq 8 ]]
                 then
                 	Keyboard "space" "customkey"
+                    (( counter++ ))
                 elif [[ ${counter} -eq 15 ]]
                 then
-                	Keyboard "${hex}" "return"
+                	Keyboard "${hexadecimal[i]}" "return"
+                elif [[ ${i} -eq $((${#hexadecimal[@]} - 1)) ]]
+                then
+                    Keyboard "${hexadecimal[i]}" "return"
                 else
-                	Keyboard "${hex}" "noreturn"
+                	Keyboard "${hexadecimal[i]}" "noreturn"
                 	Keyboard "space" "customkey"
                 fi
 
@@ -471,7 +474,7 @@ function CopyCon() {
     local data
     local chunks
     local hexadecimal=()
-    local counter=0
+    local counter
 
     local random_temp=$(RandomString)
 
@@ -548,41 +551,43 @@ function CopyCon() {
         # Append the pair of hexadecimal characters in a array
         for (( i=0; i<${#data}; i+=2 ))
         do
-        	hexadecimal[i]+="${data:i:2}"
+        	hexadecimal+=("${data:i:2}")
         done
 
-            Keyboard "copy con ${random_temp}.hex" "return"
+        Keyboard "copy con ${random_temp}.hex" "return"
 
-			# TODO: Make a line if when it reaches to the last element just print it without whitespace or new line
-            # Output into hexdump via keystrokes
-            for hex in ${hexadecimal[@]}
-            do
-                if [[ ${counter} -eq 7 ]]
-                then
-                	Keyboard "${hex}" "noreturn"
-                	Keyboard "space" "customkey"
-                elif [[ ${counter} -eq 8 ]]
-                then
-                	Keyboard "space" "customkey"
-                elif [[ ${counter} -eq 15 ]]
-                then
-                	Keyboard "${hex}" "return"
-                else
-                	Keyboard "${hex}" "noreturn"
-                	Keyboard "space" "customkey"
-                fi
+		counter=0
+		for ((i=0; i<${#hexadecimal[@]}; i++))
+		do
+            if [[ ${counter} -eq 7 ]]
+            then
+                Keyboard "${hexadecimal[i]}" "noreturn"
+                Keyboard "space" "customkey"
+            elif [[ ${counter} -eq 8 ]]
+            then
+                Keyboard "space" "customkey"
+                (( counter++ ))
+            elif [[ ${counter} -eq 15 ]]
+            then
+                Keyboard "${hexadecimal[i]}" "return"
+            elif [[ ${i} -eq $((${#hexadecimal[@]} - 1)) ]]
+            then
+                Keyboard "${hexadecimal[i]}" "copycon"
+            else
+               	Keyboard "${hexadecimal[i]}" "noreturn"
+               	Keyboard "space" "customkey"
+            fi
 
-                if [[ ${counter} -eq 15 ]]
-                then
-                    counter=0
-                else
-                    (( counter++ ))
-                fi
-            done
-            Keyboard "Ctrl+Z" "customkey"
-            Keyboard "Return" "customkey"
-			Keyboard "CertUtil.exe -f -decodehex ${random_temp}.hex \"${output_file}\" 4" "return"
-			Keyboard "del /f ${random_temp}.txt" "return"
+            if [[ ${counter} -eq 15 ]]
+            then
+                counter=0
+            else
+                (( counter++ ))
+            fi
+        done
+
+		Keyboard "CertUtil.exe -f -decodehex ${random_temp}.hex \"${output_file}\" 4" "return"
+		Keyboard "del /f ${random_temp}.txt" "return"
     fi
 
     print_status "completed" "File transferred!"
