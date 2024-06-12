@@ -132,9 +132,6 @@ function Execute() {
         dialogbox)
             DialogBox "${commands}"
             ;;
-        runspace)
-            MSBuild "${commands}"
-            ;;
         *)
             print_status "error" "Invalid Execution Type!" >&2
             print_status "information" "Available methods are: none, and dialogbox"
@@ -158,14 +155,6 @@ function DialogBox() {
     Keyboard "Super+r" "customkey"
     Keyboard "${commands}" "escapechars"
     print_status "completed" "Task completed!"
-}
-
-function MSBuild() {
-    # TODO: Add two methods one for adding shellcode and the other for powershell runspace
-    # Add a flag C# implant
-
-    # Add a flag if an input is passed as powershell runspace
-    echo "msbuild"
 }
 
 function Base64() {
