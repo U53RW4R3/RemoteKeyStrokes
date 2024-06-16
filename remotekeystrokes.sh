@@ -326,9 +326,9 @@ function Bin2Hex() {
 			    fi
 			done
 
-			Keyboard "echo %${random_1}% > ${directory_path}\\${random_temp}.txt" "return"
-			Keyboard "CertUtil.exe -f -decodehex ${directory_path}\\${random_temp}.txt \"${output_file}\" 12" "return"
-			Keyboard "del /f ${directory_path}\\${random_temp}.txt" "return"
+			Keyboard "echo %${random_1}% > \"${directory_path}\\${random_temp}.txt\"" "return"
+			Keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp}.txt\" \"${output_file}\" 12" "return"
+			Keyboard "del /f \"${directory_path}\\${random_temp}.txt\"" "return"
     	elif [[ "${mode}" = "console" ]]
     	then
             print_status "progress" "Transferring file..."
@@ -440,9 +440,9 @@ function PowershellOutFile() {
 	        done
 
             Keyboard "-----END CERTIFICATE-----" "escapechars"
-            Keyboard "'@ | Out-File ${directory_path}\\${random_temp}.txt" "escapechars"
-            Keyboard "CertUtil.exe -f -decode ${directory_path}\\${random_temp}.txt ${output_file}" "return"
-            Keyboard "Remove-Item -Force ${directory_path}\\${random_temp}.txt" "return"
+            Keyboard "'@ | Out-File \"${directory_path}\\${random_temp}.txt\"" "escapechars"
+            Keyboard "CertUtil.exe -f -decode \"${directory_path}\\${random_temp}.txt\" ${output_file}" "return"
+            Keyboard "Remove-Item -Force \"${directory_path}\\${random_temp}.txt\"" "return"
         elif [[ "${mode}" = "hex" ]]
         then
             print_status "progress" "Transferring file..."
@@ -485,9 +485,9 @@ function PowershellOutFile() {
                     (( counter++ ))
                 fi
             done
-            Keyboard "'@ | Out-File ${directory_path}\\${random_temp}.hex" "escapechars"
-			Keyboard "CertUtil.exe -f -decodehex ${directory_path}\\${random_temp}.hex \"${output_file}\" 4" "return"
-			Keyboard "Remove-Item -Force ${directory_path}\\${random_temp}.hex" "return"
+            Keyboard "'@ | Out-File \"${directory_path}\\${random_temp}.hex\"" "escapechars"
+			Keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp}.hex\" \"${output_file}\" 4" "return"
+			Keyboard "Remove-Item -Force \"${directory_path}\\${random_temp}.hex\"" "return"
         fi
     fi
 
@@ -559,7 +559,7 @@ function CopyCon() {
         fi
 
         print_status "progress" "Transferring file..."
-        Keyboard "copy con ${directory_path}\\${random_temp}.txt" "return"
+        Keyboard "copy con \"${directory_path}\\${random_temp}.txt\"" "return"
         Keyboard "-----BEGIN CERTIFICATE-----" "escapechars"
 
         for (( i=0; i<${#data}; i+=chunks ))
@@ -573,8 +573,8 @@ function CopyCon() {
         done
 
         Keyboard "-----END CERTIFICATE-----" "copycon"
-        Keyboard "CertUtil.exe -f -decode ${directory_path}\\${random_temp}.txt ${output_file}" "return"
-        Keyboard "del /f ${directory_path}\\${random_temp}.txt" "return"
+        Keyboard "CertUtil.exe -f -decode \"${directory_path}\\${random_temp}.txt\" ${output_file}" "return"
+        Keyboard "del /f \"${directory_path}\\${random_temp}.txt\"" "return"
     elif [[ "${mode}" = "hex" ]]
     then
     	print_status "progress" "Transferring file..."
@@ -586,7 +586,7 @@ function CopyCon() {
         	hexadecimal+=("${data:i:2}")
         done
 
-        Keyboard "copy con ${directory_path}\\${random_temp}.hex" "return"
+        Keyboard "copy con \"${directory_path}\\${random_temp}.hex\"" "return"
 
 		counter=0
 		for ((i=0; i<${#hexadecimal[@]}; i++))
@@ -618,8 +618,8 @@ function CopyCon() {
             fi
         done
 
-		Keyboard "CertUtil.exe -f -decodehex ${directory_path}\\${random_temp}.hex \"${output_file}\" 4" "return"
-		Keyboard "del /f ${directory_path}\\${random_temp}.hex" "return"
+		Keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp}.hex\" \"${output_file}\" 4" "return"
+		Keyboard "del /f \"${directory_path}\\${random_temp}.hex\"" "return"
     fi
 
     print_status "completed" "File transferred!"
