@@ -91,6 +91,47 @@ function CountLines() {
     echo "${counter}"
 }
 
+# There is a limitation with this implementation. However, this is ideal
+# for transferring files with an absolute path.
+
+function DirectoryName() {
+    local filepath="${1}"
+
+    # Determine the type of slashes used in the path
+    if [[ "${filepath}" == *\\* ]]
+    then
+        # Handle paths with backslashes (Windows style)
+        local directory_name="${filepath%\\*}"
+
+        # Special case: if the result is empty, it means the path was something like "C:\file"
+        if [[ -z "${directory_name}" || "${directory_name}" == "${filepath}" ]]
+        then
+            echo "."
+            return
+        fi
+
+        echo "${directory_name}"
+    else
+        # Handle paths with forward slashes (Unix style)
+        if [[ "${filepath}" != */* ]]
+        then
+            echo "."
+            return
+        fi
+
+        local directory_name="${filepath%/*}"
+
+        # Special case: if the result is empty, it means the path was something like "/file"
+        if [[ -z "${directory_name}" || "${directory_name}" == "${filepath}" ]]
+        then
+            echo "/"
+            return
+        fi
+
+        echo "${directory_name}"
+    fi
+}
+
 function terminate_program() {
     print_status "warning" "SIGINT response detected!"
     print_status "information" "Terminating program..."
@@ -235,6 +276,7 @@ function Bin2Hex() {
     local random_1=$(RandomString)
 
     local random_temp=$(RandomString)
+    local directory_path=$(DirectoryName "${output_file}")
 
     if [[ "${platform}" != "windows" && "${platform}" != "linux" ]]
     then
@@ -284,9 +326,9 @@ function Bin2Hex() {
 			    fi
 			done
 
-			Keyboard "echo %${random_1}% > ${random_temp}.txt" "return"
-			Keyboard "CertUtil.exe -f -decodehex ${random_temp}.txt \"${output_file}\" 12" "return"
-			Keyboard "del /f ${random_temp}.txt" "return"
+			Keyboard "echo %${random_1}% > ${directory_path}\\${random_temp}.txt" "return"
+			Keyboard "CertUtil.exe -f -decodehex ${directory_path}\\${random_temp}.txt \"${output_file}\" 12" "return"
+			Keyboard "del /f ${directory_path}\\${random_temp}.txt" "return"
     	elif [[ "${mode}" = "console" ]]
     	then
             print_status "progress" "Transferring file..."
@@ -328,6 +370,7 @@ function PowershellOutFile() {
     local counter
 
     local random_temp=$(RandomString)
+    local directory_path=$(DirectoryName "${output_file}")
 
     if [[ "${platform}" != "windows" && "${platform}" != "linux" ]]
     then
@@ -397,10 +440,9 @@ function PowershellOutFile() {
 	        done
 
             Keyboard "-----END CERTIFICATE-----" "escapechars"
-            Keyboard "'@ | Out-File ${random_temp}.txt" "escapechars"
-            Keyboard "CertUtil.exe -f -decode ${random_temp}.txt ${output_file}" "return"
-
-            Keyboard "Remove-Item -Force ${random_temp}.txt" "return"
+            Keyboard "'@ | Out-File ${directory_path}\\${random_temp}.txt" "escapechars"
+            Keyboard "CertUtil.exe -f -decode ${directory_path}\\${random_temp}.txt ${output_file}" "return"
+            Keyboard "Remove-Item -Force ${directory_path}\\${random_temp}.txt" "return"
         elif [[ "${mode}" = "hex" ]]
         then
             print_status "progress" "Transferring file..."
@@ -443,9 +485,9 @@ function PowershellOutFile() {
                     (( counter++ ))
                 fi
             done
-            Keyboard "'@ | Out-File ${random_temp}.hex" "escapechars"
-			Keyboard "CertUtil.exe -f -decodehex ${random_temp}.hex \"${output_file}\" 4" "return"
-			Keyboard "Remove-Item -Force ${random_temp}.hex" "return"
+            Keyboard "'@ | Out-File ${directory_path}\\${random_temp}.hex" "escapechars"
+			Keyboard "CertUtil.exe -f -decodehex ${directory_path}\\${random_temp}.hex \"${output_file}\" 4" "return"
+			Keyboard "Remove-Item -Force ${directory_path}\\${random_temp}.hex" "return"
         fi
     fi
 
@@ -466,6 +508,7 @@ function CopyCon() {
     local counter
 
     local random_temp=$(RandomString)
+    local directory_path=$(DirectoryName "${output_file}")
 
     if [[ "${platform}" != "windows" ]]
     then
@@ -516,7 +559,7 @@ function CopyCon() {
         fi
 
         print_status "progress" "Transferring file..."
-        Keyboard "copy con ${random_temp}.txt" "return"
+        Keyboard "copy con ${directory_path}\\${random_temp}.txt" "return"
         Keyboard "-----BEGIN CERTIFICATE-----" "escapechars"
 
         for (( i=0; i<${#data}; i+=chunks ))
@@ -530,8 +573,8 @@ function CopyCon() {
         done
 
         Keyboard "-----END CERTIFICATE-----" "copycon"
-        Keyboard "CertUtil.exe -f -decode ${random_temp}.txt ${output_file}" "return"
-        Keyboard "del /f ${random_temp}.txt" "return"
+        Keyboard "CertUtil.exe -f -decode ${directory_path}\\${random_temp}.txt ${output_file}" "return"
+        Keyboard "del /f ${directory_path}\\${random_temp}.txt" "return"
     elif [[ "${mode}" = "hex" ]]
     then
     	print_status "progress" "Transferring file..."
@@ -543,7 +586,7 @@ function CopyCon() {
         	hexadecimal+=("${data:i:2}")
         done
 
-        Keyboard "copy con ${random_temp}.hex" "return"
+        Keyboard "copy con ${directory_path}\\${random_temp}.hex" "return"
 
 		counter=0
 		for ((i=0; i<${#hexadecimal[@]}; i++))
@@ -575,8 +618,8 @@ function CopyCon() {
             fi
         done
 
-		Keyboard "CertUtil.exe -f -decodehex ${random_temp}.hex \"${output_file}\" 4" "return"
-		Keyboard "del /f ${random_temp}.hex" "return"
+		Keyboard "CertUtil.exe -f -decodehex ${directory_path}\\${random_temp}.hex \"${output_file}\" 4" "return"
+		Keyboard "del /f ${directory_path}\\${random_temp}.hex" "return"
     fi
 
     print_status "completed" "File transferred!"
