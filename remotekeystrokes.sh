@@ -1033,8 +1033,6 @@ Flags:
 
 COMMON OPTIONS:
     -c, --command <command | cmdfile>   Specify a command or a file containing to execute
-    -i, --input <input_file>            Specify the local input file to transfer
-    -o, --output <output_file>          Specify the remote output file to transfer
 
     -p, --platform <operating_system>   Specify the operating system ("windows" is set by
                                         default if not specified)
@@ -1045,86 +1043,30 @@ COMMON OPTIONS:
 
     -h, --help                          Display this help message
 
+UPLOAD FILES:
+    -i, --input <input_file>            Specify the local input file to transfer
+    -o, --output <output_file>          Specify the remote output file to transfer
+
 METHODS:
     -m, --method <method>               Specify a method. For command execution method
                                         "none" is set by default if not specified.
                                         For file transfer "pwshb64" is set by default
                                         if not specified. Other available methods are:
                                         "elevate", "persistence", "antiforensics", and
-                                        "mayhem".
+                                        "mayhem"
 
-    -s, --submethod <submethod>         (applies with -m)
+    -s, --submethod <submethod>         Specify a submethod from a method (applies with -m flag)
 
-    -a, --action <action>               (applies with -s)
+    -a, --action <action>               Specify an action from a submethod (applies with -s flag)
 
-    -e, --evasion <evasion>             (Only works with -m for uploading files)
+    -e, --evasion <evasion>             Specify an evasion method for uploading files (only works for "pwshb64")
 EndOfText
 
     echo "${usage}"
     exit 1
 }
 
-function main() {
-    check_dependencies
-
-    if [[ -z "${WINDOWNAME}" ]]
-    then
-        WINDOWNAME="FreeRDP"
-    elif [[ "${WINDOWNAME}" != "freerdp" && "${WINDOWNAME}" != "tightvnc" ]]
-    then
-        print_status "error" "Invalid window name specified. Allowed values: 'freerdp', or 'tightvnc'."
-        exit 1
-    fi
-
-    # Select graphical remote program to match the window name
-    if [[ "${WINDOWNAME}" == "freerdp" ]]
-    then
-        WINDOWNAME="FreeRDP"
-    elif [[ "${WINDOWNAME}" == "tightvnc" ]]
-    then
-        WINDOWNAME="TightVNC"
-    fi
-
-    if [[ ! -f "${COMMAND}" && -n "${COMMAND}" ]]
-    then
-        # When input is string and not a file. It executes command
-        if [[ -z "${METHOD}" ]]
-        then
-            METHOD="none"
-        fi
-        Execute "${COMMAND}" "${METHOD}"
-    elif [[ -f "${COMMAND}" ]]
-    then
-        # Check if a file is passed as input then execute commands
-        Automate "${COMMAND}"
-    fi
-
-    # Operating System
-    if [[ -z "${PLATFORM}" ]]
-    then
-        PLATFORM="windows"
-        if [[ -f "${INPUT}" && -n "${OUTPUT}" && (-z "${METHOD}" || -n "${METHOD}") ]]
-        then
-            Upload "${INPUT}" "${OUTPUT}" "${METHOD}" "${PLATFORM}"
-        elif [[ "${METHOD}" == "elevate" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
-        then
-            Elevate "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
-        elif [[ "${METHOD}" == "persistence" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
-        then
-            Persistence "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
-        elif [[ "${METHOD}" == "antiforensics" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
-        then
-            AntiForensics "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
-        elif [[ "${METHOD}" == "mayhem" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
-        then
-            Mayhem "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
-        fi
-    elif [[ "${PLATFORM}" != "windows" && "${PLATFORM}" != "linux" ]]
-    then
-        print_status "error" "Invalid or operating system not supported. Allowed values: 'windows' or 'linux'."
-        exit 1
-    fi
-}
+check_dependencies
 
 LONG_OPTIONS="command:,input:,output:,method:,submethod:,action:,evasion:,platform:,windowname:,help"
 
@@ -1190,4 +1132,60 @@ do
     esac
 done
 
-main
+if [[ -z "${WINDOWNAME}" ]]
+then
+    WINDOWNAME="FreeRDP"
+elif [[ "${WINDOWNAME}" != "freerdp" && "${WINDOWNAME}" != "tightvnc" ]]
+then
+    print_status "error" "Invalid window name specified. Allowed values: 'freerdp', or 'tightvnc'."
+    exit 1
+fi
+
+# Select graphical remote program to match the window name
+if [[ "${WINDOWNAME}" == "freerdp" ]]
+then
+    WINDOWNAME="FreeRDP"
+elif [[ "${WINDOWNAME}" == "tightvnc" ]]
+then
+    WINDOWNAME="TightVNC"
+fi
+
+if [[ ! -f "${COMMAND}" && -n "${COMMAND}" ]]
+then
+    # When input is string and not a file. It executes command
+    if [[ -z "${METHOD}" ]]
+    then
+        METHOD="none"
+    fi
+    Execute "${COMMAND}" "${METHOD}"
+elif [[ -f "${COMMAND}" ]]
+then
+    # Check if a file is passed as input then execute commands
+    Automate "${COMMAND}"
+fi
+
+# Operating System
+if [[ -z "${PLATFORM}" ]]
+then
+    PLATFORM="windows"
+    if [[ -f "${INPUT}" && -n "${OUTPUT}" && (-z "${METHOD}" || -n "${METHOD}") ]]
+    then
+        Upload "${INPUT}" "${OUTPUT}" "${METHOD}" "${PLATFORM}"
+    elif [[ "${METHOD}" == "elevate" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
+    then
+        Elevate "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
+    elif [[ "${METHOD}" == "persistence" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
+    then
+        Persistence "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
+    elif [[ "${METHOD}" == "antiforensics" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
+    then
+        AntiForensics "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
+    elif [[ "${METHOD}" == "mayhem" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
+    then
+        Mayhem "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
+    fi
+elif [[ "${PLATFORM}" != "windows" && "${PLATFORM}" != "linux" ]]
+then
+    print_status "error" "Invalid or operating system not supported. Allowed values: 'windows' or 'linux'."
+    exit 1
+fi

