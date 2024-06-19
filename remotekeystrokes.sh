@@ -269,7 +269,7 @@ function Base64() {
     fi
 }
 
-function Bin2Hex() {
+function Base16() {
     local input="${1}"
     local output_file="${2}"
     local platform="${3}"
@@ -657,16 +657,16 @@ function Upload() {
             CopyCon "${local_file}" "${remote_file}" "${platform}" "text"
             ;;
         pwshhex)
-            Bin2Hex "${local_file}" "${remote_file}" "${platform}" "powershell"
+            Base16 "${local_file}" "${remote_file}" "${platform}" "powershell"
             ;;
         cmdhex)
-            Bin2Hex "${local_file}" "${remote_file}" "${platform}" "certutil"
+            Base16 "${local_file}" "${remote_file}" "${platform}" "certutil"
             ;;
         copyconhex)
             CopyCon "${local_file}" "${remote_file}" "${platform}" "hex"
             ;;
         nixhex)
-            Bin2Hex "${local_file}" "${remote_file}" "${platform}" "console"
+            Base16 "${local_file}" "${remote_file}" "${platform}" "console"
             ;;
         outfilehex)
             PowershellOutFile "${local_file}" "${remote_file}" "${platform}" "hex"
