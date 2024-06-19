@@ -15,6 +15,7 @@ All credits goes to [nopernik](https://github.com/nopernik) for making it possib
 - Privilege Escalation (Coming soon)
 - Persistence (Coming soon)
 - Anti-Forensics (Coming soon)
+- Mayhem (Coming soon)
 
 ## Install Program
 
