@@ -335,19 +335,27 @@ function Base16() {
             fi
 
             print_status "progress" "Transferring file..."
+            # TODO: Test it first
 
+            # Appends the hexadecimal data in a batch file
         	for (( i=0; i<${#data}; i+=chunks ))
 			do
 			    if [[ ${i} -eq 0 ]]
 			    then
-			        Keyboard "set ${random_1}=${data:i:chunks}" "return"
+			        Keyboard "echo \"@echo off\" > \"${directory_path}\\${random_temp}.bat\"" "return"
+			        Keyboard "echo \"set ${random_1}=${data:i:chunks}\" >> \"${directory_path}\\${random_temp}.bat\"" "return"
 			    else
-			        Keyboard "set ${random_1}=%${random_1}%${data:i:chunks}" "return"
+			        Keyboard "echo \"set ${random_1}=%${random_1}%${data:i:chunks}\" >> \"${directory_path}\\${random_temp}.bat\"" "return"
 			    fi
 			done
+            Keyboard "echo \"echo %${random_1}% > \\\"${directory_path}\\${random_temp}.hex\\\" >> \"${directory_path}\\${random_temp}.bat\"" "return"
 
-			Keyboard "echo %${random_1}% > \"${directory_path}\\${random_temp}.txt\"" "return"
-			Keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp}.txt\" \"${output_file}\" 12" "return"
+            # Execute the batch file
+            Keyboard "\"${directory_path}\\${random_temp}.bat\"" "return"
+            Keyboard "del /f \"${directory_path}\\${random_temp}.bat\"" "return"
+
+			# Decode the file
+			Keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp}.hex\" \"${output_file}\" 12" "return"
 			Keyboard "del /f \"${directory_path}\\${random_temp}.txt\"" "return"
     	elif [[ "${mode}" == "console" ]]
     	then
