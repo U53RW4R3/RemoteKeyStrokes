@@ -453,11 +453,13 @@ $ sudo rm -f /usr/local/bin/remotekeystrokes /usr/local/bin/rks
 
 - [ ] Implement encryption method of AES256 via base64
 
+- [ ] Implement privesc function for both windows and linux
+
 - [ ] Implement a persistence function for both windows and linux.
 
 - [ ] Implement antiforensics function for both windows and linux.
 
-- [ ] Implement privesc function for both windows and linux
+- [ ] Implement mayhem function for both windows and linux.
 
 ## References
 
