@@ -26,6 +26,12 @@ For Debian-based distros.
 $ sudo apt install -y xfreerdp-x11 xtightvncviewer xdotool
 ```
 
+For Arch-based distros.
+
+```
+$ sudo pacman -S freerdp tightvnc xdotool
+```
+
 ### Setup
 
 Install the program in the system.
@@ -432,9 +438,17 @@ $ rks -c implant.ps1 -w tightvnc
 
 ### 0x09 - FAQ
 
-#### Can I use the techniques for my project or craft my own arsenal?
+#### What made me start this project?
 
-The techniques are common and can be reused for BadUSB, malware development, or other projects related.
+It is painfully slow when I manually type with my keyboard or navigate and click with my mouse especially outside the local network. I just want to speed up the process especially when infiltrating the network.
+
+#### Is it strictly only for graphical remote desktops (i.e. RDP, VNC, etc)?
+
+Not necessarily. More features can be added for remote terminals (i.e. SSH, Telnet, etc). I haven't figured how to implement it for Telnet since it lacks it's own way to transfer file. You can help out to improve it.
+
+#### Can I use the techniques for my project or other tradecraft for my own arsenal?
+
+The techniques are common and can be reused for BadUSB, malware development, or other projects related. It's under the copyleft license of the GNU GPLv3 that permits you as the user who have the right to view how the program operates, alter the source code to your requirements, and redistribute to other users along with the source code.
 
 ## Troubleshooting
 
