@@ -269,6 +269,7 @@ function Base64() {
     fi
 }
 
+# Encoding files into hexadecimal
 function Base16() {
     local input="${1}"
     local output_file="${2}"
@@ -635,17 +636,21 @@ function Upload() {
     local remote_file="${2}"
     local platform="${3}"
     local method="${4}"
-    local evasion="${5}"
+    local action="${5}"
+    local evasion="${6}"
+
+    # TODO: Implement action for alternatives commands, such as "compression" (gzip)
+    # and evasion for implementating encryption
 
     case "${method}" in
         "" | pwshb64)
-            Base64 "${local_file}" "${remote_file}" "${platform}" "powershell"
+            Base64 "${local_file}" "${remote_file}" "${platform}" "powershell" "${action}" "${evasion}"
             ;;
         cmdb64)
             CopyCon "${local_file}" "${remote_file}" "${platform}" "base64"
             ;;
         nixb64)
-            Base64 "${local_file}" "${remote_file}" "${platform}" "console"
+            Base64 "${local_file}" "${remote_file}" "${platform}" "console" "${action}"
             ;;
         outfile)
             PowershellOutFile "${local_file}" "${remote_file}" "${platform}" "text"
@@ -680,12 +685,32 @@ function Upload() {
     esac
 }
 
+function BypassUAC() {
+    local platform="${1}"
+    local action="${2}"
+    read -d '' description << EndOfText
+Fill in the description of the technique
+EndOfText
+
+    echo "not implemented"
+}
+
 function Elevate() {
     local elevate_method="${1}"
     local elevate_action="${2}"
     local platform="${3}"
     # TODO: add -a, --action flag
     # -a info -p <windows | linux> -m bypassuac
+
+    # TODO: Print out information with commands to instruct the user both commands and cmdlet
+    # Add a cleanup method
+    if [[ "${platform}" != "windows" ]]
+    then
+        print_status "error" "UAC only exists on Windows operating system!"
+        print_status "information" "Terminating program..."
+        exit 1
+    fi
+
     echo "Not implemented"
 }
 
@@ -725,7 +750,7 @@ EndOfText
     # Add a cleanup method
     if [[ "${platform}" != "windows" ]]
     then
-        print_status "error" "Registry keys only exists on Windows operating system user!"
+        print_status "error" "Registry keys only exists on Windows operating system!"
         print_status "information" "Terminating program..."
         exit 1
     fi
@@ -736,7 +761,12 @@ EndOfText
     elif [[ "${action}" == "backdoor" ]]
     then
         print_status "progress" "Activating sethc.exe (sticky keys) backdoor..."
-        Keyboard "shift shift shift shift shift" "customkey"
+        print_status "information" "Pressing SHIFT key 5 times"
+        for (( i=1; i<=5; i++ ))
+        do
+            print_status "progress" "SHIFT: ${i}"
+            Keyboard "shift" "customkey"
+        done
         print_status "completed" "Backdoor activated!"
     else
         print_status "error" "Invalid mode!"
@@ -754,7 +784,7 @@ EndOfText
     # Add a cleanup method
     if [[ "${platform}" != "windows" ]]
     then
-        print_status "error" "Registry keys only exists on Windows operating system user!"
+        print_status "error" "Registry keys only exists on Windows operating system!"
         print_status "information" "Terminating program..."
         exit 1
     fi
@@ -783,7 +813,7 @@ EndOfText
     # Add a cleanup method
     if [[ "${platform}" != "windows" ]]
     then
-        print_status "error" "Registry keys only exists on Windows operating system user!"
+        print_status "error" "Registry keys only exists on Windows operating system!"
         exit 1
     fi
 
@@ -812,7 +842,7 @@ EndOfText
     # Add a cleanup method
     if [[ "${platform}" != "windows" ]]
     then
-        print_status "error" "Registry keys only exists on Windows operating system user!"
+        print_status "error" "Registry keys only exists on Windows operating system!"
         print_status "information" "Terminating program..."
         exit 1
     fi
@@ -841,7 +871,7 @@ EndOfText
     # Add a cleanup method
     if [[ "${platform}" != "windows" ]]
     then
-        print_status "error" "Registry keys only exists on Windows operating system user!"
+        print_status "error" "Registry keys only exists on Windows operating system!"
         print_status "information" "Terminating program..."
         exit 1
     fi
@@ -1032,10 +1062,11 @@ Usage:
 Flags:
 
 COMMON OPTIONS:
-    -c, --command <command | file>      Specify a command or a file contains commands to execute
+    -c, --command <command | file>      Specify a command or a file contains commands 
+                                        to execute
 
-    -p, --platform <operating_system>   Specify the operating system ("windows" is set by
-                                        default if not specified)
+    -p, --platform <operating_system>   Specify the operating system ("windows" is
+                                        set by default if not specified)
 
     -w, --windowname <name>             Specify the window name for graphical remote
                                         program ("freerdp" is set by default if not
@@ -1055,11 +1086,14 @@ METHODS:
                                         "elevate", "persistence", "antiforensics", and
                                         "mayhem"
 
-    -s, --submethod <submethod>         Specify a submethod from a method (applies with -m flag)
+    -s, --submethod <submethod>         Specify a submethod from a method (applies
+                                        with -m flag)
 
-    -a, --action <action>               Specify an action from a submethod (applies with -s flag)
+    -a, --action <action>               Specify an action from a method and/or
+                                        submethod (applies with -m and/or -s flag)
 
-    -e, --evasion <evasion>             Specify an evasion method for uploading files (only works for "pwshb64")
+    -e, --evasion <evasion>             Specify an evasion method for uploading files
+                                        (only works for "pwshb64")
 EndOfText
 
     echo "${usage}"
@@ -1175,9 +1209,9 @@ then
     exit 1
 fi
 
-if [[ -f "${INPUT}" && -n "${OUTPUT}" && (-z "${METHOD}" || -n "${METHOD}") ]]
+if [[ -f "${INPUT}" && -n "${OUTPUT}" ]]
 then
-    Upload "${INPUT}" "${OUTPUT}" "${PLATFORM}" "${METHOD}"
+    Upload "${INPUT}" "${OUTPUT}" "${PLATFORM}" "${METHOD}" "${ACTION}" "${EVASION}"
 elif [[ "${METHOD}" == "elevate" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
 then
     Elevate "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"

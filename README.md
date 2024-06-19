@@ -46,17 +46,12 @@ sudo chmod 755 /usr/local/bin/remotekeystrokes /usr/local/bin/rks
 ## Help Menu
 
 ```
-$ remotekeystrokes -h
-Usage:
-    remotekeystrokes <flags>
-
-Flags:
-
 COMMON OPTIONS:
-    -c, --command <command | file>      Specify a command or a file contains commands to execute
+    -c, --command <command | file>      Specify a command or a file contains commands 
+                                        to execute
 
-    -p, --platform <operating_system>   Specify the operating system ("windows" is set by
-                                        default if not specified)
+    -p, --platform <operating_system>   Specify the operating system ("windows" is
+                                        set by default if not specified)
 
     -w, --windowname <name>             Specify the window name for graphical remote
                                         program ("freerdp" is set by default if not
@@ -76,11 +71,14 @@ METHODS:
                                         "elevate", "persistence", "antiforensics", and
                                         "mayhem"
 
-    -s, --submethod <submethod>         Specify a submethod from a method (applies with -m flag)
+    -s, --submethod <submethod>         Specify a submethod from a method (applies
+                                        with -m flag)
 
-    -a, --action <action>               Specify an action from a submethod (applies with -s flag)
+    -a, --action <action>               Specify an action from a method and/or
+                                        submethod (applies with -m and/or -s flag)
 
-    -e, --evasion <evasion>             Specify an evasion method for uploading files (only works for "pwshb64")
+    -e, --evasion <evasion>             Specify an evasion method for uploading files
+                                        (only works for "pwshb64")
 ```
 
 ## Usage
