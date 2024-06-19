@@ -269,7 +269,21 @@ function Base64() {
     fi
 }
 
-# Encoding files into hexadecimal
+function Base32() {
+    local input="${1}"
+    local output_file="${2}"
+    local platform="${3}"
+    local mode="${4}"
+
+    # TODO: Implement this feature
+    # $ basenc -w 0 --base32 file.txt
+
+    # $ basenc -w 0 --base32hex file.txt
+
+    echo "not implemented"
+}
+
+# Using hexadecimal to encode files
 function Base16() {
     local input="${1}"
     local output_file="${2}"
@@ -361,6 +375,43 @@ function Base16() {
     	fi
         print_status "completed" "File transferred!"
     fi
+}
+
+# Using binary digits of 0 and 1
+# to encode files with each 8 bits of size
+function Base2() {
+    local input="${1}"
+    local output_file="${2}"
+    local platform="${3}"
+    local mode="${4}"
+
+    # TODO: Implement this feature
+    # $ basenc -w 0 --base2msbf file.txt
+    echo "not implemented"
+}
+
+# Using decimals to encode files
+function Base10() {
+    local input="${1}"
+    local output_file="${2}"
+    local platform="${3}"
+    local mode="${4}"
+
+    # TODO: Implement this feature
+    # $ printf
+    echo "not implemented"
+}
+
+# Using octals to encode files
+function Base8() {
+    local input="${1}"
+    local output_file="${2}"
+    local platform="${3}"
+    local mode="${4}"
+
+    # TODO: Implement this feature
+    # $ od -A n -t o1 -v file.txt | tr -d "[:space:]"
+    echo "not implemented"
 }
 
 function PowershellOutFile() {
@@ -641,6 +692,8 @@ function Upload() {
 
     # TODO: Implement action for alternatives commands, such as "compression" (gzip)
     # and evasion for implementating encryption
+
+    # Add more upload methods Base2, Base8, Base10
 
     case "${method}" in
         "" | pwshb64)
