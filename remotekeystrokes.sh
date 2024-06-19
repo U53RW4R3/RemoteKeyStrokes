@@ -44,22 +44,22 @@ function Keyboard() {
     local input="${1}"
     local key="${2}"
 
-    if [[ "${key}" = "return" ]]
+    if [[ "${key}" == "return" ]]
     then
         xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type "${input}"
         xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key Return
-    elif [[ "${key}" = "escapechars" ]]
+    elif [[ "${key}" == "escapechars" ]]
     then
         xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type -- "${input}"
         xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key Return
-    elif [[ "${key}" = "copycon" ]]
+    elif [[ "${key}" == "copycon" ]]
     then
         xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type -- "${input}"
         xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key Ctrl+Z Return
-    elif [[ "${key}" = "customkey" ]]
+    elif [[ "${key}" == "customkey" ]]
     then
         xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key "${input}"
-    elif [[ "${key}" = "noreturn" ]]
+    elif [[ "${key}" == "noreturn" ]]
     then
     	xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type -- "${input}"
     fi
@@ -243,7 +243,7 @@ function Base64() {
         Keyboard "[IO.File]::WriteAllBytes(\"${output_file}\", \$${random_2})" "return"
 
         print_status "completed" "File transferred!"
-    elif [[ "${platform}" = "linux" && "${mode}" = "console" ]]
+    elif [[ "${platform}" == "linux" && "${mode}" == "console" ]]
     then
         data=$(basenc -w 0 --base64 "${input}")
 
@@ -289,7 +289,7 @@ function Bin2Hex() {
     then
     	data=$(basenc -w 0 --base16 "${input}")
 
-    	if [[ "${mode}" = "powershell" ]]
+    	if [[ "${mode}" == "powershell" ]]
     	then
             print_status "progress" "Transferring file..."
 
@@ -304,7 +304,7 @@ function Bin2Hex() {
         done
 
             Keyboard "[IO.File]::WriteAllBytes(\"${output_file}\", (\$${random_1} -split '(.{2})' | Where-Object { \$_ -ne '' } | ForEach-Object { [Convert]::ToByte(\$_, 16) }))" "return"
-        elif [[ "${mode}" = "certutil" ]]
+        elif [[ "${mode}" == "certutil" ]]
         then
             if [[ "${platform}" != "windows" ]]
             then
@@ -329,7 +329,7 @@ function Bin2Hex() {
 			Keyboard "echo %${random_1}% > \"${directory_path}\\${random_temp}.txt\"" "return"
 			Keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp}.txt\" \"${output_file}\" 12" "return"
 			Keyboard "del /f \"${directory_path}\\${random_temp}.txt\"" "return"
-    	elif [[ "${mode}" = "console" ]]
+    	elif [[ "${mode}" == "console" ]]
     	then
             print_status "progress" "Transferring file..."
 
@@ -443,7 +443,7 @@ function PowershellOutFile() {
             Keyboard "'@ | Out-File \"${directory_path}\\${random_temp}.txt\"" "escapechars"
             Keyboard "CertUtil.exe -f -decode \"${directory_path}\\${random_temp}.txt\" ${output_file}" "return"
             Keyboard "Remove-Item -Force \"${directory_path}\\${random_temp}.txt\"" "return"
-        elif [[ "${mode}" = "hex" ]]
+        elif [[ "${mode}" == "hex" ]]
         then
             print_status "progress" "Transferring file..."
             data=$(basenc -w 0 --base16 "${input}")
@@ -546,7 +546,7 @@ function CopyCon() {
             fi
             (( counter++ ))
         done < "${input}"
-    elif [[ "${mode}" = "base64" ]]
+    elif [[ "${mode}" == "base64" ]]
     then
         chunks=64
 
@@ -625,7 +625,7 @@ function CopyCon() {
     print_status "completed" "File transferred!"
 }
 
-function OutputRemoteFile() {
+function Upload() {
     local local_file="${1}"
     local remote_file="${2}"
     local platform="${3}"
@@ -674,7 +674,7 @@ function OutputRemoteFile() {
     esac
 }
 
-function PrivEsc() {
+function Elevate() {
     local elevate_mode="${1}"
     local platform="${2}"
     local elevate_method="${3}"
@@ -1124,14 +1124,14 @@ function main() {
     # File transfer
     if [[ -f "${INPUT}" && -n "${OUTPUT}" ]]
     then
-        OutputRemoteFile "${INPUT}" "${OUTPUT}" "${PLATFORM}" "${METHOD}"
+        Upload "${INPUT}" "${OUTPUT}" "${PLATFORM}" "${METHOD}"
     fi
 
     # Privilege Escalation
     if [[ -n "${ELEVATE}" && -n "${METHOD}" ]]
     then
         # -e info -p <windows | linux> -m bypassuac
-        PrivEsc "${ELEVATE}" "${PLATFORM}" "${METHOD}"
+        Elevate "${ELEVATE}" "${PLATFORM}" "${METHOD}"
     fi
 
     # Persistence
