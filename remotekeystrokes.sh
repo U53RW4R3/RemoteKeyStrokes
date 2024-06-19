@@ -1032,7 +1032,7 @@ Usage:
 Flags:
 
 COMMON OPTIONS:
-    -c, --command <command | cmdfile>   Specify a command or a file containing to execute
+    -c, --command <command | file>      Specify a command or a file contains commands to execute
 
     -p, --platform <operating_system>   Specify the operating system ("windows" is set by
                                         default if not specified)
@@ -1115,7 +1115,7 @@ do
             shift 2
             ;;
         -w | --windowname)
-            WINDOWNAME="${2}"
+            WINDOWNAME="${2,,}"
             shift 2
             ;;
         -h | --help)
@@ -1164,28 +1164,30 @@ then
     Automate "${COMMAND}"
 fi
 
-# Operating System
+# When the input for selecting an operating system is empty
+# it'll choose "windows" as default.
 if [[ -z "${PLATFORM}" ]]
 then
     PLATFORM="windows"
-    if [[ -f "${INPUT}" && -n "${OUTPUT}" && (-z "${METHOD}" || -n "${METHOD}") ]]
-    then
-        Upload "${INPUT}" "${OUTPUT}" "${METHOD}" "${PLATFORM}"
-    elif [[ "${METHOD}" == "elevate" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
-    then
-        Elevate "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
-    elif [[ "${METHOD}" == "persistence" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
-    then
-        Persistence "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
-    elif [[ "${METHOD}" == "antiforensics" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
-    then
-        AntiForensics "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
-    elif [[ "${METHOD}" == "mayhem" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
-    then
-        Mayhem "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
-    fi
 elif [[ "${PLATFORM}" != "windows" && "${PLATFORM}" != "linux" ]]
 then
     print_status "error" "Invalid or operating system not supported. Allowed values: 'windows' or 'linux'."
     exit 1
+fi
+
+if [[ -f "${INPUT}" && -n "${OUTPUT}" && (-z "${METHOD}" || -n "${METHOD}") ]]
+then
+    Upload "${INPUT}" "${OUTPUT}" "${PLATFORM}" "${METHOD}"
+elif [[ "${METHOD}" == "elevate" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
+then
+    Elevate "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
+elif [[ "${METHOD}" == "persistence" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
+then
+    Persistence "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
+elif [[ "${METHOD}" == "antiforensics" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
+then
+    AntiForensics "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
+elif [[ "${METHOD}" == "mayhem" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
+then
+    Mayhem "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
 fi

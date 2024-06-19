@@ -52,7 +52,7 @@ Usage:
 Flags:
 
 COMMON OPTIONS:
-    -c, --command <command | cmdfile>   Specify a command or a file containing to execute
+    -c, --command <command | file>      Specify a command or a file contains commands to execute
 
     -p, --platform <operating_system>   Specify the operating system ("windows" is set by
                                         default if not specified)
