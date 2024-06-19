@@ -465,6 +465,8 @@ $ sudo rm -f /usr/local/bin/remotekeystrokes /usr/local/bin/rks
 
 - [ ] Implement encryption method of AES256 via base64
 
+- [ ] Implement the rest of upload methods: Base32, Base2, Base10, Base8
+
 - [ ] Implement privesc function for both windows and linux
 
 - [ ] Implement a persistence function for both windows and linux.
