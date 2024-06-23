@@ -333,30 +333,29 @@ function Base16() {
                 print_status "information" "Terminating program..."
                 exit 1
             fi
+            
+            # TODO: Make an if statement of limited characters or lines using batch variable via command prompt
+            
+			if [[ ${#data} -gt 0000 ]]
+			then
+				echo "not implemented"
+			fi
 
             print_status "progress" "Transferring file..."
-            # TODO: Test it first
 
             # Appends the hexadecimal data in a batch file
         	for (( i=0; i<${#data}; i+=chunks ))
 			do
 			    if [[ ${i} -eq 0 ]]
 			    then
-			        Keyboard "echo \"@echo off\" > \"${directory_path}\\${random_temp}.bat\"" "return"
-			        Keyboard "echo \"set ${random_1}=${data:i:chunks}\" >> \"${directory_path}\\${random_temp}.bat\"" "return"
+			        Keyboard "set ${random_1}=${data:i:chunks}" "return"
 			    else
-			        Keyboard "echo \"set ${random_1}=%${random_1}%${data:i:chunks}\" >> \"${directory_path}\\${random_temp}.bat\"" "return"
+			        Keyboard "set ${random_1}=%${random_1}%${data:i:chunks}" "return"
 			    fi
 			done
-            Keyboard "echo \"echo %${random_1}% > \\\"${directory_path}\\${random_temp}.hex\\\" >> \"${directory_path}\\${random_temp}.bat\"" "return"
-
-            # Execute the batch file
-            Keyboard "\"${directory_path}\\${random_temp}.bat\"" "return"
-            Keyboard "del /f \"${directory_path}\\${random_temp}.bat\"" "return"
-
-			# Decode the file
+			Keyboard "echo %${random_1}% > \"${directory_path}\\${random_temp}.hex\"" "return"
 			Keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp}.hex\" \"${output_file}\" 12" "return"
-			Keyboard "del /f \"${directory_path}\\${random_temp}.txt\"" "return"
+			Keyboard "del /f \"${directory_path}\\${random_temp}.hex\"" "return"
     	elif [[ "${mode}" == "console" ]]
     	then
             print_status "progress" "Transferring file..."
