@@ -1,21 +1,5 @@
 #!/bin/bash
 
-# TODO: Add check for xfreerdp-x11 and xtightvncviewer. Also do some checks with supported package managers.
-
-function check_dependencies() {
-    if ! which xdotool &>/dev/null
-    then
-        print_status "warning" "Installing missing dependency..."
-        if ! which sudo 2>/dev/null || [[ "${EUID}" -eq 0 ]]
-        then
-            apt install -y xdotool
-        else
-            sudo apt install -y xdotool
-        fi
-        exit 1
-    fi
-}
-
 # Helper functions
 
 function print_status() {
@@ -38,6 +22,31 @@ function print_status() {
     esac
 
     echo -e "${color} ${message}"
+}
+
+function check_display_server() {
+	if [[ "${XDG_SESSION_TYPE}" != "x11" ]]
+	then
+		print_status "error" "Only X11 is officially supported due to limitations of wayland software."
+		print_status "information" "Terminating program..."
+		exit 1
+	fi
+}
+
+# TODO: Add check for xfreerdp-x11 and xtightvncviewer. Also do some checks with supported package managers.
+
+function check_dependencies() {
+    if ! which xdotool &>/dev/null
+    then
+        print_status "warning" "Installing missing dependency..."
+        if ! which sudo 2>/dev/null || [[ "${EUID}" -eq 0 ]]
+        then
+            apt install -y xdotool
+        else
+            sudo apt install -y xdotool
+        fi
+        exit 1
+    fi
 }
 
 function Keyboard() {
@@ -204,7 +213,8 @@ function Base64() {
     local platform="${3}"
     local mode="${4}"
 
-    local file_type=$(file --mime-encoding "${input}")
+    local file_format=$(file --mime-encoding "${input}")
+    local file_type=${file_format##*: }
     local data
     local chunks=100
 
@@ -224,7 +234,7 @@ function Base64() {
     # Check if input is passed as file
     if [[ -f "${input}" && ("${platform}" == "windows" || "${platform}" == "linux") && "${mode}" == "powershell" ]]
     then
-        if [[ "${file_type}" == *"ascii" ]]
+        if [[ "${file_type}" == "us-ascii" ]]
         then
             data=$(iconv -f ASCII -t UTF-16LE "${input}" | basenc -w 0 --base64)
         elif [[ "${file_type}" == "binary" ]]
@@ -427,7 +437,8 @@ function PowershellOutFile() {
     local platform="${3}"
     local mode="${4}"
 
-    local file_type=$(file --mime-encoding "${input}")
+    local file_format=$(file --mime-encoding "${input}")
+    local file_type=${file_format##*: }
     local data
     local chunks=100
     local hexadecimal=()
@@ -447,7 +458,7 @@ function PowershellOutFile() {
     then
         if [[ "${mode}" == "text" ]]
         then
-            if [[ "${file_type}" == *"ascii" ]]
+            if [[ "${file_type}" == "us-ascii" ]]
             then
                 print_status "progress" "Checking one of the lines reaches 3477 character limit"
                 while read -r line
@@ -564,7 +575,8 @@ function CopyCon() {
     local platform="${3}"
     local mode="${4}"
 
-    local file_type=$(file --mime-encoding "${input}")
+    local file_format=$(file --mime-encoding "${input}")
+    local file_type=${file_format##*: }
     local lines=$(CountLines "${input}")
     local data
     local chunks
@@ -614,7 +626,7 @@ function CopyCon() {
     then
         chunks=64
 
-        if [[ "${file_type}" == *"ascii" ]]
+        if [[ "${file_type}" == "us-ascii" ]]
         then
             data=$(iconv -f ASCII -t UTF-16LE "${input}" | basenc -w 0 --base64)
         elif [[ "${file_type}" == "binary" ]]
@@ -1160,6 +1172,7 @@ EndOfText
     exit 1
 }
 
+check_display_server
 check_dependencies
 
 LONG_OPTIONS="command:,input:,output:,method:,submethod:,action:,evasion:,platform:,windowname:,help"
