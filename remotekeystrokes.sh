@@ -1172,129 +1172,123 @@ EndOfText
     exit 1
 }
 
-check_display_server
-check_dependencies
+function main() {
+    check_display_server
+    check_dependencies
 
-LONG_OPTIONS="command:,input:,output:,method:,submethod:,action:,evasion:,platform:,windowname:,help"
-
-OPTIONS=$(getopt -o "c:i:o:m:s:a:e:p:w:h" --long "${LONG_OPTIONS}" -n "$(basename "${0}")" -- "${@}")
-if [[ ${?} != 0 ]]
-then
-    echo "Failed to parse options... Exiting." >&2
-    exit 1
-fi
-
-eval set -- "${OPTIONS}"
-
-while true
-do
-    case ${1} in
-        -c | --command)
-            COMMAND="${2}"
-            shift 2
-            ;;
-        -i | --input)
-            INPUT="${2}"
-            shift 2
-            ;;
-        -o | --output)
-            OUTPUT="${2}"
-            shift 2
-            ;;
-        -m | --method)
-            METHOD="${2,,}"
-            shift 2
-            ;;
-        -s | --submethod)
-            SUBMETHOD="${2,,}"
-            shift 2
-            ;;
-        -a | --action)
-            ACTION="${2,,}"
-            shift 2
-            ;;
-        -e | --evasion)
-            EVASION="${2,,}"
-            shift 2
-            ;;
-        -p | --platform)
-            PLATFORM="${2,,}"
-            shift 2
-            ;;
-        -w | --windowname)
-            WINDOWNAME="${2,,}"
-            shift 2
-            ;;
-        -h | --help)
-            usage
-            ;;
-        --)
-            shift
-            break
-            ;;
-        *)
-            echo "Invalid option: ${1}" >&2
-            exit 1
-            ;;
-    esac
-done
-
-if [[ -z "${WINDOWNAME}" ]]
-then
-    WINDOWNAME="FreeRDP"
-elif [[ "${WINDOWNAME}" != "freerdp" && "${WINDOWNAME}" != "tightvnc" ]]
-then
-    print_status "error" "Invalid window name specified. Allowed values: 'freerdp', or 'tightvnc'."
-    exit 1
-fi
-
-# Select graphical remote program to match the window name
-if [[ "${WINDOWNAME}" == "freerdp" ]]
-then
-    WINDOWNAME="FreeRDP"
-elif [[ "${WINDOWNAME}" == "tightvnc" ]]
-then
-    WINDOWNAME="TightVNC"
-fi
-
-if [[ ! -f "${COMMAND}" && -n "${COMMAND}" ]]
-then
-    # When input is string and not a file. It executes command
-    if [[ -z "${METHOD}" ]]
+    if [[ ${#} -eq 0 ]]
     then
-        METHOD="none"
+        usage
     fi
-    Execute "${COMMAND}" "${METHOD}"
-elif [[ -f "${COMMAND}" ]]
-then
-    # Check if a file is passed as input then execute commands
-    Automate "${COMMAND}"
-fi
 
-# When the input for selecting an operating system is empty
-# it'll choose "windows" as default.
-if [[ -z "${PLATFORM}" ]]
-then
-    PLATFORM="windows"
-elif [[ "${PLATFORM}" != "windows" && "${PLATFORM}" != "linux" ]]
-then
-    print_status "error" "Invalid or operating system not supported. Allowed values: 'windows' or 'linux'."
-    exit 1
-fi
+    while [[ ${#} -gt 0 ]]
+    do
+        case ${1} in
+            -c | --command)
+                COMMAND="${2}"
+                shift 2
+                ;;
+            -i | --input)
+                INPUT="${2}"
+                shift 2
+                ;;
+            -o | --output)
+                OUTPUT="${2}"
+                shift 2
+                ;;
+            -m | --method)
+                METHOD="${2,,}"
+                shift 2
+                ;;
+            -s | --submethod)
+                SUBMETHOD="${2,,}"
+                shift 2
+                ;;
+            -a | --action)
+                ACTION="${2,,}"
+                shift 2
+                ;;
+            -e | --evasion)
+                EVASION="${2,,}"
+                shift 2
+                ;;
+            -p | --platform)
+                PLATFORM="${2,,}"
+                shift 2
+                ;;
+            -w | --windowname)
+                WINDOWNAME="${2,,}"
+                shift 2
+                ;;
+            -h | --help)
+                usage
+                ;;
+            *)
+                echo "Invalid option: ${1}" >&2
+                exit 1
+                ;;
+        esac
+    done
 
-if [[ -f "${INPUT}" && -n "${OUTPUT}" ]]
-then
-    Upload "${INPUT}" "${OUTPUT}" "${PLATFORM}" "${METHOD}" "${ACTION}" "${EVASION}"
-elif [[ "${METHOD}" == "elevate" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
-then
-    Elevate "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
-elif [[ "${METHOD}" == "persistence" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
-then
-    Persistence "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
-elif [[ "${METHOD}" == "antiforensics" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
-then
-    AntiForensics "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
-elif [[ "${METHOD}" == "mayhem" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
-then
-    Mayhem "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
-fi
+    if [[ -z "${WINDOWNAME}" ]]
+    then
+        WINDOWNAME="FreeRDP"
+    elif [[ "${WINDOWNAME}" != "freerdp" && "${WINDOWNAME}" != "tightvnc" ]]
+    then
+        print_status "error" "Invalid window name specified. Allowed values: 'freerdp', or 'tightvnc'."
+        exit 1
+    fi
+
+    # Select graphical remote program to match the window name
+    if [[ "${WINDOWNAME}" == "freerdp" ]]
+    then
+        WINDOWNAME="FreeRDP"
+    elif [[ "${WINDOWNAME}" == "tightvnc" ]]
+    then
+        WINDOWNAME="TightVNC"
+    fi
+
+    if [[ ! -f "${COMMAND}" && -n "${COMMAND}" ]]
+    then
+        # When input is string and not a file. It executes command
+        if [[ -z "${METHOD}" ]]
+        then
+            METHOD="none"
+        fi
+        Execute "${COMMAND}" "${METHOD}"
+    elif [[ -f "${COMMAND}" ]]
+    then
+        # Check if a file is passed as input then execute commands
+        Automate "${COMMAND}"
+    fi
+
+    # When the input for selecting an operating system is empty
+    # it'll choose "windows" as default.
+    if [[ -z "${PLATFORM}" ]]
+    then
+        PLATFORM="windows"
+    elif [[ "${PLATFORM}" != "windows" && "${PLATFORM}" != "linux" ]]
+    then
+        print_status "error" "Invalid or operating system not supported. Allowed values: 'windows' or 'linux'."
+        exit 1
+    fi
+
+    if [[ -f "${INPUT}" && -n "${OUTPUT}" ]]
+    then
+        Upload "${INPUT}" "${OUTPUT}" "${PLATFORM}" "${METHOD}" "${ACTION}" "${EVASION}"
+    elif [[ "${METHOD}" == "elevate" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
+    then
+        Elevate "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
+    elif [[ "${METHOD}" == "persistence" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
+    then
+        Persistence "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
+    elif [[ "${METHOD}" == "antiforensics" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
+    then
+        AntiForensics "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
+    elif [[ "${METHOD}" == "mayhem" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
+    then
+        Mayhem "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
+    fi
+}
+
+main "${@}"
