@@ -213,8 +213,8 @@ function Base64() {
     local platform="${3}"
     local mode="${4}"
 
-    local file_format=$(file --mime-encoding "${input}")
-    local file_type=${file_format##*: }
+    local file_charset=$(file --mime-encoding "${input}")
+    local file_type=${file_charset##*: }
     local data
     local chunks=100
 
@@ -437,8 +437,8 @@ function PowershellOutFile() {
     local platform="${3}"
     local mode="${4}"
 
-    local file_format=$(file --mime-encoding "${input}")
-    local file_type=${file_format##*: }
+    local file_charset=$(file --mime-encoding "${input}")
+    local file_type=${file_charset##*: }
     local data
     local chunks=100
     local hexadecimal=()
@@ -575,8 +575,8 @@ function CopyCon() {
     local platform="${3}"
     local mode="${4}"
 
-    local file_format=$(file --mime-encoding "${input}")
-    local file_type=${file_format##*: }
+    local file_charset=$(file --mime-encoding "${input}")
+    local file_type=${file_charset##*: }
     local lines=$(CountLines "${input}")
     local data
     local chunks
