@@ -110,7 +110,9 @@ $ xfreerdp /kbd:US /clipboard /compression /dynamic-resolution /sec:rdp [/d:"<do
 - To remotely authenticate a VNC machine.
 
 ```
-$ vncviewer -passwd password.txt <IP>::<PORT>
+$ remmina -c vnc://<username>:<password>@<IP>
+
+$ remmina -c vnc://<IP>?VncUsername=<username>\&VncPassword=<password>
 ```
 
 ### 0x01 - Internal Reconnaissance
