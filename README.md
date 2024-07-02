@@ -27,10 +27,28 @@ For Debian-based distros.
 $ sudo apt install -y xfreerdp-x11 remmina xdotool
 ```
 
+For RedHat-based distros.
+
+```
+$ sudo dnf install xdotool freerdp remmina
+```
+
 For Arch-based distros.
 
 ```
 $ sudo pacman -S freerdp remmina xdotool
+```
+
+For Gentoo-based distros.
+
+```
+$ sudo emerge freerdp remmina xdotool
+```
+
+For NixOS-based distros.
+
+```
+$ sudo nix-env -iA nixpkgs.xdotool nixpkgs.xfreerdp nixpkgs.remmina
 ```
 
 ### Setup
