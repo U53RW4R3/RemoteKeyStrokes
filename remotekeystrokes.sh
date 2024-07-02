@@ -1140,15 +1140,15 @@ Usage:
 Flags:
 
 COMMON OPTIONS:
-    -c, --command <command | file>      Specify a command or a file contains commands 
+    -c, --command <command | file>      Specify a command or a file contains commands
                                         to execute
 
     -p, --platform <operating_system>   Specify the operating system ("windows" is
                                         set by default if not specified)
 
     -w, --windowname <name>             Specify the window name to focus on the
-    									active window ("freerdp" is set by default
-    									if not specified)
+					active window ("freerdp" is set by default
+					if not specified)
 
     -h, --help                          Display this help message
 
