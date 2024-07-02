@@ -49,7 +49,7 @@ function check_dependencies() {
     fi
 }
 
-function FindWindow() {
+function GetWindowSyncID() {
     local windowname="${1}"
     local sync_id=$(xdotool search --name "${windowname}" getwindowfocus getactivewindow)
 
@@ -1237,10 +1237,10 @@ function main() {
     done
 
 	# If window name isn't specified it'll set to FreeRDP as default and checks if the program exists.
-    if [[ (-z "${WINDOWNAME}" || "${WINDOWNAME}" == "freerdp") && -n $(FindWindow "${WINDOWNAME}") ]]
+    if [[ (-z "${WINDOWNAME}" || "${WINDOWNAME}" == "freerdp") && -n $(GetWindowSyncID "${WINDOWNAME}") ]]
     then
         WINDOWNAME="FreeRDP"
-    elif [[ (-n "${WINDOWNAME}" && "${WINDOWNAME}" != "freerdp") && -n $(FindWindow "${WINDOWNAME}") ]]
+    elif [[ (-n "${WINDOWNAME}" && "${WINDOWNAME}" != "freerdp") && -n $(GetWindowSyncID "${WINDOWNAME}") ]]
     then
 		WINDOWNAME="${WINDOWNAME}"
     else
