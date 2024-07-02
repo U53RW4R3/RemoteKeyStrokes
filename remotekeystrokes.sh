@@ -33,7 +33,7 @@ function check_display_server() {
 	fi
 }
 
-# TODO: Add check for xfreerdp-x11 and xtightvncviewer. Also do some checks with supported package managers.
+# TODO: Add check for xfreerdp-x11 and remmina. Also do some checks with supported package managers.
 
 function check_dependencies() {
     if ! which xdotool &>/dev/null
@@ -47,6 +47,13 @@ function check_dependencies() {
         fi
         exit 1
     fi
+}
+
+function FindWindow() {
+    local windowname="${1}"
+    local sync_id=$(xdotool search --name "${windowname}" getwindowfocus getactivewindow)
+
+    echo "${sync_id}"
 }
 
 function Keyboard() {
@@ -212,15 +219,12 @@ function Base64() {
     local output_file="${2}"
     local platform="${3}"
     local mode="${4}"
-
     local file_charset=$(file --mime-encoding "${input}")
     local file_type=${file_charset##*: }
     local data
     local chunks=100
-
-    local random_1=$(RandomString)
-    local random_2=$(RandomString)
-    local random_3=$(RandomString)
+    local random_var_one=$(RandomString)
+    local random_var_two=$(RandomString)
 
     # TODO: Implement encryption method through base64 with -e,--evasion flag
     # $ rks -i file -o output -m pwshb64 -e compression
@@ -234,12 +238,11 @@ function Base64() {
     # Check if input is passed as file
     if [[ -f "${input}" && ("${platform}" == "windows" || "${platform}" == "linux") && "${mode}" == "powershell" ]]
     then
-        if [[ "${file_type}" == "us-ascii" ]]
+        if [[ "${file_type}" == "binary" ]]
         then
+        	data=$(basenc -w 0 --base64 "${input}")
+        else
             data=$(iconv -f ASCII -t UTF-16LE "${input}" | basenc -w 0 --base64)
-        elif [[ "${file_type}" == "binary" ]]
-        then
-            data=$(basenc -w 0 --base64 "${input}")
         fi
 
         print_status "progress" "Transferring file..."
@@ -248,14 +251,14 @@ function Base64() {
         do
             if [[ ${i} -eq 0 ]]
             then
-                Keyboard "\$${random_1} = \"${data:i:chunks}\"" "return"
+                Keyboard "\$${random_var_one} = \"${data:i:chunks}\"" "return"
             else
-                Keyboard "\$${random_1} += \"${data:i:chunks}\"" "return"
+                Keyboard "\$${random_var_one} += \"${data:i:chunks}\"" "return"
             fi
         done
 
-        Keyboard "[byte[]]\$${random_2} = [Convert]::FromBase64String(\$${random_1})" "return"
-        Keyboard "[IO.File]::WriteAllBytes(\"${output_file}\", \$${random_2})" "return"
+        Keyboard "[byte[]]\$${random_var_two} = [Convert]::FromBase64String(\$${random_var_one})" "return"
+        Keyboard "[IO.File]::WriteAllBytes(\"${output_file}\", \$${random_var_two})" "return"
 
         print_status "completed" "File transferred!"
     elif [[ "${platform}" == "linux" && "${mode}" == "console" ]]
@@ -268,13 +271,13 @@ function Base64() {
         do
             if [[ ${i} -eq 0 ]]
             then
-                Keyboard "${random_1}=\"${data:i:chunks}\"" "return"
+                Keyboard "${random_var_one}=\"${data:i:chunks}\"" "return"
             else
-                Keyboard "${random_1}+=\"${data:i:chunks}\"" "return"
+                Keyboard "${random_var_one}+=\"${data:i:chunks}\"" "return"
             fi
         done
 
-        Keyboard "base64 -d <<< \$${random_1} > \"${output_file}\"" "return"
+        Keyboard "base64 -d <<< \$${random_var_one} > \"${output_file}\"" "return"
         print_status "completed" "File transferred!"
     fi
 }
@@ -284,6 +287,9 @@ function Base32() {
     local output_file="${2}"
     local platform="${3}"
     local mode="${4}"
+    local data
+    local chunks=100
+    local random_var=$(RandomString)
 
     # TODO: Implement this feature
     # $ basenc -w 0 --base32 file.txt
@@ -299,13 +305,10 @@ function Base16() {
     local output_file="${2}"
     local platform="${3}"
     local mode="${4}"
-
     local data
     local chunks=100
-
-    local random_1=$(RandomString)
-
-    local random_temp=$(RandomString)
+    local random_var=$(RandomString)
+    local random_temp_file=$(RandomString)
     local directory_path=$(DirectoryName "${output_file}")
 
     if [[ "${platform}" != "windows" && "${platform}" != "linux" ]]
@@ -333,7 +336,7 @@ function Base16() {
             fi
         done
 
-            Keyboard "[IO.File]::WriteAllBytes(\"${output_file}\", (\$${random_1} -split '(.{2})' | Where-Object { \$_ -ne '' } | ForEach-Object { [Convert]::ToByte(\$_, 16) }))" "return"
+            Keyboard "[IO.File]::WriteAllBytes(\"${output_file}\", (\$${random_var} -split '(.{2})' | Where-Object { \$_ -ne '' } | ForEach-Object { [Convert]::ToByte(\$_, 16) }))" "return"
         elif [[ "${mode}" == "certutil" ]]
         then
             if [[ "${platform}" != "windows" ]]
@@ -346,7 +349,7 @@ function Base16() {
             
             # TODO: Make an if statement of limited characters or lines using batch variable via command prompt
             
-			if [[ ${#data} -gt 0000 ]]
+			if [[ ${#data} -gt 0 ]]
 			then
 				echo "not implemented"
 			fi
@@ -358,14 +361,14 @@ function Base16() {
 			do
 			    if [[ ${i} -eq 0 ]]
 			    then
-			        Keyboard "set ${random_1}=${data:i:chunks}" "return"
+			        Keyboard "set ${random_var}=${data:i:chunks}" "return"
 			    else
-			        Keyboard "set ${random_1}=%${random_1}%${data:i:chunks}" "return"
+			        Keyboard "set ${random_var}=%${random_var}%${data:i:chunks}" "return"
 			    fi
 			done
-			Keyboard "echo %${random_1}% > \"${directory_path}\\${random_temp}.hex\"" "return"
-			Keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp}.hex\" \"${output_file}\" 12" "return"
-			Keyboard "del /f \"${directory_path}\\${random_temp}.hex\"" "return"
+			Keyboard "echo %${random_var}% > \"${directory_path}\\${random_temp_file}.hex\"" "return"
+			Keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 12" "return"
+			Keyboard "del /f \"${directory_path}\\${random_temp_file}.hex\"" "return"
     	elif [[ "${mode}" == "console" ]]
     	then
             print_status "progress" "Transferring file..."
@@ -381,14 +384,14 @@ function Base16() {
             do
                 if [[ ${i} -eq 0 ]]
                 then
-                    Keyboard "${random_1}=\"${temp:i:chunks}\"" "return"
+                    Keyboard "${random_var}=\"${temp:i:chunks}\"" "return"
                 else
-                    Keyboard "${random_1}+=\"${temp:i:chunks}\"" "return"
+                    Keyboard "${random_var}+=\"${temp:i:chunks}\"" "return"
                 fi
             done
 
 			# Interpret the backslash to output into a file.
-            Keyboard "echo -en \$${random_1} > \"${output_file}\"" "return"
+            Keyboard "echo -en \$${random_var} > \"${output_file}\"" "return"
     	fi
         print_status "completed" "File transferred!"
     fi
@@ -401,6 +404,9 @@ function Base2() {
     local output_file="${2}"
     local platform="${3}"
     local mode="${4}"
+    local data
+    local chunks=100
+    local random_var=$(RandomString)
 
     # TODO: Implement this feature
     # $ basenc -w 0 --base2msbf file.txt
@@ -413,6 +419,9 @@ function Base10() {
     local output_file="${2}"
     local platform="${3}"
     local mode="${4}"
+    local data
+    local chunks=100
+    local random_var=$(RandomString)
 
     # TODO: Implement this feature
     # $ printf
@@ -425,6 +434,9 @@ function Base8() {
     local output_file="${2}"
     local platform="${3}"
     local mode="${4}"
+    local data
+    local chunks=100
+    local random_var=$(RandomString)
 
     # TODO: Implement this feature
     # $ od -A n -t o1 -v file.txt | tr -d "[:space:]"
@@ -436,15 +448,13 @@ function PowershellOutFile() {
     local output_file="${2}"
     local platform="${3}"
     local mode="${4}"
-
     local file_charset=$(file --mime-encoding "${input}")
     local file_type=${file_charset##*: }
     local data
     local chunks=100
     local hexadecimal=()
     local counter
-
-    local random_temp=$(RandomString)
+    local random_temp_file=$(RandomString)
     local directory_path=$(DirectoryName "${output_file}")
 
     if [[ "${platform}" != "windows" && "${platform}" != "linux" ]]
@@ -458,7 +468,7 @@ function PowershellOutFile() {
     then
         if [[ "${mode}" == "text" ]]
         then
-            if [[ "${file_type}" == "us-ascii" ]]
+            if [[ "${file_type}" != "binary" ]]
             then
                 print_status "progress" "Checking one of the lines reaches 3477 character limit"
                 while read -r line
@@ -516,8 +526,8 @@ function PowershellOutFile() {
 
             Keyboard "-----END CERTIFICATE-----" "escapechars"
             Keyboard "'@ | Out-File \"${directory_path}\\${random_temp}.txt\"" "escapechars"
-            Keyboard "CertUtil.exe -f -decode \"${directory_path}\\${random_temp}.txt\" ${output_file}" "return"
-            Keyboard "Remove-Item -Force \"${directory_path}\\${random_temp}.txt\"" "return"
+            Keyboard "CertUtil.exe -f -decode \"${directory_path}\\${random_temp_file}.txt\" ${output_file}" "return"
+            Keyboard "Remove-Item -Force \"${directory_path}\\${random_temp_file}.txt\"" "return"
         elif [[ "${mode}" == "hex" ]]
         then
             print_status "progress" "Transferring file..."
@@ -560,9 +570,9 @@ function PowershellOutFile() {
                     (( counter++ ))
                 fi
             done
-            Keyboard "'@ | Out-File \"${directory_path}\\${random_temp}.hex\"" "escapechars"
-			Keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp}.hex\" \"${output_file}\" 4" "return"
-			Keyboard "Remove-Item -Force \"${directory_path}\\${random_temp}.hex\"" "return"
+            Keyboard "'@ | Out-File \"${directory_path}\\${random_temp_file}.hex\"" "escapechars"
+			Keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 4" "return"
+			Keyboard "Remove-Item -Force \"${directory_path}\\${random_temp_file}.hex\"" "return"
         fi
     fi
 
@@ -574,7 +584,6 @@ function CopyCon() {
     local output_file="${2}"
     local platform="${3}"
     local mode="${4}"
-
     local file_charset=$(file --mime-encoding "${input}")
     local file_type=${file_charset##*: }
     local lines=$(CountLines "${input}")
@@ -582,8 +591,7 @@ function CopyCon() {
     local chunks
     local hexadecimal=()
     local counter
-
-    local random_temp=$(RandomString)
+    local random_temp_file=$(RandomString)
     local directory_path=$(DirectoryName "${output_file}")
 
     if [[ "${platform}" != "windows" ]]
@@ -626,16 +634,15 @@ function CopyCon() {
     then
         chunks=64
 
-        if [[ "${file_type}" == "us-ascii" ]]
-        then
-            data=$(iconv -f ASCII -t UTF-16LE "${input}" | basenc -w 0 --base64)
-        elif [[ "${file_type}" == "binary" ]]
+        if [[ "${file_type}" == "binary" ]]
         then
             data=$(basenc -w 0 --base64 "${input}")
+        else
+        	data=$(iconv -f ASCII -t UTF-16LE "${input}" | basenc -w 0 --base64)
         fi
 
         print_status "progress" "Transferring file..."
-        Keyboard "copy con \"${directory_path}\\${random_temp}.txt\"" "return"
+        Keyboard "copy con \"${directory_path}\\${random_temp_file}.txt\"" "return"
         Keyboard "-----BEGIN CERTIFICATE-----" "escapechars"
 
         for (( i=0; i<${#data}; i+=chunks ))
@@ -649,8 +656,8 @@ function CopyCon() {
         done
 
         Keyboard "-----END CERTIFICATE-----" "copycon"
-        Keyboard "CertUtil.exe -f -decode \"${directory_path}\\${random_temp}.txt\" ${output_file}" "return"
-        Keyboard "del /f \"${directory_path}\\${random_temp}.txt\"" "return"
+        Keyboard "CertUtil.exe -f -decode \"${directory_path}\\${random_temp_file}.txt\" ${output_file}" "return"
+        Keyboard "del /f \"${directory_path}\\${random_temp_file}.txt\"" "return"
     elif [[ "${mode}" == "hex" ]]
     then
     	print_status "progress" "Transferring file..."
@@ -662,7 +669,7 @@ function CopyCon() {
         	hexadecimal+=("${data:i:2}")
         done
 
-        Keyboard "copy con \"${directory_path}\\${random_temp}.hex\"" "return"
+        Keyboard "copy con \"${directory_path}\\${random_temp_file}.hex\"" "return"
 
 		counter=0
 		for ((i=0; i<${#hexadecimal[@]}; i++))
@@ -694,8 +701,8 @@ function CopyCon() {
             fi
         done
 
-		Keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp}.hex\" \"${output_file}\" 4" "return"
-		Keyboard "del /f \"${directory_path}\\${random_temp}.hex\"" "return"
+		Keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 4" "return"
+		Keyboard "del /f \"${directory_path}\\${random_temp_file}.hex\"" "return"
     fi
 
     print_status "completed" "File transferred!"
@@ -1125,7 +1132,6 @@ function Mayhem() {
     echo "not implemented"
 }
 
-# TODO: Add more flags once it's fully implemented
 function usage() {
     read -d '' usage << EndOfText
 Usage:
@@ -1140,9 +1146,9 @@ COMMON OPTIONS:
     -p, --platform <operating_system>   Specify the operating system ("windows" is
                                         set by default if not specified)
 
-    -w, --windowname <name>             Specify the window name for graphical remote
-                                        program ("freerdp" is set by default if not
-                                        specified)
+    -w, --windowname <name>             Specify the window name to focus on the
+    									active window ("freerdp" is set by default
+    									if not specified)
 
     -h, --help                          Display this help message
 
@@ -1230,22 +1236,16 @@ function main() {
         esac
     done
 
-    if [[ -z "${WINDOWNAME}" ]]
+	# If window name isn't specified it'll set to FreeRDP as default and checks if the program exists.
+    if [[ (-z "${WINDOWNAME}" || "${WINDOWNAME}" == "freerdp") && -n $(FindWindow "${WINDOWNAME}") ]]
     then
         WINDOWNAME="FreeRDP"
-    elif [[ "${WINDOWNAME}" != "freerdp" && "${WINDOWNAME}" != "tightvnc" ]]
+    elif [[ (-n "${WINDOWNAME}" && "${WINDOWNAME}" != "freerdp") && -n $(FindWindow "${WINDOWNAME}") ]]
     then
-        print_status "error" "Invalid window name specified. Allowed values: 'freerdp', or 'tightvnc'."
+		WINDOWNAME="${WINDOWNAME}"
+    else
+        print_status "error" "Application name is absent or invalid window name."
         exit 1
-    fi
-
-    # Select graphical remote program to match the window name
-    if [[ "${WINDOWNAME}" == "freerdp" ]]
-    then
-        WINDOWNAME="FreeRDP"
-    elif [[ "${WINDOWNAME}" == "tightvnc" ]]
-    then
-        WINDOWNAME="TightVNC"
     fi
 
     if [[ ! -f "${COMMAND}" && -n "${COMMAND}" ]]

