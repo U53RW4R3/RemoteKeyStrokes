@@ -111,8 +111,6 @@ $ xfreerdp /kbd:US /clipboard /compression /dynamic-resolution /sec:rdp [/d:"<do
 
 ```
 $ remmina -c vnc://<username>:<password>@<IP>
-
-$ remmina -c vnc://<IP>?VncUsername=<username>\&VncPassword=<password>
 ```
 
 ### 0x01 - Internal Reconnaissance
