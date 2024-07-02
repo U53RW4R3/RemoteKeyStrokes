@@ -282,7 +282,7 @@ There are 11 file transfer methods in total.
 |   `pwshhex`    | Windows and Linux | Encodes the file into hexadecimal then decodes it with powershell. |
 |    `cmdhex`    |      Windows      | Outputting a hex encoded one liner in a variable then decodes it with `CertUtil.exe`. |
 |  `copyconhex`  |      Windows      | Uses `copy con` to output the encoded hexdump file's content then decodes it with `CertUtil.exe`. |
-|   `nixhex`     |       Unix        | Outputting a hex encoded one liner in a variable then decodes with with `echo -e` to interpret the `\x` sequence character.|
+|   `nixhex`     |       Unix        | Outputting a hex encoded one liner in a variable then decodes with with `echo -e` to interpret the `\x` sequence character. This is suitable when dealing with Telnet servers.|
 |  `outfilehex`  |      Windows      | Uses `Out-File` cmdlet to output the encoded hexdump file's content then decodes it with `CertUtil.exe`. |
 
 Upload a file remotely when pivoting in a isolated network. If you want to specify the remote path on windows be sure to include quotes. By default it uses Powershell base64 to transfer files if not specified. This also includes droppers even if the size is large. Bear in mind it'll take time to complete the file transfer.
@@ -442,7 +442,7 @@ If you're targeting VNC, Telnet, or other network protocols you can specify the 
 $ rks -c implant.ps1 -w <window_name>
 ```
 
-### 0x09 - FAQ
+### 0x09 - FAQ (Frequent Asked Questions)
 
 #### What made me start this project?
 
@@ -450,7 +450,7 @@ It is painfully slow when I manually type with my keyboard or navigate and click
 
 #### Is it strictly only for graphical remote desktops (i.e. RDP, VNC, etc)?
 
-Not necessarily. More features can be added for remote terminals (i.e. SSH, Telnet, etc). I haven't figured how to implement it for Telnet since it lacks it's own way to transfer file. You can help out to improve it.
+Not necessarily. I made it possible for remote terminals such as, Telnet since it lacks it's a feature to transfer files.
 
 #### Can I use the techniques for my project or other tradecraft for my own arsenal?
 
