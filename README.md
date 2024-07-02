@@ -59,7 +59,7 @@ COMMON OPTIONS:
     -p, --platform <operating_system>   Specify the operating system ("windows" is
                                         set by default if not specified)
 
-    -w, --windowname <name>             Specify the window name to focus on the
+    -w, --windowname <window_name>      Specify the window name to focus on the
                                         active window ("freerdp" is set by default
                                         if not specified)
 
