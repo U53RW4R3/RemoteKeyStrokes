@@ -40,122 +40,24 @@ function check_elevated() {
     fi
 }
 
-function check_program() {
-    local program="${1}"
-    if [[ -z $(which "${program}") ]]
-    then
-        echo "${program}"
-    fi
-}
-
-function install_dependencies() {
-    local package_manager="${1}"
-    local package="${2}"
-
-    case "${package_manager}" in
-        apt)
-            apt install -y "${package}"
-            ;;
-        dnf)
-            dnf install "${package}"
-            ;;
-        pacman)
-            pacman -S "${package}"
-            ;;
-        emerge)
-            emerge "${package}"
-            ;;
-        nix-env)
-            nix-env -iA "${package}"
-            ;;
-        *)
-            print_status "error" "Unsupported package manager."
-            ;;
-    esac
-}
-
-function retrieve_dependencies() {
-    local package_manager="${1}"
-    declare -A packages
-
-    case "${package_manager}" in
-        apt)
-            packages["xdotool"]="xdotool"
-            packages["xfreerdp"]="freerdp2-x11"
-            packages["remmina"]="remmina"
-            ;;
-        dnf)
-            packages["xdotool"]="xdotool"
-            packages["xfreerdp"]="freerdp"
-            packages["remmina"]="remmina"
-            ;;
-        pacman)
-            packages["xdotool"]="xdotool"
-            packages["xfreerdp"]="freerdp"
-            packages["remmina"]="remmina"
-            ;;
-        emerge)
-            packages["xdotool"]="xdotool"
-            packages["xfreerdp"]="freerdp"
-            packages["remmina"]="remmina"
-            ;;
-        nix-env)
-            packages["xdotool"]="nixpkgs.xdotool"
-            packages["xfreerdp"]="nixpkgs.xfreerdp"
-            packages["remmina"]="nixpkgs.remmina"
-            ;;
-        *)
-            print_status "error" "Unsupported package manager."
-            ;;
-    esac
-
-    local missing_dependencies=()
+function check_dependencies() {
     local programs=("xdotool" "xfreerdp" "remmina")
+    local missing_dependencies=()
+
     for program in "${programs[@]}"
     do
-        if [[ -n $(check_program "${program}") ]]
+        if [[ -z $(which "${program}") ]]
         then
-            missing_dependencies+=("${packages[$program]}")
+            missing_dependencies+=("${program}")
         fi
     done
 
-    if [[ ${#missing_dependencies[@]} -eq 0 ]]
+    if [[ ${#missing_dependencies[@]} -ne 0 ]]
     then
-        print_status "information" "All required dependencies are already installed."
-    else
-        check_elevated
-
-        print_status "information" "Installing required dependencies..."
-        for dependency in "${missing_dependencies[@]}"
-        do
-            install_dependencies "${package_manager}" "${dependency}"
-        done
+        print_status "warning" "Required dependencies: ${missing_dependencies[@]}"
+        print_status "information" "Terminating program..."
+        exit 1
     fi
-}
-
-function check_dependencies() {
-    declare -A package_managers=(
-        ["apt"]="debian"
-        ["dnf"]="redhat"
-        ["pacman"]="arch"
-        ["emerge"]="gentoo"
-        ["nix-env"]="nixos"
-    )
-
-    for package_manager in "${!package_managers[@]}"
-    do
-        if [[ -n $(which "${package_manager}") ]]
-        then
-            local distro=${package_managers[${package_manager}]}
-            print_status "information" "OS Distribution: ${distro}"
-            retrieve_dependencies "${package_manager}"
-            return
-        fi
-    done
-
-    print_status "error" "Unsupported distribution."
-    print_status "information" "Terminating program..."
-    exit 1
 }
 
 function get_window_sync_id() {
@@ -323,7 +225,7 @@ function execute() {
     esac
 }
 
-function base64() {
+function base64_encoding_scheme() {
     local input="${1}"
     local output_file="${2}"
     local platform="${3}"
@@ -391,7 +293,7 @@ function base64() {
     fi
 }
 
-function base32() {
+function base32_radix() {
     local input="${1}"
     local output_file="${2}"
     local platform="${3}"
@@ -409,7 +311,7 @@ function base32() {
 }
 
 # Using hexadecimal to encode files
-function base16() {
+function base16_radix() {
     local input="${1}"
     local output_file="${2}"
     local platform="${3}"
@@ -508,7 +410,7 @@ function base16() {
 
 # Using binary digits of 0 and 1
 # to encode files with each 8 bits of size
-function base2() {
+function base2_radix() {
     local input="${1}"
     local output_file="${2}"
     local platform="${3}"
@@ -523,7 +425,7 @@ function base2() {
 }
 
 # Using decimals to encode files
-function base10() {
+function base10_radix() {
     local input="${1}"
     local output_file="${2}"
     local platform="${3}"
@@ -538,7 +440,7 @@ function base10() {
 }
 
 # Using octals to encode files
-function base8() {
+function base8_radix() {
     local input="${1}"
     local output_file="${2}"
     local platform="${3}"
@@ -832,13 +734,13 @@ function upload() {
 
     case "${method}" in
         "" | pwshb64)
-            base64 "${local_file}" "${remote_file}" "${platform}" "powershell" "${action}" "${evasion}"
+            base64_encoding_scheme "${local_file}" "${remote_file}" "${platform}" "powershell" "${action}" "${evasion}"
             ;;
         cmdb64)
             copy_con "${local_file}" "${remote_file}" "${platform}" "base64"
             ;;
         nixb64)
-            base64 "${local_file}" "${remote_file}" "${platform}" "console" "${action}"
+            base64_encoding_scheme "${local_file}" "${remote_file}" "${platform}" "console" "${action}"
             ;;
         outfile)
             powershell_outfile "${local_file}" "${remote_file}" "${platform}" "text"
@@ -850,16 +752,16 @@ function upload() {
             copy_con "${local_file}" "${remote_file}" "${platform}" "text"
             ;;
         pwshhex)
-            base16 "${local_file}" "${remote_file}" "${platform}" "powershell"
+            base16_radix "${local_file}" "${remote_file}" "${platform}" "powershell"
             ;;
         cmdhex)
-            base16 "${local_file}" "${remote_file}" "${platform}" "certutil"
+            base16_radix "${local_file}" "${remote_file}" "${platform}" "certutil"
             ;;
         copyconhex)
             copy_con "${local_file}" "${remote_file}" "${platform}" "hex"
             ;;
         nixhex)
-            base16 "${local_file}" "${remote_file}" "${platform}" "console"
+            base16_radix "${local_file}" "${remote_file}" "${platform}" "console"
             ;;
         outfilehex)
             powershell_outfile "${local_file}" "${remote_file}" "${platform}" "hex"
