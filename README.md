@@ -468,7 +468,7 @@ It is painfully slow when I manually type with my keyboard or navigate and click
 
 #### Is it strictly only for graphical remote desktops (i.e. RDP, VNC, etc)?
 
-Not necessarily. I made it possible for remote terminals such as, Telnet since it lacks it's a feature to transfer files.
+Not necessarily. I made it possible for remote consoles such as, Telnet since it lacks a feature to transfer files.
 
 #### Can I use the techniques for my project or other tradecraft for my own arsenal?
 
