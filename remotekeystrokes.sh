@@ -1234,7 +1234,7 @@ function main() {
                 shift 2
                 ;;
             -w | --windowname)
-                WINDOWNAME="${2,,}"
+                WINDOWNAME="${2}"
                 shift 2
                 ;;
             -h | --help)
@@ -1248,10 +1248,10 @@ function main() {
     done
 
 	# If window name isn't specified it'll set to FreeRDP as default and checks if the program exists.
-    if [[ (-z "${WINDOWNAME}" || "${WINDOWNAME}" == "freerdp") && -n $(get_window_sync_id "${WINDOWNAME}") ]]
+    if [[ (-z "${WINDOWNAME}" || "${WINDOWNAME,,}" == "freerdp") && -n $(get_window_sync_id "${WINDOWNAME}") ]]
     then
         WINDOWNAME="FreeRDP"
-    elif [[ (-n "${WINDOWNAME}" && "${WINDOWNAME}" != "freerdp") && -n $(get_window_sync_id "${WINDOWNAME}") ]]
+    elif [[ (-n "${WINDOWNAME}" && "${WINDOWNAME,,}" != "freerdp") && -n $(get_window_sync_id "${WINDOWNAME}") ]]
     then
 		WINDOWNAME="${WINDOWNAME}"
     else
