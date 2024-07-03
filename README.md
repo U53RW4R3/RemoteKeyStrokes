@@ -293,14 +293,14 @@ There are 11 file transfer methods in total.
 | -------------- | ----------------- | ----------- |
 |   `pwshb64`    | Windows and Linux | Encodes the file into base64 then decodes it with powershell. |
 |    `cmdb64`    |      Windows      | Uses `copy con` to output the encoded base64 file's content then decodes it with `CertUtil.exe`. |
-|    `nixb64`    |       Unix        | Decodes base64 content into a file with `base64`. |
+|    `nixb64`    |       Unix        | Decodes base64 content into a file. |
 |   `outfile`    | Windows and Linux | Uses `Out-File` cmdlet to output the text file. |
 |  `outfileb64`  |      Windows      | Uses `Out-File` cmdlet to output the encoded base64 file's content then decodes it with `CertUtil.exe`. |
 |   `copycon`    |      Windows      | Uses `copy con` command to output the text file. |
 |   `pwshhex`    | Windows and Linux | Encodes the file into hexadecimal then decodes it with powershell. |
 |    `cmdhex`    |      Windows      | Outputting a hex encoded one liner in a variable then decodes it with `CertUtil.exe`. |
 |  `copyconhex`  |      Windows      | Uses `copy con` to output the encoded hexdump file's content then decodes it with `CertUtil.exe`. |
-|   `nixhex`     |       Unix        | Outputting a hex encoded one liner in a variable then decodes with with `echo -e` to interpret the `\x` sequence character. This is suitable when dealing with Telnet servers.|
+|   `nixhex`     |       Unix        | Outputting a hex encoded one liner in a variable then decodes with with `echo -e` to interpret the `\x` sequence character. This is suitable when dealing with IoT devices especially when Telnet lacks a feature to transfer files.|
 |  `outfilehex`  |      Windows      | Uses `Out-File` cmdlet to output the encoded hexdump file's content then decodes it with `CertUtil.exe`. |
 
 Upload a file remotely when pivoting in a isolated network. If you want to specify the remote path on windows be sure to include quotes. By default it uses Powershell base64 to transfer files if not specified. This also includes droppers even if the size is large. Bear in mind it'll take time to complete the file transfer.
