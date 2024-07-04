@@ -111,7 +111,7 @@ function keyboard() {
             "custom_keystroke")
                 wlrctl
                 ;;
-	    esac
+        esac
 	fi
 }
 
@@ -199,9 +199,9 @@ function automate() {
     # If there are zero new lines just read the remaining file's contents.
     if [[ ${lines} -eq 0 ]]
     then
-		read contents < "${file}"
-		keyboard "${contents}" "escape_keystrokes"
-		keyboard "Return" "custom_keystroke"
+        read contents < "${file}"
+        keyboard "${contents}" "escape_keystrokes"
+        keyboard "Return" "custom_keystroke"
     else
         while read -r line
         do
@@ -246,7 +246,7 @@ function execute() {
         *)
             print_status "error" "Invalid Execution Type!" >&2
             print_status "information" "Available methods are: none, and dialogbox"
-			print_status "information" "Terminating program..."
+            print_status "information" "Terminating program..."
             exit 1
             ;;
     esac
@@ -278,7 +278,7 @@ function base64_encoding_scheme() {
     then
         if [[ "${file_type}" == "binary" ]]
         then
-        	data=$(basenc -w 0 --base64 "${input}")
+            data=$(basenc -w 0 --base64 "${input}")
         else
             data=$(iconv -f ASCII -t UTF-16LE "${input}" | basenc -w 0 --base64)
         fi
@@ -396,10 +396,10 @@ function base16_radix() {
             fi
 
             # TODO: Make an if statement of limited characters or lines using batch variable via command prompt
-			if [[ ${#data} -gt 0 ]]
-			then
-				echo "not implemented"
-			fi
+            if [[ ${#data} -gt 0 ]]
+            then
+                echo "not implemented"
+            fi
 
             print_status "progress" "Transferring file..."
 
