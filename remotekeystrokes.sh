@@ -687,7 +687,7 @@ function copy_con() {
         done < "${input}"
 
         print_status "progress" "Transferring file..."
-        keyboard "copy con ${output_file}" "keystrokes"
+        keyboard "copy con /y ${output_file}" "keystrokes"
         keyboard "Return" "custom_keystroke"
 
         counter=1
@@ -716,7 +716,7 @@ function copy_con() {
         fi
 
         print_status "progress" "Transferring file..."
-        keyboard "copy con \"${directory_path}\\${random_temp_file}.txt\"" "keystrokes"
+        keyboard "copy con /y \"${directory_path}\\${random_temp_file}.txt\"" "keystrokes"
         keyboard "Return" "custom_keystroke"
         keyboard "-----BEGIN CERTIFICATE-----" "escape_keystrokes"
         keyboard "Return" "custom_keystroke"
@@ -751,7 +751,7 @@ function copy_con() {
         	hexadecimal+=("${data:i:2}")
         done
 
-        keyboard "copy con \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
+        keyboard "copy con /y \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
         keyboard "Return" "custom_keystroke"
 
         counter=0
