@@ -34,15 +34,16 @@ function check_elevated() {
 function check_dependencies() {
     local programs=("xfreerdp" "remmina")
     local missing_dependencies=()
-
-	case "${XDG_SESSION_TYPE}" in
-        "x11")
-			programs+=("xdotool")
-		    ;;
-		"wayland")
-			programs+=("wlrctl")
-			;;
-	esac
+    
+    if [[ "${XDG_SESSION_TYPE}" == "x11" ]]
+    then
+	    programs+=("xdotool")
+	    programs+=("xfreerdp")
+    elif [[ "${XDG_SESSION_TYPE}" == "wayland" ]]
+    then
+		programs+=("wlrctl")
+		programs+=("wlfreerdp")
+    fi
 
     for program in "${programs[@]}"
     do

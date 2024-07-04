@@ -21,6 +21,8 @@ All credits goes to [nopernik](https://github.com/nopernik) for making it possib
 
 ### Dependencies
 
+#### Requirements for X11
+
 For Debian-based distros.
 
 ```
@@ -30,7 +32,7 @@ $ sudo apt install -y xfreerdp-x11 remmina xdotool
 For RedHat-based distros.
 
 ```
-$ sudo dnf install xdotool freerdp remmina
+$ sudo dnf install xdotool freerdp-2 remmina
 ```
 
 For Arch-based distros.
@@ -48,7 +50,46 @@ $ sudo emerge freerdp remmina xdotool
 For NixOS-based distros.
 
 ```
-$ sudo nix-env -iA nixpkgs.xdotool nixpkgs.xfreerdp nixpkgs.remmina
+$ sudo nix-env -iA nixpkgs.xdotool nixpkgs.freerdp nixpkgs.remmina
+```
+
+#### Requirements for Wayland
+
+For Debian-based distros.
+
+```
+$ sudo apt install -y freerdp2-wayland remmina
+```
+
+For RedHat-based distros.
+
+```
+$ sudo dnf install freerdp-2 remmina
+```
+
+For Arch-based distros.
+
+```
+$ sudo pacman -S freerdp remmina && yay -S wlrctl
+```
+
+For Gentoo-based distros.
+
+```
+$ sudo emerge freerdp remmina xdotool
+```
+
+For NixOS-based distros.
+
+```
+$ sudo nix-env -iA nixpkgs.freerdp nixpkgs.remmina
+```
+
+Clone the source repository then compile `wlrctl` to install the system. Skip this step if you're using any Arch-based distros.
+
+```
+$ git clone https://git.sr.ht/~brocellous/wlrctl && cd wlrctl \
+meson setup --prefix=/usr/local build && sudo ninja -C build install
 ```
 
 ### Setup
