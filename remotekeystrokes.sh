@@ -22,15 +22,6 @@ function print_status() {
     echo -e "${color} ${message}"
 }
 
-function check_display_server() {
-	if [[ "${XDG_SESSION_TYPE}" != "x11" ]]
-	then
-		print_status "error" "Only X11 is officially supported due to limitations of wayland software."
-		print_status "information" "Terminating program..."
-		exit 1
-	fi
-}
-
 function check_elevated() {
     if [[ ${EUID} -ne 0 ]]
     then
@@ -41,8 +32,17 @@ function check_elevated() {
 }
 
 function check_dependencies() {
-    local programs=("xdotool" "xfreerdp" "remmina")
+    local programs=("xfreerdp" "remmina")
     local missing_dependencies=()
+    
+	case "${XDG_SESSION_TYPE}" in
+		"x11")
+			programs+=("xdotool")
+		    ;;
+		"wayland")
+			programs+=("wlrctl")
+			;;
+	esac
 
     for program in "${programs[@]}"
     do
@@ -62,7 +62,17 @@ function check_dependencies() {
 
 function get_window_sync_id() {
     local windowname="${1}"
-    local sync_id=$(xdotool search --name "${windowname}" getwindowfocus getactivewindow)
+    local sync_id
+    
+	if [[ "${XDG_SESSION_TYPE}" == "x11" ]]
+	then
+		sync_id=$(xdotool search --name "${windowname}" getwindowfocus getactivewindow)
+	elif [[ "${XDG_SESSION_TYPE}" == "wayland" ]]
+	then
+		print_status "error" "Not implemented!"
+		print_status "information" "Terminating program..."
+		exit 1
+	fi
 
     echo "${sync_id}"
 }
@@ -71,25 +81,52 @@ function keyboard() {
     local input="${1}"
     local key="${2}"
 
-    if [[ "${key}" == "return" ]]
-    then
-        xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type "${input}"
-        xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key Return
-    elif [[ "${key}" == "escapechars" ]]
-    then
-        xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type -- "${input}"
-        xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key Return
-    elif [[ "${key}" == "copycon" ]]
-    then
-        xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type -- "${input}"
-        xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key Ctrl+Z Return
-    elif [[ "${key}" == "customkey" ]]
-    then
-        xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key "${input}"
-    elif [[ "${key}" == "noreturn" ]]
-    then
-    	xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type -- "${input}"
-    fi
+	if [[ "${XDG_SESSION_TYPE}" == "x11" ]]
+	then
+		case "${key}" in
+	        "return")
+				xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type "${input}"
+				xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key Return
+	            ;;
+	        "escapechars")
+    		    xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type -- "${input}"
+	    		xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key Return
+	        	;;
+	        "copycon")
+				xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type -- "${input}"
+				xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key Ctrl+Z Return
+	        	;;
+	        "customkey")
+	    		xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key "${input}"
+	        	;;
+	        "noreturn")
+				xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type -- "${input}"
+	        	;;
+    	esac
+	elif [[ "${XDG_SESSION_TYPE}" == "wayland" ]]
+	then
+		print_status "error" "Not implemented!"
+		print_status "information" "Terminating program..."
+		exit 1
+
+		case "${key}" in
+	        "return")
+	        	wlrctl
+	            ;;
+	        "escapechars")
+	        	wlrctl
+	        	;;
+	        "copycon")
+	        	wlrctl
+	        	;;
+	        "customkey")
+	    		wlrctl
+	        	;;
+	        "noreturn")
+				wlrctl
+	        	;;
+	    esac
+	fi
 }
 
 function randomize_string() {
@@ -176,8 +213,8 @@ function automate() {
     # If there are zero new lines just read the remaining file's contents.
     if [[ ${lines} -eq 0 ]]
     then
-	read contents < "${file}"
-	keyboard "${contents}" "escapechars"
+		read contents < "${file}"
+		keyboard "${contents}" "escapechars"
     else
         while read -r line
         do
@@ -1190,7 +1227,6 @@ EndOfText
 }
 
 function main() {
-    check_display_server
     check_dependencies
 
     if [[ ${#} -eq 0 ]]
@@ -1303,3 +1339,4 @@ function main() {
 }
 
 main "${@}"
+
