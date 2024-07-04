@@ -1323,15 +1323,20 @@ function main() {
         esac
     done
 
-	# If window name isn't specified it'll set to FreeRDP as default and checks if the program exists.
-    if [[ (-z "${WINDOWNAME}" || "${WINDOWNAME,,}" == "freerdp") && -n $(get_window_name "${WINDOWNAME}") ]]
+	# If window name isn't specified it'll set to FreeRDP as default.
+    if [[ (-z "${WINDOWNAME}" || "${WINDOWNAME,,}" == "freerdp") ]]
     then
         WINDOWNAME="FreeRDP"
-    elif [[ (-n "${WINDOWNAME}" && "${WINDOWNAME,,}" != "freerdp") && -n $(get_window_name "${WINDOWNAME}") ]]
+    elif [[ (-n "${WINDOWNAME}" && "${WINDOWNAME,,}" != "freerdp") ]]
     then
 		WINDOWNAME="${WINDOWNAME}"
-    else
+    fi
+
+    # Checks if the program exists.
+    if [[ -z $(get_window_name "${WINDOWNAME}") ]]
+    then
         print_status "error" "Application name is absent or invalid window name."
+        print_status "information" "Terminating program..."
         exit 1
     fi
 
