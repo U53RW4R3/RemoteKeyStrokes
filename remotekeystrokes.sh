@@ -32,17 +32,17 @@ function check_elevated() {
 }
 
 function check_dependencies() {
-    local programs=("xfreerdp" "remmina")
+    local programs=("remmina")
     local missing_dependencies=()
-    
+
     if [[ "${XDG_SESSION_TYPE}" == "x11" ]]
     then
-	    programs+=("xdotool")
-	    programs+=("xfreerdp")
+        programs+=("xdotool")
+        programs+=("xfreerdp")
     elif [[ "${XDG_SESSION_TYPE}" == "wayland" ]]
     then
-		programs+=("wlrctl")
-		programs+=("wlfreerdp")
+        programs+=("wlrctl")
+        programs+=("wlfreerdp")
     fi
 
     for program in "${programs[@]}"
@@ -65,15 +65,15 @@ function get_window_sync_id() {
     local windowname="${1}"
     local sync_id
 
-	if [[ "${XDG_SESSION_TYPE}" == "x11" ]]
-	then
-		sync_id=$(xdotool search --name "${windowname}" getwindowfocus getactivewindow)
-	elif [[ "${XDG_SESSION_TYPE}" == "wayland" ]]
-	then
-		print_status "error" "Not implemented!"
-		print_status "information" "Terminating program..."
-		exit 1
-	fi
+    if [[ "${XDG_SESSION_TYPE}" == "x11" ]]
+    then
+        sync_id=$(xdotool search --name "${windowname}" getwindowfocus getactivewindow)
+    elif [[ "${XDG_SESSION_TYPE}" == "wayland" ]]
+    then
+        print_status "error" "Not implemented!"
+        print_status "information" "Terminating program..."
+        exit 1
+    fi
 
     echo "${sync_id}"
 }
@@ -84,33 +84,33 @@ function keyboard() {
 
 	if [[ "${XDG_SESSION_TYPE}" == "x11" ]]
 	then
-		case "${key}" in
+        case "${key}" in
             "keystrokes")
                 xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type "${input}"
                 ;;
             "escape_keystrokes")
                 xdotool search --name "${WINDOWNAME}" windowfocus windowactivate type -- "${input}"
                 ;;
-	        "custom_keystroke")
-	    		xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key "${input}"
-	        	;;
-    	esac
+            "custom_keystroke")
+                xdotool search --name "${WINDOWNAME}" windowfocus windowactivate key "${input}"
+                ;;
+        esac
 	elif [[ "${XDG_SESSION_TYPE}" == "wayland" ]]
 	then
-		print_status "error" "Not implemented!"
-		print_status "information" "Terminating program..."
-		exit 1
+        print_status "error" "Not implemented!"
+        print_status "information" "Terminating program..."
+        exit 1
 
-		case "${key}" in
+        case "${key}" in
             "keystrokes")
                 wlrctl
                 ;;
             "escape_keystrokes")
                 wlrctl
                 ;;
-	        "custom_keystroke")
-	    		wlrctl
-	        	;;
+            "custom_keystroke")
+                wlrctl
+                ;;
 	    esac
 	fi
 }
@@ -394,9 +394,8 @@ function base16_radix() {
                 print_status "information" "Terminating program..."
                 exit 1
             fi
-            
+
             # TODO: Make an if statement of limited characters or lines using batch variable via command prompt
-            
 			if [[ ${#data} -gt 0 ]]
 			then
 				echo "not implemented"
@@ -405,21 +404,22 @@ function base16_radix() {
             print_status "progress" "Transferring file..."
 
             # Appends the hexadecimal data in a batch file
-        	for (( i=0; i<${#data}; i+=chunks ))
-			do
-			    if [[ ${i} -eq 0 ]]
-			    then
-			        keyboard "set ${random_var}=${data:i:chunks}" "keystrokes"
-			        keyboard "Return" "custom_keystroke"
-			    else
-			        keyboard "set ${random_var}=%${random_var}%${data:i:chunks}" "keystrokes"
-			        keyboard "Return" "custom_keystroke"
-			    fi
-			done
-			keyboard "echo %${random_var}% > \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
-			keyboard "Return" "custom_keystroke"
-			keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 12" "keystrokes"
-			keyboard "Return" "custom_keystroke"
+            for (( i=0; i<${#data}; i+=chunks ))
+            do
+                if [[ ${i} -eq 0 ]]
+                then
+                    keyboard "set ${random_var}=${data:i:chunks}" "keystrokes"
+                    keyboard "Return" "custom_keystroke"
+                else
+                    keyboard "set ${random_var}=%${random_var}%${data:i:chunks}" "keystrokes"
+                    keyboard "Return" "custom_keystroke"
+                fi
+            done
+
+            keyboard "echo %${random_var}% > \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
+            keyboard "Return" "custom_keystroke"
+            keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 12" "keystrokes"
+            keyboard "Return" "custom_keystroke"
 			keyboard "del /f \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
 			keyboard "Return" "custom_keystroke"
     	elif [[ "${mode}" == "console" ]]
@@ -522,40 +522,37 @@ function powershell_outfile() {
 
     if [[ -f "${input}" ]]
     then
-        if [[ "${mode}" == "text" ]]
+        if [[ "${mode}" == "text" && "${file_type}" != "binary" ]]
         then
-            if [[ "${file_type}" != "binary" ]]
-            then
-                print_status "progress" "Checking one of the lines reaches 3477 character limit"
-                while read -r line
-                do
-                    length=${#line}
-                    if [[ ${length} -ge 3477 ]]
-                    then
-                        print_status "error" "Character Limit reached!"
-                        print_status "information" "Use 'outfileb64' as a method instead."
-                        print_status "information" "Terminating program..."
-                        exit 1
-                    fi
-                done < "${input}"
+            print_status "progress" "Checking one of the lines reaches 3477 character limit"
+            while read -r line
+            do
+                length=${#line}
+                if [[ ${length} -ge 3477 ]]
+                then
+                    print_status "error" "Character Limit reached!"
+                    print_status "information" "Use 'outfileb64' as a method instead."
+                    print_status "information" "Terminating program..."
+                    exit 1
+                fi
+            done < "${input}"
 
-                print_status "progress" "Transferring file..."
-                keyboard "@'" "escape_keystrokes"
+            print_status "progress" "Transferring file..."
+            keyboard "@'" "escape_keystrokes"
+            keyboard "Return" "custom_keystroke"
+            while read -r line
+            do
+                keyboard "${line}" "keystrokes"
                 keyboard "Return" "custom_keystroke"
-                while read -r line
-                do
-                    keyboard "${line}" "keystrokes"
-                    keyboard "Return" "custom_keystroke"
-                done < "${input}"
+            done < "${input}"
 
-                keyboard "'@ | Out-File ${output_file}" "escape_keystrokes"
-                keyboard "Return" "custom_keystroke"
-            elif [[ "${file_type}" == "binary" ]]
-            then
-                print_status "warning" "This is a binary file! Switching to 'outfileb64' method instead..."
-                powershell_outfile "${input}" "${output_file}" "${platform}" "certutil"
-                exit 1
-            fi
+            keyboard "'@ | Out-File ${output_file}" "escape_keystrokes"
+            keyboard "Return" "custom_keystroke"
+        elif [[ "${mode}" == "text" && "${file_type}" == "binary" ]]
+        then
+            print_status "warning" "This is a binary file! Switching to 'outfileb64' method instead..."
+            powershell_outfile "${input}" "${output_file}" "${platform}" "certutil"
+            exit 1
         elif [[ "${mode}" == "base64" ]]
         then
             chunks=64
@@ -575,17 +572,17 @@ function powershell_outfile() {
             keyboard "-----BEGIN CERTIFICATE-----" "escape_keystrokes"
             keyboard "Return" "custom_keystroke"
 
-	        for (( i=0; i<${#data}; i+=chunks ))
-	        do
-	            if [[ ${i} -eq 0 ]]
-	            then
-	            	keyboard "${data:i:chunks}" "keystrokes"
-	            	keyboard "Return" "custom_keystroke"
-	            else
-	            	keyboard "${data:i:chunks}" "keystrokes"
-	            	keyboard "Return" "custom_keystroke"
-	            fi
-	        done
+            for (( i=0; i<${#data}; i+=chunks ))
+            do
+                if [[ ${i} -eq 0 ]]
+                then
+                    keyboard "${data:i:chunks}" "keystrokes"
+                    keyboard "Return" "custom_keystroke"
+                else
+                    keyboard "${data:i:chunks}" "keystrokes"
+                    keyboard "Return" "custom_keystroke"
+                fi
+            done
 
             keyboard "-----END CERTIFICATE-----" "escape_keystrokes"
             keyboard "Return" "custom_keystroke"
@@ -642,10 +639,10 @@ function powershell_outfile() {
             done
             keyboard "'@ | Out-File \"${directory_path}\\${random_temp_file}.hex\"" "escape_keystrokes"
             keyboard "Return" "custom_keystroke"
-			keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 4" "keystrokes"
-			keyboard "Return" "custom_keystroke"
-			keyboard "Remove-Item -Force \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
-			keyboard "Return" "custom_keystroke"
+            keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 4" "keystrokes"
+            keyboard "Return" "custom_keystroke"
+            keyboard "Remove-Item -Force \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
+            keyboard "Return" "custom_keystroke"
         fi
     fi
 
@@ -715,7 +712,7 @@ function copy_con() {
         then
             data=$(basenc -w 0 --base64 "${input}")
         else
-        	data=$(iconv -f ASCII -t UTF-16LE "${input}" | basenc -w 0 --base64)
+            data=$(iconv -f ASCII -t UTF-16LE "${input}" | basenc -w 0 --base64)
         fi
 
         print_status "progress" "Transferring file..."
@@ -757,9 +754,9 @@ function copy_con() {
         keyboard "copy con \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
         keyboard "Return" "custom_keystroke"
 
-		counter=0
-		for ((i=0; i<${#hexadecimal[@]}; i++))
-		do
+        counter=0
+        for ((i=0; i<${#hexadecimal[@]}; i++))
+        do
             if [[ ${counter} -eq 7 ]]
             then
                 keyboard "${hexadecimal[i]}" "keystrokes"
@@ -790,10 +787,10 @@ function copy_con() {
             fi
         done
 
-		keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 4" "keystrokes"
-		keyboard "Return" "custom_keystroke"
-		keyboard "del /f \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
-		keyboard "Return" "custom_keystroke"
+        keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 4" "keystrokes"
+        keyboard "Return" "custom_keystroke"
+        keyboard "del /f \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
+        keyboard "Return" "custom_keystroke"
     fi
 
     print_status "completed" "File transferred!"
@@ -849,7 +846,7 @@ function upload() {
         *)
             print_status "error" "Invalid File Transfer Technique!" >&2
             print_status "information" "Available methods are: pwshb64, cmdb64, nixb64, outfile, outfileb64, copycon, pwshhex, cmdhex, copyconhex, nixhex, and outfilehex"
-			print_status "information" "Terminating program..."
+            print_status "information" "Terminating program..."
             exit 1
             ;;
     esac
