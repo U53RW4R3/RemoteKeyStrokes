@@ -61,13 +61,13 @@ function check_dependencies() {
     fi
 }
 
-function get_window_sync_id() {
-    local windowname="${1}"
-    local sync_id
+function get_window_name() {
+    local titlebar="${1}"
+    local windowname
 
     if [[ "${XDG_SESSION_TYPE}" == "x11" ]]
     then
-        sync_id=$(xdotool search --name "${windowname}" getwindowfocus getactivewindow)
+        windowname=$(xdotool search --name "${windowname}" getwindowname)
     elif [[ "${XDG_SESSION_TYPE}" == "wayland" ]]
     then
         print_status "error" "Not implemented!"
@@ -75,7 +75,7 @@ function get_window_sync_id() {
         exit 1
     fi
 
-    echo "${sync_id}"
+    echo "${windowname}"
 }
 
 function keyboard() {
@@ -1324,10 +1324,10 @@ function main() {
     done
 
 	# If window name isn't specified it'll set to FreeRDP as default and checks if the program exists.
-    if [[ (-z "${WINDOWNAME}" || "${WINDOWNAME,,}" == "freerdp") && -n $(get_window_sync_id "${WINDOWNAME}") ]]
+    if [[ (-z "${WINDOWNAME}" || "${WINDOWNAME,,}" == "freerdp") && -n $(get_window_name "${WINDOWNAME}") ]]
     then
         WINDOWNAME="FreeRDP"
-    elif [[ (-n "${WINDOWNAME}" && "${WINDOWNAME,,}" != "freerdp") && -n $(get_window_sync_id "${WINDOWNAME}") ]]
+    elif [[ (-n "${WINDOWNAME}" && "${WINDOWNAME,,}" != "freerdp") && -n $(get_window_name "${WINDOWNAME}") ]]
     then
 		WINDOWNAME="${WINDOWNAME}"
     else
