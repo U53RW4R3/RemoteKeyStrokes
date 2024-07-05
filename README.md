@@ -17,7 +17,7 @@ All credits goes to [nopernik](https://github.com/nopernik) for making it possib
 - Anti-Forensics (Coming soon)
 - Mayhem (Coming soon)
 
-## Install Program
+## Install RemoteKeyStrokes
 
 ### Dependencies
 
@@ -55,7 +55,7 @@ $ sudo nix-env -iA nixpkgs.xdotool nixpkgs.freerdp nixpkgs.remmina
 
 #### Requirements for Wayland (This is limited to KDE Desktop Environment)
 
-This includes dependencies to compile `kdotool`.
+This includes dependencies to compile `kdotool`. I tried to find the universal program to match window names but so far only KDE works.
 
 For Debian-based distros.
 
@@ -105,7 +105,7 @@ sudo cp target/release/kdotool /usr/local/bin/
 
 ##### Compile and install `dotool`
 
-Follow the instructions to install the `go` compiler. (This is better and universal but limited to keystrokes. No features for focusing on windows.)
+Follow the [instructions (click here)](https://go.dev/doc/install) to install the `go` compiler. This is universal but limited to keystrokes and mouse input.
 
 ```
 $ git clone https://git.sr.ht/~geb/dotool && cd dotool && \
@@ -540,6 +540,10 @@ Not necessarily. I made it possible for remote consoles such as, Telnet since it
 #### Can I use the techniques for my project or other tradecraft for my own arsenal?
 
 The techniques are common and can be reused for BadUSB, malware development, or other projects related. It's under the copyleft license of the GNU GPLv3 that permits you as the user who have the right to view how the program operates, alter the source code to your requirements, and redistribute to other users along with the source code.
+
+#### Is it available for `wayland` display server?
+
+Yes and I found suitable programs to get it functional but it's limited to KDE desktop environment. I may have to reinvent in **Go** since `dotool` exists to makes my life easier find to focus the part related to match windows names.
 
 ## Troubleshooting
 
