@@ -41,7 +41,6 @@ function check_dependencies() {
         programs+=("xfreerdp")
     elif [[ "${XDG_SESSION_TYPE}" == "wayland" ]]
     then
-        programs+=("wlrctl")
         programs+=("wlfreerdp")
     fi
 
@@ -103,13 +102,13 @@ function keyboard() {
 
         case "${key}" in
             "keystrokes")
-                wlrctl
+                echo ""
                 ;;
             "escape_keystrokes")
-                wlrctl
+                echo ""
                 ;;
             "custom_keystroke")
-                wlrctl
+                echo ""
                 ;;
         esac
 	fi
@@ -141,7 +140,7 @@ function count_lines() {
     echo "${counter}"
 }
 
-# There is a limitation with this implementation. 
+# There is a limitation with this implementation.
 # However, this is ideal for uploading files with a specific path.
 
 function DirectoryName() {
@@ -1384,4 +1383,3 @@ function main() {
 }
 
 main "${@}"
-
