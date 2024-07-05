@@ -85,13 +85,6 @@ For NixOS-based distros.
 $ sudo nix-env -iA nixpkgs.freerdp nixpkgs.remmina
 ```
 
-Clone the source repository then compile `wlrctl` to install the system. Skip this step if you're using any Arch-based distros.
-
-```
-$ git clone https://git.sr.ht/~brocellous/wlrctl && cd wlrctl \
-meson setup --prefix=/usr/local build && sudo ninja -C build install
-```
-
 ### Setup
 
 Install the program in the system.
