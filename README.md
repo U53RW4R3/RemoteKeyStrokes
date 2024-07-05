@@ -53,36 +53,69 @@ For NixOS-based distros.
 $ sudo nix-env -iA nixpkgs.xdotool nixpkgs.freerdp nixpkgs.remmina
 ```
 
-#### Requirements for Wayland
+#### Requirements for Wayland (This is limited to KDE Desktop Environment)
+
+This includes dependencies to compile `kdotool`.
 
 For Debian-based distros.
 
 ```
-$ sudo apt install -y freerdp2-wayland remmina
+$ sudo apt install -y freerdp2-wayland remmina libdbus-1-dev pkg-config libxkbcommon-dev libwayland-dev scdoc
 ```
 
 For RedHat-based distros.
 
 ```
-$ sudo dnf install freerdp-2 remmina
+$ sudo dnf install freerdp-2 remmina dbus-devel pkg-config libxkbcommon-devel wayland-devel scdoc
 ```
 
 For Arch-based distros.
 
 ```
-$ sudo pacman -S freerdp remmina && yay -S wlrctl
+$ sudo pacman -S --noconfirm freerdp remmina dbus pkg-config libxkbcommon wayland scdoc
 ```
 
 For Gentoo-based distros.
 
 ```
-$ sudo emerge freerdp remmina xdotool
+$ sudo emerge freerdp remmina dbus pkg-config libxkbcommon wayland scdoc
 ```
 
 For NixOS-based distros.
 
 ```
-$ sudo nix-env -iA nixpkgs.freerdp nixpkgs.remmina
+$ sudo nix-env -iA nixpkgs.freerdp nixpkgs.remmina nixpkgs.dbus nixpkgs.pkg-config nixpkgs.libxkbcommon nixpkgs.wayland nixpkgs.scdoc
+```
+
+Follow the instructions to install rust compiler.
+
+```
+$ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+##### Compile and install `kdotool`
+
+Compile `kdotool` and install it to the system.
+
+```
+$ git clone https://github.com/jinliu/kdotool && cd kdotool && \
+rustup default stable && cargo b -r && \
+sudo cp target/release/kdotool /usr/local/bin/
+```
+
+##### Compile and install `dotool`
+
+Follow the instructions to install the `go` compiler. (This is better and universal but limited to keystrokes. No features for focusing on windows.)
+
+```
+$ git clone https://git.sr.ht/~geb/dotool && cd dotool && \
+./build.sh && sudo ./build.sh install
+
+$ groupadd -f input
+
+$ sudo usermod -aG input $USER
+
+$ reboot
 ```
 
 ### Setup
@@ -516,6 +549,18 @@ To uninstall the programs.
 
 ```
 $ sudo rm -f /usr/local/bin/remotekeystrokes /usr/local/bin/rks
+```
+
+To uninstall `kdotool`.
+
+```
+$ sudo rm /usr/local/bin/kdotool
+```
+
+To uninstall `dotool`.
+
+```
+$ cd dotool && sudo ./uninstall.sh
 ```
 
 ## TODO and Help Wanted
