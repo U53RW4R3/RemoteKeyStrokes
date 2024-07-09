@@ -120,7 +120,7 @@ $ reboot
 
 ### Setup
 
-Install the program in the system.
+Install the program in the system and create `rks` as a symbolic link of `remotekeystrokes`. This will be used as an command alias.
 
 ```
 $ sudo wget -O /usr/local/bin/remotekeystrokes https://raw.githubusercontent.com/U53RW4R3/RemoteKeyStrokes/main/remotekeystrokes.sh && \
@@ -176,15 +176,23 @@ METHODS:
 
 ### 0x00 - Remote Authentication
 
+#### Legends
+
+- Dollar sign (`$`) indicates a unix shell prompt with normal user privileges, and it includes commands.
+
+- Angle brackets (`<>`) means mandatory parameters.
+
+- Square brackets (`[]`) means optional parameters if not required to specify.
+
 #### RDP
 
-- To authenticate modern operating systems specify the flag either to force authentication as TLS `/sec:tls` or authentication as NLA `/sec:nla`.
+To authenticate modern operating systems specify the flag either to force authentication as TLS `/sec:tls` or authentication as NLA `/sec:nla`.
 
 ```
 $ xfreerdp /kbd:US /clipboard /compression /dynamic-resolution /sec:<tls | nla> [/d:"<domain_name>"] /u:"<username>" /p:"<password>" /v:<IP>:[<PORT>]
 ```
 
-- To authenticate legacy operating systems specify the flag `/sec:rdp` to force old authentication.
+To authenticate legacy operating systems specify the flag `/sec:rdp` to force old authentication.
 
 ```
 $ xfreerdp /kbd:US /clipboard /compression /dynamic-resolution /sec:rdp [/d:"<domain_name>"] /u:"<username>" /p:"<password>" /v:<IP>:[<PORT>]
@@ -192,17 +200,35 @@ $ xfreerdp /kbd:US /clipboard /compression /dynamic-resolution /sec:rdp [/d:"<do
 
 #### VNC
 
-- To remotely authenticate a VNC machine.
+To remotely authenticate a VNC machine.
 
 ```
 $ remmina -c vnc://<username>:<password>@<IP>
 ```
 
+#### SSH
+
+```
+$ ssh [-p <PORT>] <username>@<IP>
+```
+
+#### Telnet
+
+```
+$ telnet <IP> [PORT]
+```
+
+#### When using RemoteKeyStrokes
+
+To use `remotekeystrokes` (or an alias command `rks`) when executing commands on the Windows target with authenticated remote session. Before executing them you must navigate it with a window name (`-w`) by default it'll search for `FreeRDP` when using `xfreerdp` (for x11) or `wlfreerdp` (for wayland) if not specified. When targeting systems with a different remote login program be sure to specify the window name. Specify `-c` flag to issue commands. You can also prepare a text file to insert commands and it'll read them one by one. The flag will check if it's a string or a file.
+
+For graphical remote desktop programs such as, FreeRDP, Remmina, and other third party programs. Unlike remote terminal sessions like `telnet` and `ssh`. You must navigate the cursor to an active application inside the target machine. For instance in Windows environment you must open a command prompt (`cmd.exe`) or powershell (`powershell.exe`). It is possible for Windows to open programs with a dialogue box (`-m dialogbox`) for a quick launch. Ensure to clear traces from the registry entry when you initially executed with the method. It's located in `HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU`. You'll see examples of how you'll be able to perform quick offensive measures with just Living off the Land (LotL) techniques.
+
 ### 0x01 - Internal Reconnaissance
 
 #### Command Prompt
 
-- Local machine enumeration
+Local machine enumeration.
 
 ```
 $ cat recon_local_enum_cmds.txt
@@ -222,7 +248,7 @@ $ rks -c recon_local_enum_cmds.txt
 [DONE] Task completed!
 ```
 
-- To execute a single command
+To execute in a single command. This is concise especially when using with a dialbog box.
 
 ```
 $ rks -c "cmd.exe /k \"whoami /all & net user & net localgroup Administrators & ipconfig /all & systeminfo\"" -m dialogbox
@@ -230,7 +256,7 @@ $ rks -c "cmd.exe /k \"whoami /all & net user & net localgroup Administrators & 
 [PROG] Executing commands...
 [DONE] Task completed!
 ```
-- Active directory enumeration
+Active directory enumeration.
 
 ```
 $ cat recon_ad_enum_cmds.txt
@@ -249,7 +275,7 @@ $ rks -c recon_ad_enum_cmds.txt
 [DONE] Task completed!
 ```
 
-To execute a single command.
+To execute in a single command. This is concise especially when using with a dialbog box.
 
 ```
 $ rks -c "cmd.exe /k \"net user /domain & net group \"Domain Admins\" /domain & net group \"Enterprise Admins\" /domain & net group \"Domain Computers\" /domain\""
