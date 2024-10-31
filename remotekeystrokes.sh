@@ -402,10 +402,10 @@ function base16_radix() {
                 fi
             done
 
-            keyboard "echo %${random_var}% > \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
-            keyboard "Return" "custom_keystroke"
-            keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 12" "keystrokes"
-            keyboard "Return" "custom_keystroke"
+			keyboard "echo %${random_var}% > \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
+			keyboard "Return" "custom_keystroke"
+			keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 12" "keystrokes"
+			keyboard "Return" "custom_keystroke"
 			keyboard "del /f \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
 			keyboard "Return" "custom_keystroke"
     	elif [[ "${mode}" == "console" ]]
@@ -432,8 +432,8 @@ function base16_radix() {
             done
 
 			# Interpret the backslash to output into a file.
-            keyboard "echo -en \$${random_var} > \"${output_file}\"" "keystrokes"
-            keyboard "Return" "custom_keystroke"
+			keyboard "echo -en \$${random_var} > \"${output_file}\"" "keystrokes"
+			keyboard "Return" "custom_keystroke"
     	fi
         print_status "completed" "File transferred!"
     fi
@@ -597,23 +597,23 @@ function powershell_outfile() {
             do
                 if [[ ${counter} -eq 7 ]]
                 then
-                	keyboard "${hexadecimal[i]}" "keystrokes"
-                	keyboard "space" "custom_keystroke"
+					keyboard "${hexadecimal[i]}" "keystrokes"
+					keyboard "space" "custom_keystroke"
                 elif [[ ${counter} -eq 8 ]]
                 then
-                	keyboard "space" "custom_keystroke"
-                    (( counter++ ))
+					keyboard "space" "custom_keystroke"
+					(( counter++ ))
                 elif [[ ${counter} -eq 15 ]]
                 then
-                	keyboard "${hexadecimal[i]}" "keystrokes"
-                	keyboard "Return" "custom_keystroke"
+					keyboard "${hexadecimal[i]}" "keystrokes"
+					keyboard "Return" "custom_keystroke"
                 elif [[ ${i} -eq $((${#hexadecimal[@]} - 1)) ]]
                 then
-                    keyboard "${hexadecimal[i]}" "keystrokes"
-                    keyboard "Return" "custom_keystroke"
+					keyboard "${hexadecimal[i]}" "keystrokes"
+					keyboard "Return" "custom_keystroke"
                 else
-                	keyboard "${hexadecimal[i]}" "keystrokes"
-                	keyboard "space" "custom_keystroke"
+					keyboard "${hexadecimal[i]}" "keystrokes"
+					keyboard "space" "custom_keystroke"
                 fi
 
                 if [[ ${counter} -eq 15 ]]
@@ -841,9 +841,9 @@ function upload() {
 function bypassuac() {
     local platform="${1}"
     local action="${2}"
-    read -d '' description << EndOfText
+    read -d '' description << EOF
 Fill in the description of the technique
-EndOfText
+EOF
 
     echo "not implemented"
 }
@@ -870,9 +870,9 @@ function elevate() {
 function create_user() {
     local platform="${1}"
     local action="${2}"
-    read -d '' description << EndOfText
+    read -d '' description << EOF
 Fill in the description of the technique
-EndOfText
+EOF
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
@@ -895,9 +895,9 @@ EndOfText
 function sticky_keys() {
     local platform="${1}"
     local action="${2}"
-    read -d '' description << EndOfText
+    read -d '' description << EOF
 Fill in the description of the technique
-EndOfText
+EOF
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
@@ -929,9 +929,9 @@ EndOfText
 function utility_manager() {
     local platform="${1}"
     local action="${2}"
-    read -d '' description << EndOfText
+    read -d '' description << EOF
 Fill in the description of the technique
-EndOfText
+EOF
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
@@ -958,9 +958,9 @@ EndOfText
 function magnifier() {
     local platform="${1}"
     local action="${2}"
-    read -d '' description << EndOfText
+    read -d '' description << EOF
 Fill in the description of the technique
-EndOfText
+EOF
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
@@ -987,9 +987,9 @@ EndOfText
 function narrator() {
     local platform="${1}"
     local action="${2}"
-    read -d '' description << EndOfText
+    read -d '' description << EOF
 Fill in the description of the technique
-EndOfText
+EOF
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
@@ -1016,9 +1016,9 @@ EndOfText
 function display_switch() {
     local platform="${1}"
     local action="${2}"
-    read -d '' description << EndOfText
+    read -d '' description << EOF
 Fill in the description of the technique
-EndOfText
+EOF
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
@@ -1079,9 +1079,9 @@ function persistence() {
 
 function window_event_log_utility() {
     local action="${1}"
-    read -d '' description << EndOfText
+    read -d '' description << EOF
 Fill in the description of the technique
-EndOfText
+EOF
 
     if [[ "${platform}" != "windows" ]]
     then
@@ -1108,9 +1108,9 @@ EndOfText
 
 function clear_event_log() {
     local action="${1}"
-    read -d '' description << EndOfText
+    read -d '' description << EOF
 Fill in the description of the technique
-EndOfText
+EOF
 
     if [[ "${platform}" != "windows" ]]
     then
@@ -1137,9 +1137,9 @@ EndOfText
 
 function event_viewer() {
     local action="${1}"
-    read -d '' description << EndOfText
+    read -d '' description << EOF
 Fill in the description of the technique
-EndOfText
+EOF
 
     if [[ "${platform}" != "windows" ]]
     then
@@ -1191,9 +1191,9 @@ function antiforensics() {
 }
 
 function format_disk() {
-    read -d '' description << EndOfText
+    read -d '' description << EOF
 Fill in the description of the technique
-EndOfText
+EOF
 
     echo "not implemented"
 }
@@ -1207,7 +1207,7 @@ function mayhem() {
 }
 
 function usage() {
-    read -d '' usage << EndOfText
+    read -d '' usage << EOF
 Usage:
     $(basename ${0}) <flags>
 
@@ -1221,8 +1221,8 @@ COMMON OPTIONS:
                                         set by default if not specified)
 
     -w, --windowname <window_name>      Specify the window name to focus on the
-					active window ("freerdp" is set by default
-					if not specified)
+										active window ("freerdp" is set by default
+										if not specified)
 
     -h, --help                          Display this help message
 
@@ -1246,7 +1246,7 @@ METHODS:
 
     -e, --evasion <evasion>             Specify an evasion method for uploading files
                                         (only works for "pwshb64")
-EndOfText
+EOF
 
     echo "${usage}"
     exit 1
