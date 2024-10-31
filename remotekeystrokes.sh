@@ -402,12 +402,12 @@ function base16_radix() {
                 fi
             done
 
-			keyboard "echo %${random_var}% > \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
-			keyboard "Return" "custom_keystroke"
-			keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 12" "keystrokes"
-			keyboard "Return" "custom_keystroke"
-			keyboard "del /f \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
-			keyboard "Return" "custom_keystroke"
+            keyboard "echo %${random_var}% > \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
+            keyboard "Return" "custom_keystroke"
+            keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 12" "keystrokes"
+            keyboard "Return" "custom_keystroke"
+            keyboard "del /f \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
+            keyboard "Return" "custom_keystroke"
     	elif [[ "${mode}" == "console" ]]
     	then
             print_status "progress" "Transferring file..."
@@ -431,9 +431,9 @@ function base16_radix() {
                 fi
             done
 
-			# Interpret the backslash to output into a file.
-			keyboard "echo -en \$${random_var} > \"${output_file}\"" "keystrokes"
-			keyboard "Return" "custom_keystroke"
+            # Interpret the backslash to output into a file.
+            keyboard "echo -en \$${random_var} > \"${output_file}\"" "keystrokes"
+            keyboard "Return" "custom_keystroke"
     	fi
         print_status "completed" "File transferred!"
     fi
@@ -597,23 +597,23 @@ function powershell_outfile() {
             do
                 if [[ ${counter} -eq 7 ]]
                 then
-					keyboard "${hexadecimal[i]}" "keystrokes"
-					keyboard "space" "custom_keystroke"
+                    keyboard "${hexadecimal[i]}" "keystrokes"
+                    keyboard "space" "custom_keystroke"
                 elif [[ ${counter} -eq 8 ]]
                 then
-					keyboard "space" "custom_keystroke"
-					(( counter++ ))
+                    keyboard "space" "custom_keystroke"
+                    (( counter++ ))
                 elif [[ ${counter} -eq 15 ]]
                 then
-					keyboard "${hexadecimal[i]}" "keystrokes"
-					keyboard "Return" "custom_keystroke"
+                    keyboard "${hexadecimal[i]}" "keystrokes"
+                    keyboard "Return" "custom_keystroke"
                 elif [[ ${i} -eq $((${#hexadecimal[@]} - 1)) ]]
                 then
-					keyboard "${hexadecimal[i]}" "keystrokes"
-					keyboard "Return" "custom_keystroke"
+                    keyboard "${hexadecimal[i]}" "keystrokes"
+                    keyboard "Return" "custom_keystroke"
                 else
-					keyboard "${hexadecimal[i]}" "keystrokes"
-					keyboard "space" "custom_keystroke"
+                    keyboard "${hexadecimal[i]}" "keystrokes"
+                    keyboard "space" "custom_keystroke"
                 fi
 
                 if [[ ${counter} -eq 15 ]]
@@ -734,7 +734,7 @@ function copy_con() {
         # Append the pair of hexadecimal characters in a array
         for (( i=0; i<${#data}; i+=2 ))
         do
-        	hexadecimal+=("${data:i:2}")
+            hexadecimal+=("${data:i:2}")
         done
 
         keyboard "copy con /y \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
@@ -1309,13 +1309,13 @@ function main() {
         esac
     done
 
-	# If window name isn't specified it'll set to FreeRDP as default.
+    # If window name isn't specified it'll set to FreeRDP as default.
     if [[ (-z "${WINDOWNAME}" || "${WINDOWNAME,,}" == "freerdp") ]]
     then
         WINDOWNAME="FreeRDP"
     elif [[ (-n "${WINDOWNAME}" && "${WINDOWNAME,,}" != "freerdp") ]]
     then
-		WINDOWNAME="${WINDOWNAME}"
+        WINDOWNAME="${WINDOWNAME}"
     fi
 
     # Checks if the program exists.
